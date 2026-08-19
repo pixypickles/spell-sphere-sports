@@ -1,5 +1,18 @@
 (()=>{'use strict';
 
+function updateOrientation(){
+  const w=Math.max(window.innerWidth,document.documentElement.clientWidth||0);
+  const h=Math.max(window.innerHeight,document.documentElement.clientHeight||0);
+  const landscape = w >= h * 1.10;
+  document.body.classList.toggle('isLandscape', landscape);
+  document.body.classList.toggle('isPortrait', !landscape);
+}
+window.addEventListener('resize', updateOrientation, {passive:true});
+window.addEventListener('orientationchange', ()=>setTimeout(updateOrientation,120), {passive:true});
+updateOrientation();
+
+
+
 const c=document.getElementById('game'),g=c.getContext('2d');
 const W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576},CY=360;
@@ -143,8 +156,8 @@ class Bullet{
     Object.assign(this,{
       x,y,dx,dy,team,curve,target,r:7,life:3.6,
       speed:curve?315:355,age:0,
-      curveTime:curve?0.55:0,
-      maxCurveRate:curve?1.35:0
+      curveTime:curve?1.20:0,
+      maxCurveRate:curve?2.35:0
     });
   }
   update(dt){
@@ -163,7 +176,8 @@ class Bullet{
       while(diff>Math.PI)diff-=Math.PI*2;
       while(diff<-Math.PI)diff+=Math.PI*2;
 
-      const maxTurn=this.maxCurveRate*dt;
+      const ageRatio=1-(this.age/this.curveTime);
+      const maxTurn=this.maxCurveRate*(0.55+0.45*ageRatio)*dt;
       const turn=clamp(diff,-maxTurn,maxTurn);
       const nextA=curA+turn;
       this.dx=Math.cos(nextA);
@@ -226,7 +240,7 @@ function shoot(u,target,curve=false){
     const side=(Math.abs(target.y-u.y)>20?(target.y>u.y?-1:1):u.curveSide);
 
     // 初速は少しだけ横へ振る。大きく外へ投げすぎない。
-    const bend=.34;
+    const bend=.70;
     const q=norm(
       direct.x+(-direct.y)*bend*side,
       direct.y+( direct.x)*bend*side

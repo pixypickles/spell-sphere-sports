@@ -6,7 +6,7 @@ button,select{font:inherit}
 #game{display:block;width:100%;height:100%;background:#6f91a0;touch-action:none}
 
 #rotateNotice{display:none;position:fixed;inset:0;z-index:20000;align-items:center;justify-content:center;background:#111827;color:#fff;font-weight:900;font-size:7vw;padding:8vw;text-align:center}
-@media(orientation:portrait){#rotateNotice{display:flex}#gameWrap{display:none}}
+
 
 #hud{position:absolute;z-index:10;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:18px;align-items:center;color:#fff;font-weight:900;font-size:clamp(14px,2.3vw,25px);text-shadow:0 2px 5px #0008;pointer-events:none}
 #roundLabel{font-size:.62em;color:#ffe89b}
@@ -92,3 +92,11 @@ button{touch-action:manipulation!important}
 }
 
 .rookieBtn{width:100%;margin-top:7px;padding:10px;border-radius:11px;border:1px solid #9fd7ff88;background:#234a6a;color:#dff3ff;font-weight:900;touch-action:manipulation}
+
+/* v2.25 orientation fix */
+#gameWrap{display:block}
+#rotateNotice{display:none}
+body.isPortrait #rotateNotice{display:flex}
+body.isPortrait #gameWrap{display:none}
+body.isLandscape #rotateNotice{display:none}
+body.isLandscape #gameWrap{display:block}
