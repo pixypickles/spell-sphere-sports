@@ -57,3 +57,14 @@ body{display:flex;align-items:flex-start;justify-content:center}
  position:absolute;right:9px;top:8px;width:32px;height:32px;border:0;border-radius:50%;
  background:#ffffff22;color:#fff;font-size:22px;font-weight:900
 }
+
+/* v2.9 beginner team selector */
+.teamPick{
+  margin:10px 0 12px;padding:10px;border-radius:11px;
+  background:#17233b99;border:1px solid #ffffff2e;text-align:left
+}
+.teamPickTitle{font-size:12px;font-weight:900;color:#ffe79a;margin-bottom:5px}
+.teamPick select{
+  width:100%;padding:8px;border:0;border-radius:8px;background:#f5f6fa;color:#1d2638;font-weight:800
+}
+.teamDesc{font-size:11px;line-height:1.4;margin-top:6px;color:#dbe7ff}
