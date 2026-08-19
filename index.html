@@ -14,7 +14,48 @@
    <button id="dodgeBtn" class="gameBtn dodge">↻<small>回避</small></button>
  </div>
  <div id="message"></div>
- <div id="menu" class="overlay"><section class="panel"><div class="kicker">BEGINNER CUP / TEST MATCH</div><h1>魔導球技</h1><p>味方の役割を選択</p><label>味方A<select id="roleA"><option value="support">サポート</option><option value="attacker">旗取り</option><option value="guard">守備</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label><label>味方B<select id="roleB"><option value="guard">守備</option><option value="attacker">旗取り</option><option value="support">サポート</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label><button id="startBtn" class="menuBtn">試合開始</button><p class="note">青は左から右へ攻めます。敵旗に触れるか、敵3人を全員アウトで1本。2本先取。</p></section></div>
+ <div id="menu" class="overlay"><section class="panel"><div class="kicker">BEGINNER CUP / TEST MATCH</div><h1>魔導球技</h1><p>味方の役割を選択</p><label>味方A<select id="roleA"><option value="support">サポート</option><option value="attacker">旗取り</option><option value="guard">守備</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label><label>味方B<select id="roleB"><option value="guard">守備</option><option value="attacker">旗取り</option><option value="support">サポート</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label><button id="startBtn" class="menuBtn">試合開始</button>
+<button id="designBtn" class="designBtn" type="button">現在の仕様・今後の追加</button><p class="note">青は左から右へ攻めます。敵旗に触れるか、敵3人を全員アウトで1本。2本先取。</p></section></div>
  <div id="result" class="overlay hidden"><section class="panel"><div class="kicker">RESULT</div><h1 id="resultTitle">ROUND WIN</h1><p id="resultText"></p><button id="nextBtn" class="menuBtn">次のラウンド</button></section></div>
-</main><script src="game.js"></script><div id="versionBadge" style="position:fixed;left:6px;bottom:4px;z-index:9999;font:11px system-ui;color:#fff9;background:#0005;padding:2px 5px;border-radius:5px;pointer-events:none">v2.7</div>
+</main><script src="game.js"></script><div id="versionBadge" style="position:fixed;left:6px;bottom:4px;z-index:9999;font:11px system-ui;color:#fff9;background:#0005;padding:2px 5px;border-radius:5px;pointer-events:none">v2.8</div>
+
+<div id="designPanel" class="designOverlay hidden">
+  <div class="designCard">
+    <button id="designClose" class="designClose" type="button">×</button>
+    <h2>現在の仕様 / ROADMAP <small>v2.8</small></h2>
+    <div class="designScroll">
+      <h3>決定済み</h3>
+      <p>横持ち・1人用・3対3。2本先取。旗取得または敵全員アウトでラウンド勝利。</p>
+      <p>通常弾、回転弾、前転回避、魔力自然回復、弾同士の相殺、遮蔽物を使った攻防。</p>
+      <p>基本能力はプレイ中に大きく成長させず、競技としての公平感を優先。</p>
+
+      <h3>成長方針</h3>
+      <p><b>能力値アップは本編クリア後のやり込み候補。</b> 本編中は原則ほぼ固定。</p>
+      <p>例外として、途中で一度だけ「俊足の魔導ブーツ」のようなアイテムを入手し、走力がわずかに上がる案を採用候補にする。</p>
+
+      <h3>次の実装順</h3>
+      <ol>
+        <li>基本試合の操作感・壁・AIを仕上げる</li>
+        <li>ビギナー大会：敵3チームをAI戦術で差別化</li>
+        <li>大会メニュー・総当たり戦績・進行保存</li>
+        <li>最初の特殊技（シールド / 壁破壊弾）</li>
+        <li>練習試合と「同じ技の相手に3勝」で技習得</li>
+        <li>上位大会と追加特殊技</li>
+      </ol>
+
+      <h3>後で追加する特殊技候補</h3>
+      <p>分裂、直角、ブーメラン、壁沿い、高速、連射、強風/竜巻、分身、透明化、獣化。</p>
+    </div>
+  </div>
+</div>
+
+
+<script>
+(function(){
+ const b=document.getElementById('designBtn'),p=document.getElementById('designPanel'),c=document.getElementById('designClose');
+ if(b&&p){b.addEventListener('pointerup',function(e){e.preventDefault();p.classList.remove('hidden')});}
+ if(c&&p){c.addEventListener('pointerup',function(e){e.preventDefault();p.classList.add('hidden')});}
+})();
+</script>
+
 </body></html>
