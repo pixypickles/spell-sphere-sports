@@ -143,8 +143,8 @@ class Bullet{
     Object.assign(this,{
       x,y,dx,dy,team,curve,target,r:7,life:3.6,
       speed:curve?315:355,age:0,
-      curveTime:curve?1.20:0,
-      maxCurveRate:curve?2.35:0
+      curveTime:curve?0.55:0,
+      maxCurveRate:curve?1.35:0
     });
   }
   update(dt){
@@ -163,8 +163,7 @@ class Bullet{
       while(diff>Math.PI)diff-=Math.PI*2;
       while(diff<-Math.PI)diff+=Math.PI*2;
 
-      const ageRatio=1-(this.age/this.curveTime);
-      const maxTurn=this.maxCurveRate*(0.55+0.45*ageRatio)*dt;
+      const maxTurn=this.maxCurveRate*dt;
       const turn=clamp(diff,-maxTurn,maxTurn);
       const nextA=curA+turn;
       this.dx=Math.cos(nextA);
@@ -227,7 +226,7 @@ function shoot(u,target,curve=false){
     const side=(Math.abs(target.y-u.y)>20?(target.y>u.y?-1:1):u.curveSide);
 
     // 初速は少しだけ横へ振る。大きく外へ投げすぎない。
-    const bend=.70;
+    const bend=.34;
     const q=norm(
       direct.x+(-direct.y)*bend*side,
       direct.y+( direct.x)*bend*side
