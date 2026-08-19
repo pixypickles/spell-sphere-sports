@@ -58,7 +58,8 @@ function defaultSave(){
     totalWins:0,totalLosses:0,beginnerWins:0,bestPlace:4,
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
-    specialSlot1:'double',specialSlot2:'none'
+    specialSlot1:'double',specialSlot2:'none',
+    encounteredTeams:[]
   };
 }
 function loadSave(){
@@ -155,6 +156,56 @@ function saveSkillSet(){
   saveData.specialSlot2=s2;
   saveData.shieldEquipped=(s1==='shield'||s2==='shield'); // 旧セーブ互換用
   writeSave();
+}
+
+
+function teamKey(kind,id){return `${kind}:${id}`}
+function markEncountered(kind,id){
+  const key=teamKey(kind,id);
+  if(!Array.isArray(saveData.encounteredTeams))saveData.encounteredTeams=[];
+  if(!saveData.encounteredTeams.includes(key)){
+    saveData.encounteredTeams.push(key);
+    writeSave();
+  }
+}
+function practiceEntries(){
+  const keys=Array.isArray(saveData.encounteredTeams)?saveData.encounteredTeams:[];
+  const list=[];
+  for(const key of keys){
+    const [kind,id]=key.split(':');
+    const data=kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id];
+    if(data)list.push({kind,id,name:data.name,desc:data.desc});
+  }
+  return list;
+}
+function updatePracticeMenu(){
+  const sel=$('practiceTeamSelect'),info=$('practiceTeamInfo');
+  if(!sel||!info)return;
+  const list=practiceEntries();
+  sel.innerHTML='';
+  if(!list.length){
+    const op=document.createElement('option');
+    op.value='';
+    op.textContent='まだ対戦相手がいません';
+    sel.appendChild(op);
+    info.textContent='大会で一度対戦すると、ここに練習相手として追加されます。';
+    $('practiceStartBtn').disabled=true;
+    return;
+  }
+  $('practiceStartBtn').disabled=false;
+  for(const e of list){
+    const op=document.createElement('option');
+    op.value=`${e.kind}:${e.id}`;
+    op.textContent=e.name;
+    sel.appendChild(op);
+  }
+  const refresh=()=>{
+    const [kind,id]=sel.value.split(':');
+    const d=kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id];
+    info.textContent=d?d.desc:'';
+  };
+  sel.onchange=refresh;
+  refresh();
 }
 
 function saveCupResume(){
@@ -776,7 +827,7 @@ function returnToMainMenu(){
   fx=[];
   pendingLearnMessage='';
 
-  for(const id of ['result','cupPanel','cupEndPanel','skillSetPanel']){
+  for(const id of ['result','cupPanel','cupEndPanel','skillSetPanel','practicePanel']){
     const el=$(id);
     if(el)el.classList.add('hidden');
   }
@@ -812,6 +863,24 @@ bindTap('skillSetCloseBtn',()=>{
   $('menu').classList.remove('hidden');
 });
 
+
+bindTap('practiceCloseBtn',()=>{
+  $('practicePanel').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+});
+bindTap('practiceStartBtn',()=>{
+  const val=$('practiceTeamSelect').value;
+  if(!val)return;
+  const [kind,id]=val.split(':');
+  mode='practice';
+  cupKind=kind==='rookie'?'rookie':'beginner';
+  currentOpponent=id;
+  bScore=0;rScore=0;round=1;
+  score.textContent='0 - 0';
+  $('practicePanel').classList.add('hidden');
+  reset();
+});
+
 bindTap('cupStartBtn',()=>{running=false;over=false;mode='cup';cupKind='beginner';cupIndex=0;cupTable=newCupTable();currentOpponent=CUP_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
 bindTap('cupContinueBtn',()=>{
   const r=saveData.cupResume;
@@ -825,8 +894,12 @@ bindTap('cupContinueBtn',()=>{
   $('cupPanel').classList.remove('hidden');
 });
 bindTap('rookieBtn',()=>{if(!saveData.rookieUnlocked)return;mode='cup';cupKind='rookie';cupIndex=0;cupTable=newCupTable();currentOpponent=ROOKIE_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
-bindTap('practiceBtn',()=>{running=false;over=false;mode='practice';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('menu').classList.add('hidden');reset()});
-bindTap('cupMatchBtn',()=>{currentOpponent=currentCupOrder()[cupIndex];bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('cupPanel').classList.add('hidden');reset()});
+bindTap('practiceBtn',()=>{
+  updatePracticeMenu();
+  $('menu').classList.add('hidden');
+  $('practicePanel').classList.remove('hidden');
+});
+bindTap('cupMatchBtn',()=>{currentOpponent=currentCupOrder()[cupIndex];markEncountered(cupKind,currentOpponent);bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('cupPanel').classList.add('hidden');reset()});
 bindTap('cupBackBtn',()=>{
   saveCupResume();
   mode='menu';
@@ -867,9 +940,22 @@ bindTap('nextBtn',()=>{
       $('cupPanel').classList.remove('hidden');
     }
   }else{
-    if(bScore>rScore)saveData.totalWins++;else saveData.totalLosses++;
+    pendingLearnMessage='';
+    if(bScore>rScore){
+      saveData.totalWins++;
+      if(opponentHasShield())pendingLearnMessage=gainShieldResearch();
+    }else{
+      saveData.totalLosses++;
+    }
     writeSave();
+
+    const learnMsg=pendingLearnMessage;
     returnToMainMenu();
+
+    if(learnMsg){
+      setTimeout(()=>flash(learnMsg,1300),120);
+      pendingLearnMessage='';
+    }
   }
 });
 for(const ev of ['contextmenu','selectstart','dragstart'])document.addEventListener(ev,e=>{if(e.target.closest('#gameWrap')||e.target.closest('button'))e.preventDefault()},{passive:false});

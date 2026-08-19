@@ -134,3 +134,14 @@ body.isLandscape #gameWrap{display:block}
   margin:10px 0;padding:9px;border-radius:9px;background:#111c30aa;
   border:1px solid #ffffff24;color:#dce8ff;font-size:11px;line-height:1.5;text-align:left
 }
+
+/* v2.31 practice match */
+#practicePanel{
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  touch-action:pan-y;padding:8px 10px 28px
+}
+.practicePanelCard{margin:6px auto 32px}
+.practiceTeamInfo{
+  margin:9px 0;padding:9px;border-radius:9px;background:#111c30aa;
+  border:1px solid #ffffff24;color:#dce8ff;font-size:11px;line-height:1.5;text-align:left
+}
