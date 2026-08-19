@@ -4,30 +4,46 @@ const c=document.getElementById('game'),g=c.getContext('2d'),W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576}, CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 const walls=[
- // left field: long cover, with a clear lower passage
- {x:330,y:205,w:18,h:90},
- {x:330,y:335,w:18,h:80},
- {x:420,y:165,w:18,h:85},
- {x:420,y:315,w:18,h:85},
- {x:505,y:205,w:70,h:16},
- {x:505,y:345,w:70,h:16},
+ // LEFT HALF — clear upper / middle / lower lanes
+ {x:340,y:185,w:18,h:105},
+ {x:340,y:405,w:18,h:105},
+ {x:430,y:145,w:18,h:95},
+ {x:430,y:455,w:18,h:95},
+ {x:500,y:220,w:76,h:16},
+ {x:500,y:445,w:76,h:16},
 
- // right field: mirror
- {x:932,y:205,w:18,h:90},
- {x:932,y:335,w:18,h:80},
- {x:842,y:165,w:18,h:85},
- {x:842,y:315,w:18,h:85},
- {x:705,y:205,w:70,h:16},
- {x:705,y:345,w:70,h:16},
+ // RIGHT HALF — mirror
+ {x:922,y:185,w:18,h:105},
+ {x:922,y:405,w:18,h:105},
+ {x:832,y:145,w:18,h:95},
+ {x:832,y:455,w:18,h:95},
+ {x:704,y:220,w:76,h:16},
+ {x:704,y:445,w:76,h:16},
 
- // central hollow bunker, lowered but not blocking bottom lane
- {x:545,y:255,w:190,h:18},
- {x:545,y:355,w:190,h:18},
- {x:545,y:273,w:18,h:82},
- {x:717,y:273,w:18,h:82}
+ // CENTRAL HOLLOW BUNKER — enough space above and below
+ {x:545,y:275,w:190,h:18},
+ {x:545,y:385,w:190,h:18},
+ {x:545,y:293,w:18,h:92},
+ {x:717,y:293,w:18,h:92}
 ];
 const flagBlue={x:230,y:360}, flagRed={x:1050,y:360};
-let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
+let player=null,allies=[],enemies=[],bullets=[],fx=[];
+const BEGINNER_TEAMS={
+  rush:{
+    name:'ブルームランナーズ',
+    roles:['attacker','attacker','support']
+  },
+  guard:{
+    name:'ストーンウォールズ',
+    roles:['guard','guard','shooter']
+  },
+  shoot:{
+    name:'スターショッツ',
+    roles:['shooter','shooter','balance']
+  }
+};
+let selectedBeginnerTeam='rush';
+let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
 let input={x:0,y:0,active:false};let keys={};let heldAt=0;
 const $=id=>document.getElementById(id),score=$('score'),clock=$('clock'),roundLabel=$('roundLabel'),manaFill=$('manaFill'),message=$('message');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));const norm=(x,y)=>{const d=Math.hypot(x,y)||1;return{x:x/d,y:y/d}};const d2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -41,12 +57,27 @@ function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COU
 function move(u,x,y,dt){if(!u.alive)return;let s=u.speed*(u.dodgeT>0?2.25:1),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
 function shoot(u,target,curve=false){if(!u||!u.alive||!target||!target.alive)return;const cost=curve?16:11,now=performance.now()/1000;if(u.mana<cost||now-u.lastShot<u.shotCd)return;u.lastShot=now;u.mana-=cost;let direct=norm(target.x-u.x,target.y-u.y),dx=direct.x,dy=direct.y,side=1;if(curve){if(Math.abs(target.y-u.y)>24)side=target.y>=u.y?-1:1;else{u.curveSide*=-1;side=u.curveSide}const bend=.78;dx=direct.x+(-direct.y)*bend*side;dy=direct.y+(direct.x)*bend*side;let q=norm(dx,dy);dx=q.x;dy=q.y}bullets.push(new Bullet(u.x+dx*23,u.y+dy*23,dx,dy,u.team,curve,target,side))}
 function nearest(u,arr){return arr.filter(v=>v&&v.alive).sort((a,b)=>d2(u,a)-d2(u,b))[0]||null}
-function reset(){bullets=[];fx=[];left=60;secAcc=0;over=false;running=true;player=new Unit(300,360,'blue',true);allies=[new Unit(275,220,'blue',false,$('roleA').value),new Unit(275,500,'blue',false,$('roleB').value)];const er=BEGINNER_TEAMS[selectedBeginnerTeam].roles;
-    enemies=[
-      new Unit(1015,185,'red',false,er[0]),
-      new Unit(1080,285,'red',false,er[1]),
-      new Unit(1015,385,'red',false,er[2])
-    ];clock.textContent='1:00';roundLabel.textContent='ROUND '+round;flash('ROUND '+round,1000)}
+function reset(){
+  bullets=[];fx=[];left=60;secAcc=0;over=false;running=true;
+
+  player=new Unit(300,360,'blue',true);
+  allies=[
+    new Unit(275,235,'blue',false,$('roleA').value),
+    new Unit(275,485,'blue',false,$('roleB').value)
+  ];
+
+  const selected=BEGINNER_TEAMS[selectedBeginnerTeam] || BEGINNER_TEAMS.rush;
+  const er=selected.roles;
+  enemies=[
+    new Unit(980,235,'red',false,er[0]),
+    new Unit(1010,360,'red',false,er[1]),
+    new Unit(980,485,'red',false,er[2])
+  ];
+
+  clock.textContent='1:00';
+  roundLabel.textContent='ROUND '+round;
+  flash(selected.name+' / ROUND '+round,1000);
+}
 function ai(u,dt,enemy){if(!u.alive)return;u.think-=dt;if(u.think<=0){u.think=.18+Math.random()*.18;u.target=nearest(u,enemy?[player,...allies]:enemies)}const target=u.target,enemyFlag=enemy?flagBlue:flagRed,ownFlag=enemy?flagRed:flagBlue;let tx=u.x,ty=u.y;if(u.role==='attacker'){tx=enemyFlag.x;ty=enemyFlag.y}else if(u.role==='guard'){if(target&&d2(u,target)<270){tx=target.x;ty=target.y}else{tx=ownFlag.x;ty=ownFlag.y}}else if(u.role==='support'&&!enemy&&player&&player.alive){tx=player.x+70;ty=player.y}else if(u.role==='shooter'&&target){const ds=d2(u,target);if(ds<235){tx=u.x-(target.x-u.x);ty=u.y-(target.y-u.y)}else if(ds>410){tx=target.x;ty=target.y}}else if(target){tx=target.x;ty=target.y}let n=norm(tx-u.x,ty-u.y);if(walls.some(w=>circleRect(u.x+n.x*28,u.y+n.y*28,u.r,w))){n={x:-n.y,y:n.x}}const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<95),now=performance.now()/1000;if(danger&&now-u.lastDodge>1.9&&Math.random()<.09){u.lastDodge=now;u.dodgeT=.32;u.inv=.23;n={x:-danger.dy,y:danger.dx}}move(u,n.x,n.y,dt);if(target&&d2(u,target)<530)shoot(u,target,Math.random()<.22)}
 function checkFlags(){for(const u of [player,...allies])if(u&&u.alive&&d2(u,flagRed)<u.r+22)return finish('blue','敵旗を取りました！');for(const u of enemies)if(u.alive&&d2(u,flagBlue)<u.r+22)return finish('red','敵に旗を取られました');if(player&&player.alive&&d2(player,flagBlue)<45)player.mana=Math.min(100,player.mana+36/60)}
 function checkEnd(){if(enemies.every(e=>!e.alive))finish('blue','敵3人を全員アウト！');else if([player,...allies].every(e=>!e.alive))finish('red','味方が全員アウト')}
@@ -119,4 +150,22 @@ const startGame=()=>{bScore=rScore=0;round=1;score.textContent='0 - 0';$('menu')
 const nextRound=()=>{$('result').classList.add('hidden');if(bScore>=2||rScore>=2){bScore=rScore=0;round=1;score.textContent='0 - 0';$('menu').classList.remove('hidden')}else{round++;reset()}};
 function bindTap(el,fn){let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn();setTimeout(()=>fired=false,300)});el.addEventListener('click',e=>{e.preventDefault();if(!fired)fn()});}
 bindTap($('startBtn'),startGame);bindTap($('nextBtn'),nextRound);
+
+const teamSelect=$('teamSelect');
+const teamDesc=$('teamDesc');
+function syncTeamChoice(){
+  if(!teamSelect)return;
+  selectedBeginnerTeam=teamSelect.value in BEGINNER_TEAMS ? teamSelect.value : 'rush';
+  const info={
+    rush:'旗取り型：前へ出る選手が多く、旗を積極的に狙うチーム',
+    guard:'守備型：自陣旗と壁裏を重視して戦うチーム',
+    shoot:'射撃型：距離を取り、アウトを優先して狙うチーム'
+  };
+  if(teamDesc)teamDesc.textContent=info[selectedBeginnerTeam];
+}
+if(teamSelect){
+  teamSelect.addEventListener('change',syncTeamChoice);
+  teamSelect.addEventListener('input',syncTeamChoice);
+  syncTeamChoice();
+}
 })();
