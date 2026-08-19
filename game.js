@@ -23,12 +23,20 @@ const TEAMS={
   guard:{name:'ストーンウォールズ',desc:'守備型：自陣旗と壁裏を重視して戦います。',roles:['guard','guard','shooter']},
   shoot:{name:'スターショッツ',desc:'射撃型：距離を取り、アウトを優先して狙います。',roles:['shooter','shooter','balance']}
 };
+const ROOKIE_TEAMS={
+  shield:{name:'アズールガーディアンズ',desc:'シールド使い：魔力盾で1発だけ防ぎます。',roles:['guard','shooter','balance'],shieldUsers:[0]},
+  rush:{name:'スカイランナーズ',desc:'機動型：前線を押し上げながらシールドも使います。',roles:['attacker','support','attacker'],shieldUsers:[1]},
+  mix:{name:'ルーンスターズ',desc:'混成型：守備と射撃を切り替え、シールドで隙を補います。',roles:['guard','shooter','support'],shieldUsers:[2]}
+};
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
-let mode='menu',cupIndex=0,cupTable=null,currentOpponent='rush';
+let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
 const CUP_ORDER=['rush','guard','shoot'];
+const ROOKIE_ORDER=['shield','rush','mix'];
 const CUP_NAMES={player:'プレイヤーチーム',rush:TEAMS.rush.name,guard:TEAMS.guard.name,shoot:TEAMS.shoot.name};
+function currentCupOrder(){return cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER}
+function opponentData(id){return cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]}
 const SAVE_KEY='magic_ball_save_v216';
 let saveData=loadSave();
 
@@ -58,10 +66,12 @@ function refreshRecordUI(){
     ru.classList.toggle('locked',!saveData.rookieUnlocked);
   }
   if(cb)cb.classList.toggle('hidden',!saveData.cupResume);
+  const rb=$('rookieBtn');if(rb)rb.classList.toggle('hidden',!saveData.rookieUnlocked);
 }
 function saveCupResume(){
   if(mode!=='cup'||!cupTable)return;
   saveData.cupResume={
+    cupKind,
     cupIndex,
     cupTable:JSON.parse(JSON.stringify(cupTable)),
     roleA:$('roleA')?.value||'support',
@@ -71,26 +81,27 @@ function saveCupResume(){
 }
 function clearCupResume(){saveData.cupResume=null;writeSave()}
 
-function newCupTable(){const t={};for(const id of ['player',...CUP_ORDER])t[id]={id,name:CUP_NAMES[id],w:0,l:0,rf:0,ra:0};return t}
+function newCupTable(){const t={};t.player={id:'player',name:'プレイヤーチーム',w:0,l:0,rf:0,ra:0};for(const id of currentCupOrder()){const d=opponentData(id);t[id]={id,name:d.name,w:0,l:0,rf:0,ra:0}}return t}
 function recordMatch(a,b,as,bs){const A=cupTable[a],B=cupTable[b];A.rf+=as;A.ra+=bs;B.rf+=bs;B.ra+=as;if(as>bs){A.w++;B.l++}else{B.w++;A.l++}}
 function simulateCpu(a,b){const aw=Math.random()<.5,ls=Math.random()<.55?1:0;recordMatch(a,b,aw?2:ls,aw?ls:2)}
 function sortedTable(){return Object.values(cupTable).sort((a,b)=>b.w-a.w||((b.rf-b.ra)-(a.rf-a.ra))||b.rf-a.rf)}
 function tableHTML(){return '<div class="standingRow standingHead"><span></span><span>チーム</span><span>勝敗</span><span>得失</span></div>'+sortedTable().map((r,i)=>`<div class="standingRow ${r.id==='player'?'me':''}"><span class="rank">${i+1}</span><span class="teamName">${r.name}</span><span class="stat">${r.w}-${r.l}</span><span class="stat">${r.rf-r.ra>=0?'+':''}${r.rf-r.ra}</span></div>`).join('')}
-function refreshCup(){currentOpponent=CUP_ORDER[cupIndex];$('cupTitle').textContent=`第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${TEAMS[currentOpponent].name}</b><br><small>${TEAMS[currentOpponent].desc}</small>`;$('standings').innerHTML=tableHTML()}
+function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='rookie'?'ルーキー':'ビギナー'} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
 function finishCup(){
-  simulateCpu('rush','guard');simulateCpu('guard','shoot');simulateCpu('shoot','rush');
+  const o=currentCupOrder();
+  simulateCpu(o[0],o[1]);simulateCpu(o[1],o[2]);simulateCpu(o[2],o[0]);
   $('finalStandings').innerHTML=tableHTML();
   const place=sortedTable().findIndex(r=>r.id==='player')+1;
-  saveData.bestPlace=Math.min(saveData.bestPlace||4,place);
-  if(place===1){
-    saveData.beginnerWins++;
-    saveData.rookieUnlocked=true;
+  if(cupKind==='beginner'){
+    saveData.bestPlace=Math.min(saveData.bestPlace||4,place);
+    if(place===1){saveData.beginnerWins++;saveData.rookieUnlocked=true}
+    $('cupEndTitle').textContent=place===1?'ビギナーカップ優勝！':`ビギナーカップ ${place}位`;
+    $('cupEndText').textContent=place===1?'ルーキーカップへの挑戦権を獲得しました！':'もう一度挑戦できます。';
+  }else{
+    $('cupEndTitle').textContent=place===1?'ルーキーカップ優勝！':`ルーキーカップ ${place}位`;
+    $('cupEndText').textContent=place===1?'特殊技を使う相手にも勝利！':'シールドへの対処を覚えて再挑戦しましょう。';
   }
-  saveData.cupResume=null;
-  writeSave();
-  $('cupEndTitle').textContent=place===1?'ビギナーカップ優勝！':`ビギナーカップ ${place}位`;
-  $('cupEndText').textContent=place===1?'ルーキーカップへの挑戦権を獲得しました！':'もう一度挑戦できます。';
-  $('cupEndPanel').classList.remove('hidden');
+  saveData.cupResume=null;writeSave();$('cupEndPanel').classList.remove('hidden');
 }
 
 let input={x:0,y:0},keys={},heldAt=0;
@@ -103,7 +114,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -116,6 +127,7 @@ class Unit{
     if(wasDodging&&this.dodgeT<=0)this.dodgeRecover=.20;
     this.emote=Math.max(0,this.emote-dt);
     if(this.charging)this.chargeT=Math.min(.8,this.chargeT+dt);
+    this.shield=Math.max(0,this.shield-dt);
     this.strafeTimer=Math.max(0,this.strafeTimer-dt);
     if(this.strafeTimer<=0){
       this.strafeTimer=.8+Math.random()*1.4;
@@ -131,8 +143,8 @@ class Bullet{
     Object.assign(this,{
       x,y,dx,dy,team,curve,target,r:7,life:3.6,
       speed:curve?315:355,age:0,
-      curveTime:curve?0.55:0,
-      maxCurveRate:curve?1.35:0
+      curveTime:curve?1.20:0,
+      maxCurveRate:curve?2.35:0
     });
   }
   update(dt){
@@ -151,7 +163,8 @@ class Bullet{
       while(diff>Math.PI)diff-=Math.PI*2;
       while(diff<-Math.PI)diff+=Math.PI*2;
 
-      const maxTurn=this.maxCurveRate*dt;
+      const ageRatio=1-(this.age/this.curveTime);
+      const maxTurn=this.maxCurveRate*(0.55+0.45*ageRatio)*dt;
       const turn=clamp(diff,-maxTurn,maxTurn);
       const nextA=curA+turn;
       this.dx=Math.cos(nextA);
@@ -177,6 +190,7 @@ class Bullet{
     const targets=this.team==='blue'?enemies:[player,...allies];
     for(const u of targets){
       if(u&&u.alive&&u.inv<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
+        if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
         const wasControlled=u.controlled;
         u.alive=false;
         this.life=0;
@@ -199,6 +213,8 @@ function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COU
 function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.dodgeT>0?2.25:1),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
 function nearest(u,arr){let best=null,bd=1e9;for(const v of arr){if(!v||!v.alive)continue;const d=dist(u,v);if(d<bd){bd=d;best=v}}return best}
 
+function useShield(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastShield<5.2)return false;u.lastShield=now;u.shield=3;return true}
+
 function shoot(u,target,curve=false){
   if(!u||!u.alive||!target||!target.alive||u.dodgeT>0||u.dodgeRecover>0)return;
   const cost=curve?16:11,now=performance.now()/1000;
@@ -211,7 +227,7 @@ function shoot(u,target,curve=false){
     const side=(Math.abs(target.y-u.y)>20?(target.y>u.y?-1:1):u.curveSide);
 
     // 初速は少しだけ横へ振る。大きく外へ投げすぎない。
-    const bend=.34;
+    const bend=.70;
     const q=norm(
       direct.x+(-direct.y)*bend*side,
       direct.y+( direct.x)*bend*side
@@ -228,15 +244,16 @@ function reset(){
     new Unit(280,235,'blue',false,$('roleA').value),
     new Unit(280,485,'blue',false,$('roleB').value)
   ];
-  const roles=TEAMS[currentOpponent].roles;
+  const od=opponentData(currentOpponent),roles=od.roles;
   enemies=[
     new Unit(995,220,'red',false,roles[0]),
     new Unit(1015,360,'red',false,roles[1]),
     new Unit(995,500,'red',false,roles[2])
   ];
+  if(cupKind==='rookie'&&od.shieldUsers)for(const i of od.shieldUsers)if(enemies[i])enemies[i].specialKind='shield';
   clock.textContent='1:00';
   roundLabel.textContent='ROUND '+round;
-  flash(TEAMS[currentOpponent].name,900);
+  flash(opponentData(currentOpponent).name,900);
 }
 
 function ai(u,dt,isEnemy){
@@ -305,6 +322,7 @@ function ai(u,dt,isEnemy){
   if(walls.some(w=>circleRect(u.x+n.x*30,u.y+n.y*30,u.r,w)))n={x:-n.y,y:n.x};
 
   const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<95);
+  if(u.specialKind==='shield'&&danger&&u.shield<=0&&Math.random()<.18)useShield(u);
   const now=performance.now()/1000;
   if(danger&&now-u.lastDodge>1.9&&Math.random()<.08){
     u.lastDodge=now;u.dodgeT=.32;u.inv=.23;
@@ -426,6 +444,7 @@ function drawUnit(u){
   if(u.dodgeT>0)g.rotate(u.rollAngle);
   if(u.inv>0)g.globalAlpha=.55;
 
+  if(u.shield>0){g.save();g.strokeStyle='#8fe5ff';g.lineWidth=4;g.globalAlpha=.8;g.beginPath();g.arc(0,0,29,0,Math.PI*2);g.stroke();g.restore();}
   if(u.dodgeT>0){
     g.strokeStyle=u.team==='blue'?'#d7e7ff99':'#ffd9dd99';g.lineWidth=4;g.beginPath();g.arc(0,0,25,-2.5,1.8);g.stroke();
   }
@@ -534,20 +553,21 @@ for(const id of ['special1','special2'])$(id).addEventListener('pointerdown',e=>
 
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
-bindTap('cupStartBtn',()=>{mode='cup';cupIndex=0;cupTable=newCupTable();currentOpponent=CUP_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
+bindTap('cupStartBtn',()=>{mode='cup';cupKind='beginner';cupIndex=0;cupTable=newCupTable();currentOpponent=CUP_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
 bindTap('cupContinueBtn',()=>{
   const r=saveData.cupResume;
   if(!r)return;
-  mode='cup';cupIndex=r.cupIndex||0;cupTable=r.cupTable||newCupTable();
+  mode='cup';cupKind=r.cupKind||'beginner';cupIndex=r.cupIndex||0;cupTable=r.cupTable||newCupTable();
   if($('roleA')&&r.roleA)$('roleA').value=r.roleA;
   if($('roleB')&&r.roleB)$('roleB').value=r.roleB;
-  currentOpponent=CUP_ORDER[cupIndex]||CUP_ORDER[0];
+  currentOpponent=currentCupOrder()[cupIndex]||currentCupOrder()[0];
   $('menu').classList.add('hidden');
   refreshCup();
   $('cupPanel').classList.remove('hidden');
 });
-bindTap('practiceBtn',()=>{mode='practice';currentOpponent='rush';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('menu').classList.add('hidden');reset()});
-bindTap('cupMatchBtn',()=>{currentOpponent=CUP_ORDER[cupIndex];bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('cupPanel').classList.add('hidden');reset()});
+bindTap('rookieBtn',()=>{if(!saveData.rookieUnlocked)return;mode='cup';cupKind='rookie';cupIndex=0;cupTable=newCupTable();currentOpponent=ROOKIE_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
+bindTap('practiceBtn',()=>{mode='practice';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('menu').classList.add('hidden');reset()});
+bindTap('cupMatchBtn',()=>{currentOpponent=currentCupOrder()[cupIndex];bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('cupPanel').classList.add('hidden');reset()});
 bindTap('cupBackBtn',()=>{saveCupResume();mode='menu';$('cupPanel').classList.add('hidden');$('menu').classList.remove('hidden')});
 bindTap('cupFinishBtn',()=>{mode='menu';$('cupEndPanel').classList.add('hidden');$('menu').classList.remove('hidden')});
 bindTap('nextBtn',()=>{
@@ -555,7 +575,7 @@ bindTap('nextBtn',()=>{
   const ended=bScore>=2||rScore>=2;
   if(!ended){round++;reset();return}
   if(mode==='cup'){
-    recordMatch('player',CUP_ORDER[cupIndex],bScore,rScore);
+    recordMatch('player',currentCupOrder()[cupIndex],bScore,rScore);
     if(bScore>rScore)saveData.totalWins++;else saveData.totalLosses++;
     cupIndex++;
     if(cupIndex>=3){

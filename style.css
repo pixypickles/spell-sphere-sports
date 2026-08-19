@@ -90,3 +90,5 @@ button{touch-action:manipulation!important}
   border:1px solid #ffe79a66;background:#6a582d55;color:#ffe79a;font-weight:900;
   touch-action:manipulation
 }
+
+.rookieBtn{width:100%;margin-top:7px;padding:10px;border-radius:11px;border:1px solid #9fd7ff88;background:#234a6a;color:#dff3ff;font-weight:900;touch-action:manipulation}
