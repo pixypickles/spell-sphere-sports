@@ -105,6 +105,7 @@ function refreshRecordUI(){
 
 function specialName(kind){
   if(kind==='double')return '2連射';
+  if(kind==='blade')return '魔力剣';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
 }
@@ -116,6 +117,8 @@ function updateSpecialButtons(){
     const kind=slots[i];
     if(kind==='double'){
       el.innerHTML='×2<small>2連射</small>';
+    }else if(kind==='blade'){
+      el.innerHTML='剣<small>魔力剣</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
       el.innerHTML='盾<small>シールド</small>';
     }else{
@@ -136,9 +139,9 @@ function updateSkillSetUI(){
   b.value=saveData.specialSlot2||'none';
 
   if(!saveData.shieldUnlocked){
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
   }else{
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
   }
 }
 function saveSkillSet(){
@@ -283,7 +286,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -297,6 +300,7 @@ class Unit{
     this.emote=Math.max(0,this.emote-dt);
     if(this.charging)this.chargeT=Math.min(.8,this.chargeT+dt);
     this.shield=Math.max(0,this.shield-dt);
+    this.bladeT=Math.max(0,this.bladeT-dt);
     this.strafeTimer=Math.max(0,this.strafeTimer-dt);
     if(this.strafeTimer<=0){
       this.strafeTimer=.8+Math.random()*1.4;
@@ -650,6 +654,24 @@ function drawUnit(u){
   if(u.inv>0)g.globalAlpha=.55;
 
   if(u.shield>0){g.save();g.strokeStyle='#8fe5ff';g.lineWidth=4;g.globalAlpha=.8;g.beginPath();g.arc(0,0,29,0,Math.PI*2);g.stroke();g.restore();}
+  if(u.bladeT>0){
+    const p=1-u.bladeT/.34;
+    g.save();
+    g.rotate(u.bladeAngle);
+    g.globalAlpha=Math.max(.15,1-p);
+    g.lineWidth=8;
+    g.lineCap='round';
+    g.strokeStyle='#dff8ff';
+    g.beginPath();
+    g.arc(0,0,72,-Math.PI*.55,Math.PI*.55);
+    g.stroke();
+    g.lineWidth=3;
+    g.strokeStyle='#ffffff';
+    g.beginPath();
+    g.arc(0,0,82,-Math.PI*.55,Math.PI*.55);
+    g.stroke();
+    g.restore();
+  }
   if(u.dodgeT>0){
     g.strokeStyle=u.team==='blue'?'#d7e7ff99':'#ffd9dd99';g.lineWidth=4;g.beginPath();g.arc(0,0,25,-2.5,1.8);g.stroke();
   }
@@ -795,11 +817,55 @@ function useDoubleShot(u){
   return true;
 }
 
+
+function useManaBlade(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastBlade<2.4){flash('魔力剣クールタイム',360);return false}
+  if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
+  if(u.mana<18){flash('魔力不足',360);return false}
+
+  const target=nearest(u,enemies);
+  let ax=1,ay=0;
+  if(target){const d=norm(target.x-u.x,target.y-u.y);ax=d.x;ay=d.y}
+  else if(u.team==='red'){ax=-1;ay=0}
+
+  u.mana-=18;
+  u.lastBlade=now;
+  u.bladeT=.34;
+  u.bladeAngle=Math.atan2(ay,ax);
+
+  const range=92;
+  const halfArc=Math.PI*.55; // about 198° total: generous half-circle feel
+  let cut=0;
+
+  for(const b of bullets){
+    if(b.life<=0||b.team===u.team)continue;
+    const dx=b.x-u.x,dy=b.y-u.y,dist=Math.hypot(dx,dy);
+    if(dist>range)continue;
+    let da=Math.atan2(dy,dx)-u.bladeAngle;
+    while(da>Math.PI)da-=Math.PI*2;
+    while(da<-Math.PI)da+=Math.PI*2;
+    if(Math.abs(da)<=halfArc){
+      b.life=0;
+      spark(b.x,b.y);
+      cut++;
+    }
+  }
+  if(cut>0)flash(cut>=2?`${cut}発斬り！`:'弾を斬った！',420);
+  return true;
+}
+
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
 
   if(kind==='double'){
     if(useDoubleShot(player))flash('2連射！',420);
+    return;
+  }
+
+  if(kind==='blade'){
+    if(useManaBlade(player))flash('魔力剣！',300);
     return;
   }
 
