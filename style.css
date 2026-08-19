@@ -100,3 +100,14 @@ body.isPortrait #rotateNotice{display:flex}
 body.isPortrait #gameWrap{display:none}
 body.isLandscape #rotateNotice{display:none}
 body.isLandscape #gameWrap{display:block}
+
+/* v2.27 skill learning */
+.skillProgressCard{
+  margin:7px 0 9px;padding:8px 10px;border-radius:10px;
+  background:#202943aa;border:1px solid #8fe5ff44;text-align:left;
+  font-size:11px;font-weight:800
+}
+.skillProgressTitle{
+  color:#9fe8ff;font-size:10px;letter-spacing:.08em;margin-bottom:3px
+}
+.skillLearned{color:#ffe79a}

@@ -43,7 +43,7 @@ const ROOKIE_TEAMS={
 };
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
-let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
+let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
 const CUP_ORDER=['rush','guard','shoot'];
 const ROOKIE_ORDER=['shield','rush','mix'];
@@ -56,7 +56,8 @@ let saveData=loadSave();
 function defaultSave(){
   return{
     totalWins:0,totalLosses:0,beginnerWins:0,bestPlace:4,
-    rookieUnlocked:false,cupResume:null
+    rookieUnlocked:false,cupResume:null,
+    shieldProgress:0,shieldUnlocked:false,shieldEquipped:false
   };
 }
 function loadSave(){
@@ -80,6 +81,21 @@ function refreshRecordUI(){
   }
   if(cb)cb.classList.toggle('hidden',!saveData.cupResume);
   const rb=$('rookieBtn');if(rb)rb.classList.toggle('hidden',!saveData.rookieUnlocked);
+
+  const sp=$('shieldProgressText');
+  if(sp){
+    sp.textContent=saveData.shieldUnlocked?'シールド　習得済み':`シールド　${saveData.shieldProgress||0}/3`;
+    sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
+  }
+
+  const s1=$('special1');
+  if(s1){
+    if(saveData.shieldUnlocked&&saveData.shieldEquipped){
+      s1.innerHTML='盾<small>シールド</small>';
+    }else{
+      s1.innerHTML='Ⅰ<small>✌</small>';
+    }
+  }
 }
 function saveCupResume(){
   if(mode!=='cup'||!cupTable)return;
@@ -100,6 +116,28 @@ function simulateCpu(a,b){const aw=Math.random()<.5,ls=Math.random()<.55?1:0;rec
 function sortedTable(){return Object.values(cupTable).sort((a,b)=>b.w-a.w||((b.rf-b.ra)-(a.rf-a.ra))||b.rf-a.rf)}
 function tableHTML(){return '<div class="standingRow standingHead"><span></span><span>チーム</span><span>勝敗</span><span>得失</span></div>'+sortedTable().map((r,i)=>`<div class="standingRow ${r.id==='player'?'me':''}"><span class="rank">${i+1}</span><span class="teamName">${r.name}</span><span class="stat">${r.w}-${r.l}</span><span class="stat">${r.rf-r.ra>=0?'+':''}${r.rf-r.ra}</span></div>`).join('')}
 function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='rookie'?'ルーキー':'ビギナー'} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
+
+function gainShieldResearch(){
+  if(saveData.shieldUnlocked)return '';
+  saveData.shieldProgress=Math.min(3,(saveData.shieldProgress||0)+1);
+
+  if(saveData.shieldProgress>=3){
+    saveData.shieldUnlocked=true;
+    saveData.shieldEquipped=true;
+    writeSave();
+    return 'シールド習得！　特殊①に装備しました';
+  }
+
+  writeSave();
+  return `シールド習得 ${saveData.shieldProgress}/3`;
+}
+
+function opponentHasShield(){
+  if(cupKind!=='rookie')return false;
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.shieldUsers&&d.shieldUsers.length);
+}
+
 function finishCup(){
   const o=currentCupOrder();
   simulateCpu(o[0],o[1]);simulateCpu(o[1],o[2]);simulateCpu(o[2],o[0]);
@@ -226,7 +264,21 @@ function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COU
 function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.dodgeT>0?2.25:1),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
 function nearest(u,arr){let best=null,bd=1e9;for(const v of arr){if(!v||!v.alive)continue;const d=dist(u,v);if(d<bd){bd=d;best=v}}return best}
 
-function useShield(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastShield<5.2)return false;u.lastShield=now;u.shield=3;return true}
+function useShield(u,playerUse=false){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastShield<5.2)return false;
+
+  if(playerUse){
+    const cost=30;
+    if(u.mana<cost){flash('魔力不足',400);return false}
+    u.mana-=cost;
+  }
+
+  u.lastShield=now;
+  u.shield=3;
+  return true;
+}
 
 function shoot(u,target,curve=false){
   if(!u||!u.alive||!target||!target.alive||u.dodgeT>0||u.dodgeRecover>0)return;
@@ -562,7 +614,17 @@ $('dodgeBtn').addEventListener('pointerdown',e=>{
   player.lastDodge=now;player.dodgeT=.34;player.inv=.24;
 });
 
-for(const id of ['special1','special2'])$(id).addEventListener('pointerdown',e=>{e.preventDefault();if(player&&player.alive){player.emote=.8;flash('✌',420)}});
+bindTap('special1',()=>{
+  if(!player||!player.alive)return;
+  if(saveData.shieldUnlocked&&saveData.shieldEquipped){
+    if(useShield(player,true))flash('シールド！',420);
+  }else{
+    player.emote=.8;flash('✌',420);
+  }
+});
+bindTap('special2',()=>{
+  if(player&&player.alive){player.emote=.8;flash('✌',420)}
+});
 
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
@@ -589,13 +651,29 @@ bindTap('nextBtn',()=>{
   if(!ended){round++;reset();return}
   if(mode==='cup'){
     recordMatch('player',currentCupOrder()[cupIndex],bScore,rScore);
-    if(bScore>rScore)saveData.totalWins++;else saveData.totalLosses++;
+
+    pendingLearnMessage='';
+    if(bScore>rScore){
+      saveData.totalWins++;
+      if(opponentHasShield())pendingLearnMessage=gainShieldResearch();
+    }else{
+      saveData.totalLosses++;
+    }
+
     cupIndex++;
     if(cupIndex>=3){
       finishCup();
+      if(pendingLearnMessage){
+        $('cupEndText').innerHTML += `<br><b>${pendingLearnMessage}</b>`;
+        pendingLearnMessage='';
+      }
     }else{
       saveCupResume();
       refreshCup();
+      if(pendingLearnMessage){
+        $('cupOpponent').innerHTML = `<b>${pendingLearnMessage}</b><br><br>` + $('cupOpponent').innerHTML;
+        pendingLearnMessage='';
+      }
       $('cupPanel').classList.remove('hidden');
     }
   }else{
