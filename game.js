@@ -4,22 +4,29 @@ const c=document.getElementById('game'),g=c.getContext('2d'),W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576}, CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 const walls=[
- {x:390,y:125,w:70,h:18},
- {x:390,y:355,w:70,h:18},
- {x:560,y:195,w:70,h:18},
- {x:560,y:285,w:70,h:18},
- {x:730,y:125,w:70,h:18},
- {x:730,y:355,w:70,h:18},
+ // upper lane
+ {x:390,y:135,w:70,h:18},
+ {x:560,y:155,w:70,h:18},
+ {x:730,y:135,w:70,h:18},
+
+ // middle lane
+ {x:390,y:250,w:70,h:18},
+ {x:730,y:250,w:70,h:18},
+
+ // lower lane
+ {x:390,y:365,w:70,h:18},
+ {x:560,y:345,w:70,h:18},
+ {x:730,y:365,w:70,h:18},
 
  // hollow central wall / frame
- {x:605,y:205,w:125,h:16},
- {x:605,y:300,w:125,h:16},
- {x:605,y:221,w:16,h:79},
- {x:714,y:221,w:16,h:79},
+ {x:600,y:205,w:135,h:16},
+ {x:600,y:300,w:135,h:16},
+ {x:600,y:221,w:16,h:79},
+ {x:719,y:221,w:16,h:79},
 
- // thin outer-side walls
- {x:260,y:205,w:18,h:90},
- {x:1002,y:205,w:18,h:90}
+ // defensive walls near each flag: horizontal, not vertical
+ {x:270,y:245,w:76,h:18},
+ {x:934,y:245,w:76,h:18}
 ];
 const flagBlue={x:230,y:360}, flagRed={x:1050,y:360};
 let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
