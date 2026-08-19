@@ -8,17 +8,17 @@ const walls=[
  {x:330,y:195,w:18,h:95},
  {x:330,y:370,w:18,h:95},
  {x:420,y:155,w:18,h:85},
- {x:420,y:420,w:18,h:85},
+ {x:420,y:387,w:18,h:85},
  {x:505,y:175,w:70,h:16},
- {x:505,y:469,w:70,h:16},
+ {x:505,y:456,w:70,h:16},
 
  // RIGHT FIELD — mirror of left
  {x:932,y:195,w:18,h:95},
  {x:932,y:370,w:18,h:95},
  {x:842,y:155,w:18,h:85},
- {x:842,y:420,w:18,h:85},
+ {x:842,y:387,w:18,h:85},
  {x:705,y:175,w:70,h:16},
- {x:705,y:469,w:70,h:16},
+ {x:705,y:456,w:70,h:16},
 
  // CENTRAL HOLLOW BUNKER — centered vertically
  {x:545,y:270,w:190,h:18},
@@ -35,7 +35,10 @@ let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=fal
 let input={x:0,y:0,active:false};let keys={};let heldAt=0;
 const $=id=>document.getElementById(id),score=$('score'),clock=$('clock'),roundLabel=$('roundLabel'),manaFill=$('manaFill'),message=$('message');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));const norm=(x,y)=>{const d=Math.hypot(x,y)||1;return{x:x/d,y:y/d}};const d2=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-class Unit{constructor(x,y,team,controlled=false,role='balance'){Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1});this.speed=controlled?190:158}update(dt){if(!this.alive)return;this.mana=Math.min(100,this.mana+8*dt);this.dodgeT=Math.max(0,this.dodgeT-dt);this.inv=Math.max(0,this.inv-dt);this.emote=Math.max(0,this.emote-dt);if(this.charging)this.chargeT=Math.min(.8,this.chargeT+dt)}}
+class Unit{constructor(x,y,team,controlled=false,role='balance'){Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0});this.speed=controlled?190:158}update(dt){if(!this.alive)return;this.mana=Math.min(100,this.mana+8*dt);this.dodgeT=Math.max(0,this.dodgeT-dt);this.inv=Math.max(0,this.inv-dt);this.emote=Math.max(0,this.emote-dt);
+if(this.charging)this.chargeT=Math.min(.8,this.chargeT+dt);
+if(this.dodgeT>0)this.rollAngle+=dt*18;
+else this.rollAngle=0}}
 class Bullet{constructor(x,y,dx,dy,team,curve,target,curveSide=1){Object.assign(this,{x,y,dx,dy,team,curve,target,r:7,life:3.6,speed:curve?315:355,curveSide,age:0})}update(dt){this.life-=dt;this.age+=dt;if(this.curve&&this.target&&this.target.alive){let n=norm(this.target.x-this.x,this.target.y-this.y);let k=Math.min(1,(2.9+this.age*1.3)*dt);this.dx=this.dx*(1-k)+n.x*k;this.dy=this.dy*(1-k)+n.y*k;let q=norm(this.dx,this.dy);this.dx=q.x;this.dy=q.y}this.x+=this.dx*this.speed*dt;this.y+=this.dy*this.speed*dt;if(this.x<COURT.x||this.x>COURT.x+COURT.w||this.y<COURT.y||this.y>COURT.y+COURT.h){this.life=0;return}for(const w of walls){if(circleRect(this.x,this.y,this.r,w)){this.life=0;spark(this.x,this.y);return}}const arr=this.team==='blue'?enemies:[player,...allies];for(const u of arr){if(u&&u.alive&&u.inv<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){u.alive=false;this.life=0;spark(u.x,u.y);flash(u.controlled?'OUT!':(u.team==='red'?'ENEMY OUT':'ALLY OUT'),700);checkEnd();return}}}}
 function circleRect(x,y,r,w){const cx=clamp(x,w.x,w.x+w.w),cy=clamp(y,w.y,w.y+w.h);return Math.hypot(x-cx,y-cy)<r}
 function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COURT.y+COURT.h-r)return false;return !walls.some(w=>circleRect(x,y,r,w))}
@@ -69,16 +72,17 @@ bullets=bullets.filter(b=>b.life>0);for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);g.strokeStyle='#5d5663';g.lineWidth=5;g.beginPath();g.moveTo(-3,25);g.lineTo(-3,-25);g.stroke();g.fillStyle=team==='blue'?BLUE:RED;g.beginPath();g.moveTo(0,-23);g.lineTo(team==='blue'?25:-25,-13);g.lineTo(0,-3);g.closePath();g.fill();g.restore()}
 function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadraticCurveTo(x+w,y,x+w,y+r);g.lineTo(x+w,y+h-r);g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);g.lineTo(x+r,y+h);g.quadraticCurveTo(x,y+h,x,y+h-r);g.lineTo(x,y+r);g.quadraticCurveTo(x,y,x+r,y);g.closePath();g.fill()}
 function drawUnit(u){if(!u||!u.alive)return;g.save();g.translate(u.x,u.y);
- // Dodge animation: tumble/forward-roll rather than only sliding.
- // One full revolution over the dodge window, with a slight squash/bob.
- if(u.dodgeT>0){
-   const progress=1-Math.min(1,u.dodgeT/.36);
-   const spin=progress*Math.PI*2;
-   g.rotate(spin);
-   const squash=1-.12*Math.sin(progress*Math.PI);
-   g.scale(1/squash,squash);
- }
+ if(u.dodgeT>0)g.rotate(u.rollAngle);
  if(u.inv>0)g.globalAlpha=.55;
+ if(u.dodgeT>0){
+   g.save();
+   g.strokeStyle=u.team==='blue'?'#d7e7ff99':'#ffd9dd99';
+   g.lineWidth=4;
+   g.beginPath();
+   g.arc(0,0,25,-2.5,1.8);
+   g.stroke();
+   g.restore();
+ }
  if(u.controlled){g.strokeStyle='#ffe66d';g.lineWidth=3;g.beginPath();g.arc(0,4,25,0,Math.PI*2);g.stroke();g.fillStyle='#ffe66d';g.beginPath();g.moveTo(0,-50);g.lineTo(-7,-40);g.lineTo(7,-40);g.closePath();g.fill()}
  g.fillStyle='#0002';g.beginPath();g.ellipse(0,14,18,7,0,0,Math.PI*2);g.fill();
 
@@ -95,14 +99,7 @@ function drawUnit(u){if(!u||!u.alive)return;g.save();g.translate(u.x,u.y);
 
  // charged curve throw motion
  if(u.charging){const t=performance.now()/1000,spin=t*10;g.strokeStyle='#b9a1ff';g.lineWidth=3;g.beginPath();g.arc(0,-2,24+Math.sin(t*12)*2,spin,spin+Math.PI*1.55);g.stroke();g.fillStyle='#e8ddff';const ox=Math.cos(spin)*21,oy=-2+Math.sin(spin)*12;g.beginPath();g.arc(ox,oy,5+u.chargeT*3,0,Math.PI*2);g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(8,-3);g.lineTo(15+Math.cos(spin)*4,-14+Math.sin(spin)*3);g.stroke()}
- if(u.emote>0){g.font='19px sans-serif';g.fillText('✌',14,-31)}
- if(u.dodgeT>0){
-   const progress=1-Math.min(1,u.dodgeT/.36);
-   g.strokeStyle='#ffffffaa';g.lineWidth=2.5;
-   g.beginPath();g.arc(0,0,27,-1.2,1.0);g.stroke();
-   g.beginPath();g.arc(0,0,31,1.8,3.8);g.stroke();
- }
- g.restore()}
+ if(u.emote>0){g.font='19px sans-serif';g.fillText('✌',14,-31)}g.restore()}
 function draw(){g.fillStyle='#5f7d8a';g.fillRect(0,0,W,H); // UI outside court
  g.fillStyle='#9ad9b8';g.fillRect(COURT.x,COURT.y,COURT.w,COURT.h);g.strokeStyle='#fff9d7';g.lineWidth=4;g.strokeRect(COURT.x,COURT.y,COURT.w,COURT.h);g.setLineDash([12,12]);g.beginPath();g.moveTo(W/2,COURT.y);g.lineTo(W/2,COURT.y+COURT.h);g.stroke();g.setLineDash([]);
  // subtle fantasy markings
