@@ -764,6 +764,35 @@ function usePlayerSpecial(kind){
 bindTap('special1',()=>usePlayerSpecial(saveData.specialSlot1||'none'));
 bindTap('special2',()=>usePlayerSpecial(saveData.specialSlot2||'none'));
 
+
+function returnToMainMenu(){
+  running=false;
+  over=false;
+  mode='menu';
+  cupKind='beginner';
+  cupIndex=0;
+  currentOpponent='rush';
+  bullets=[];
+  fx=[];
+  pendingLearnMessage='';
+
+  for(const id of ['result','cupPanel','cupEndPanel','skillSetPanel']){
+    const el=$(id);
+    if(el)el.classList.add('hidden');
+  }
+
+  $('menu').classList.remove('hidden');
+
+  bScore=0;
+  rScore=0;
+  round=1;
+  score.textContent='0 - 0';
+  roundLabel.textContent='ROUND 1';
+  clock.textContent='1:00';
+
+  refreshRecordUI();
+}
+
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
 
@@ -783,7 +812,7 @@ bindTap('skillSetCloseBtn',()=>{
   $('menu').classList.remove('hidden');
 });
 
-bindTap('cupStartBtn',()=>{mode='cup';cupKind='beginner';cupIndex=0;cupTable=newCupTable();currentOpponent=CUP_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
+bindTap('cupStartBtn',()=>{running=false;over=false;mode='cup';cupKind='beginner';cupIndex=0;cupTable=newCupTable();currentOpponent=CUP_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
 bindTap('cupContinueBtn',()=>{
   const r=saveData.cupResume;
   if(!r)return;
@@ -796,10 +825,16 @@ bindTap('cupContinueBtn',()=>{
   $('cupPanel').classList.remove('hidden');
 });
 bindTap('rookieBtn',()=>{if(!saveData.rookieUnlocked)return;mode='cup';cupKind='rookie';cupIndex=0;cupTable=newCupTable();currentOpponent=ROOKIE_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
-bindTap('practiceBtn',()=>{mode='practice';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('menu').classList.add('hidden');reset()});
+bindTap('practiceBtn',()=>{running=false;over=false;mode='practice';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('menu').classList.add('hidden');reset()});
 bindTap('cupMatchBtn',()=>{currentOpponent=currentCupOrder()[cupIndex];bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('cupPanel').classList.add('hidden');reset()});
-bindTap('cupBackBtn',()=>{saveCupResume();mode='menu';$('cupPanel').classList.add('hidden');$('menu').classList.remove('hidden')});
-bindTap('cupFinishBtn',()=>{mode='menu';$('cupEndPanel').classList.add('hidden');$('menu').classList.remove('hidden')});
+bindTap('cupBackBtn',()=>{
+  saveCupResume();
+  mode='menu';
+  $('cupPanel').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+  refreshRecordUI();
+});
+bindTap('cupFinishBtn',()=>{returnToMainMenu()});
 bindTap('nextBtn',()=>{
   $('result').classList.add('hidden');
   const ended=bScore>=2||rScore>=2;
@@ -834,7 +869,7 @@ bindTap('nextBtn',()=>{
   }else{
     if(bScore>rScore)saveData.totalWins++;else saveData.totalLosses++;
     writeSave();
-    mode='menu';$('menu').classList.remove('hidden');
+    returnToMainMenu();
   }
 });
 for(const ev of ['contextmenu','selectstart','dragstart'])document.addEventListener(ev,e=>{if(e.target.closest('#gameWrap')||e.target.closest('button'))e.preventDefault()},{passive:false});
