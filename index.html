@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#17233a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>魔導球技 v2.27</title>
-<link rel="stylesheet" href="style.css?v=227">
+<title>魔導球技 v2.29</title>
+<link rel="stylesheet" href="style.css?v=229">
 
 <style id="bootFallback">
 .hidden{display:none!important}
@@ -50,6 +50,7 @@
       <p class="lead">自チーム＋3チームの総当たり大会</p>
       <div class="cupInfo"><b>ビギナーカップ</b><small>プレイヤーは3試合。敵同士の試合は自動集計します。</small></div>
       
+      <button id="skillSetBtn" type="button" class="skillSetBtn">特殊技セット</button>
       <div class="skillProgressCard">
         <div class="skillProgressTitle">特殊技研究</div>
         <div id="shieldProgressText">シールド　0/3</div>
@@ -72,7 +73,37 @@
     </section>
   </div>
 
-  <div id="cupPanel" class="overlay hidden">
+  
+  <div id="skillSetPanel" class="overlay hidden">
+    <section class="panel skillSetPanel">
+      <div class="kicker">SPECIAL SET</div>
+      <h1>特殊技セット</h1>
+      <p class="lead">試合で使う特殊技を2つまでセットできます。</p>
+
+      <label class="skillSlotLabel">特殊①
+        <select id="specialSlot1">
+          <option value="none">なし（✌）</option>
+          <option value="double">2連射</option>
+          <option value="shield">シールド</option>
+        </select>
+      </label>
+
+      <label class="skillSlotLabel">特殊②
+        <select id="specialSlot2">
+          <option value="none">なし（✌）</option>
+          <option value="double">2連射</option>
+          <option value="shield">シールド</option>
+        </select>
+      </label>
+
+      <div id="skillSetInfo" class="skillSetInfo"></div>
+
+      <button id="skillSetSaveBtn" type="button" class="menuBtn">セットを保存</button>
+      <button id="skillSetCloseBtn" type="button" class="subBtn">戻る</button>
+    </section>
+  </div>
+
+<div id="cupPanel" class="overlay hidden">
     <section class="panel cupPanelCard">
       <div class="kicker">BEGINNER CUP</div><h1 id="cupTitle">第1試合</h1><p id="cupOpponent" class="lead"></p>
       <div id="standings" class="standings"></div>
@@ -97,7 +128,7 @@
   </div>
 </main>
 
-<div id="versionBadge">v2.27</div>
-<script src="game.js?v=227"></script>
+<div id="versionBadge">v2.29</div>
+<script src="game.js?v=229"></script>
 </body>
 </html>

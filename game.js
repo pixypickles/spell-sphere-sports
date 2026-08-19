@@ -57,14 +57,25 @@ function defaultSave(){
   return{
     totalWins:0,totalLosses:0,beginnerWins:0,bestPlace:4,
     rookieUnlocked:false,cupResume:null,
-    shieldProgress:0,shieldUnlocked:false,shieldEquipped:false
+    shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
+    specialSlot1:'double',specialSlot2:'none'
   };
 }
 function loadSave(){
   try{
     const raw=localStorage.getItem(SAVE_KEY);
     if(!raw)return defaultSave();
-    return Object.assign(defaultSave(),JSON.parse(raw));
+    const parsed=JSON.parse(raw);
+    const data=Object.assign(defaultSave(),parsed);
+
+    // v2.27以前の「自動装備」セーブを新しい2枠方式へ移行
+    if(data.shieldUnlocked && data.shieldEquipped &&
+       data.specialSlot1==='none' && data.specialSlot2==='none'){
+      data.specialSlot1='shield';
+    }else if(data.specialSlot1==='none' && data.specialSlot2==='none'){
+      data.specialSlot1='double';
+    }
+    return data;
   }catch(_){return defaultSave()}
 }
 function writeSave(){
@@ -88,15 +99,64 @@ function refreshRecordUI(){
     sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
   }
 
-  const s1=$('special1');
-  if(s1){
-    if(saveData.shieldUnlocked&&saveData.shieldEquipped){
-      s1.innerHTML='盾<small>シールド</small>';
+  updateSpecialButtons();
+}
+
+function specialName(kind){
+  if(kind==='double')return '2連射';
+  if(kind==='shield')return 'シールド';
+  return 'なし（✌）';
+}
+function updateSpecialButtons(){
+  const slots=[saveData.specialSlot1||'none',saveData.specialSlot2||'none'];
+  ['special1','special2'].forEach((id,i)=>{
+    const el=$(id);
+    if(!el)return;
+    const kind=slots[i];
+    if(kind==='double'){
+      el.innerHTML='×2<small>2連射</small>';
+    }else if(kind==='shield'&&saveData.shieldUnlocked){
+      el.innerHTML='盾<small>シールド</small>';
     }else{
-      s1.innerHTML='Ⅰ<small>✌</small>';
+      el.innerHTML=`${i+1===1?'Ⅰ':'Ⅱ'}<small>✌</small>`;
     }
+  });
+}
+function updateSkillSetUI(){
+  const a=$('specialSlot1'),b=$('specialSlot2'),info=$('skillSetInfo');
+  if(!a||!b)return;
+
+  const shieldOptionA=[...a.options].find(o=>o.value==='shield');
+  const shieldOptionB=[...b.options].find(o=>o.value==='shield');
+  if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
+  if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
+
+  a.value=saveData.specialSlot1||'none';
+  b.value=saveData.specialSlot2||'none';
+
+  if(!saveData.shieldUnlocked){
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
+  }else{
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
   }
 }
+function saveSkillSet(){
+  const a=$('specialSlot1'),b=$('specialSlot2');
+  if(!a||!b)return;
+
+  let s1=a.value,s2=b.value;
+  if(s1==='shield'&&!saveData.shieldUnlocked)s1='none';
+  if(s2==='shield'&&!saveData.shieldUnlocked)s2='none';
+
+  // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
+  if(s1!=='none'&&s1===s2)s1='none';
+
+  saveData.specialSlot1=s1;
+  saveData.specialSlot2=s2;
+  saveData.shieldEquipped=(s1==='shield'||s2==='shield'); // 旧セーブ互換用
+  writeSave();
+}
+
 function saveCupResume(){
   if(mode!=='cup'||!cupTable)return;
   saveData.cupResume={
@@ -123,9 +183,16 @@ function gainShieldResearch(){
 
   if(saveData.shieldProgress>=3){
     saveData.shieldUnlocked=true;
+
+    // 空き枠があれば初回だけ自動セット。後からセット画面で変更可能。
+    if((saveData.specialSlot1||'none')==='none'){
+      saveData.specialSlot1='shield';
+    }else if((saveData.specialSlot2||'none')==='none'){
+      saveData.specialSlot2='shield';
+    }
     saveData.shieldEquipped=true;
     writeSave();
-    return 'シールド習得！　特殊①に装備しました';
+    return 'シールド習得！　特殊技セットで変更できます';
   }
 
   writeSave();
@@ -165,7 +232,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -386,8 +453,30 @@ function ai(u,dt,isEnemy){
   let n=norm(tx-u.x,ty-u.y);
   if(walls.some(w=>circleRect(u.x+n.x*30,u.y+n.y*30,u.r,w)))n={x:-n.y,y:n.x};
 
-  const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<95);
-  if(u.specialKind==='shield'&&danger&&u.shield<=0&&Math.random()<.18)useShield(u);
+  const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
+
+  // シールドAIは弾を見て即発動しない。
+  // 認識してから0.25〜0.45秒ほど反応が遅れるため、近距離では間に合わないことがある。
+  if(u.specialKind==='shield'&&u.shield<=0){
+    const nowShield=performance.now()/1000;
+    const ready=nowShield-u.lastShield>=5.2;
+
+    if(danger&&ready){
+      if(u.shieldReact<0){
+        u.shieldReact=.25+Math.random()*.20;
+      }else{
+        u.shieldReact-=dt;
+        if(u.shieldReact<=0){
+          useShield(u);
+          u.shieldReact=-1;
+        }
+      }
+    }else{
+      u.shieldReact=-1;
+    }
+  }else{
+    u.shieldReact=-1;
+  }
   const now=performance.now()/1000;
   if(danger&&now-u.lastDodge>1.9&&Math.random()<.08){
     u.lastDodge=now;u.dodgeT=.32;u.inv=.23;
@@ -614,20 +703,86 @@ $('dodgeBtn').addEventListener('pointerdown',e=>{
   player.lastDodge=now;player.dodgeT=.34;player.inv=.24;
 });
 
-bindTap('special1',()=>{
-  if(!player||!player.alive)return;
-  if(saveData.shieldUnlocked&&saveData.shieldEquipped){
-    if(useShield(player,true))flash('シールド！',420);
-  }else{
-    player.emote=.8;flash('✌',420);
+
+function useDoubleShot(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  const cooldown=3.2;
+  const cost=26;
+
+  if(now-u.lastDouble<cooldown){
+    flash('2連射クールタイム',420);
+    return false;
   }
-});
-bindTap('special2',()=>{
-  if(player&&player.alive){player.emote=.8;flash('✌',420)}
-});
+  if(u.dodgeT>0||u.dodgeRecover>0){
+    flash('回避中は使えない',380);
+    return false;
+  }
+  if(u.mana<cost){
+    flash('魔力不足',400);
+    return false;
+  }
+
+  const target=nearest(u,enemies);
+  if(!target)return false;
+
+  u.lastDouble=now;
+  u.mana-=cost;
+
+  // shoot() itself would charge mana and obey normal shot cooldown, so fire the two
+  // projectiles directly as a special technique.
+  const fireOne=()=>{
+    if(!u.alive)return;
+    const t=nearest(u,enemies);
+    if(!t)return;
+    const d=norm(t.x-u.x,t.y-u.y);
+    bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t));
+  };
+
+  fireOne();
+  setTimeout(fireOne,170);
+  return true;
+}
+
+function usePlayerSpecial(kind){
+  if(!player||!player.alive)return;
+
+  if(kind==='double'){
+    if(useDoubleShot(player))flash('2連射！',420);
+    return;
+  }
+
+  if(kind==='shield'&&saveData.shieldUnlocked){
+    if(useShield(player,true))flash('シールド！',420);
+    return;
+  }
+
+  player.emote=.8;
+  flash('✌',420);
+}
+
+bindTap('special1',()=>usePlayerSpecial(saveData.specialSlot1||'none'));
+bindTap('special2',()=>usePlayerSpecial(saveData.specialSlot2||'none'));
 
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
+
+bindTap('skillSetBtn',()=>{
+  updateSkillSetUI();
+  $('menu').classList.add('hidden');
+  $('skillSetPanel').classList.remove('hidden');
+});
+bindTap('skillSetSaveBtn',()=>{
+  saveSkillSet();
+  $('skillSetPanel').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+  flash('特殊技セットを保存',450);
+});
+bindTap('skillSetCloseBtn',()=>{
+  $('skillSetPanel').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+});
+
 bindTap('cupStartBtn',()=>{mode='cup';cupKind='beginner';cupIndex=0;cupTable=newCupTable();currentOpponent=CUP_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
 bindTap('cupContinueBtn',()=>{
   const r=saveData.cupResume;
