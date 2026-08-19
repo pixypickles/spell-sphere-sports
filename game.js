@@ -4,31 +4,27 @@ const c=document.getElementById('game'),g=c.getContext('2d'),W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576}, CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 const walls=[
- // LEFT FIELD — symmetric upper/lower cover
- {x:330,y:245,w:18,h:95},
- {x:330,y:377,w:18,h:95},
- {x:420,y:205,w:18,h:85},
- {x:420,y:387,w:18,h:85},
- {x:505,y:225,w:70,h:16},
- {x:505,y:456,w:70,h:16},
+ // left field: long cover, with a clear lower passage
+ {x:330,y:205,w:18,h:90},
+ {x:330,y:335,w:18,h:80},
+ {x:420,y:165,w:18,h:85},
+ {x:420,y:315,w:18,h:85},
+ {x:505,y:205,w:70,h:16},
+ {x:505,y:345,w:70,h:16},
 
- // RIGHT FIELD — mirror of left
- {x:932,y:245,w:18,h:95},
- {x:932,y:377,w:18,h:95},
- {x:842,y:205,w:18,h:85},
- {x:842,y:387,w:18,h:85},
- {x:705,y:225,w:70,h:16},
- {x:705,y:456,w:70,h:16},
+ // right field: mirror
+ {x:932,y:205,w:18,h:90},
+ {x:932,y:335,w:18,h:80},
+ {x:842,y:165,w:18,h:85},
+ {x:842,y:315,w:18,h:85},
+ {x:705,y:205,w:70,h:16},
+ {x:705,y:345,w:70,h:16},
 
- // CENTRAL HOLLOW BUNKER — centered vertically
- {x:545,y:320,w:190,h:18},
- {x:545,y:422,w:190,h:18},
- {x:545,y:338,w:18,h:84},
- {x:717,y:338,w:18,h:84},
-
- // mid-lane short covers, matched top/bottom clearance
- {x:455,y:375,w:62,h:16},
- {x:763,y:375,w:62,h:16}
+ // central hollow bunker, lowered but not blocking bottom lane
+ {x:545,y:255,w:190,h:18},
+ {x:545,y:355,w:190,h:18},
+ {x:545,y:273,w:18,h:82},
+ {x:717,y:273,w:18,h:82}
 ];
 const flagBlue={x:230,y:360}, flagRed={x:1050,y:360};
 let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
@@ -47,9 +43,9 @@ function shoot(u,target,curve=false){if(!u||!u.alive||!target||!target.alive)ret
 function nearest(u,arr){return arr.filter(v=>v&&v.alive).sort((a,b)=>d2(u,a)-d2(u,b))[0]||null}
 function reset(){bullets=[];fx=[];left=60;secAcc=0;over=false;running=true;player=new Unit(300,360,'blue',true);allies=[new Unit(275,220,'blue',false,$('roleA').value),new Unit(275,500,'blue',false,$('roleB').value)];const er=BEGINNER_TEAMS[selectedBeginnerTeam].roles;
     enemies=[
-      new Unit(880,165,'red',false,er[0]),
-      new Unit(930,250,'red',false,er[1]),
-      new Unit(880,335,'red',false,er[2])
+      new Unit(1015,185,'red',false,er[0]),
+      new Unit(1080,285,'red',false,er[1]),
+      new Unit(1015,385,'red',false,er[2])
     ];clock.textContent='1:00';roundLabel.textContent='ROUND '+round;flash('ROUND '+round,1000)}
 function ai(u,dt,enemy){if(!u.alive)return;u.think-=dt;if(u.think<=0){u.think=.18+Math.random()*.18;u.target=nearest(u,enemy?[player,...allies]:enemies)}const target=u.target,enemyFlag=enemy?flagBlue:flagRed,ownFlag=enemy?flagRed:flagBlue;let tx=u.x,ty=u.y;if(u.role==='attacker'){tx=enemyFlag.x;ty=enemyFlag.y}else if(u.role==='guard'){if(target&&d2(u,target)<270){tx=target.x;ty=target.y}else{tx=ownFlag.x;ty=ownFlag.y}}else if(u.role==='support'&&!enemy&&player&&player.alive){tx=player.x+70;ty=player.y}else if(u.role==='shooter'&&target){const ds=d2(u,target);if(ds<235){tx=u.x-(target.x-u.x);ty=u.y-(target.y-u.y)}else if(ds>410){tx=target.x;ty=target.y}}else if(target){tx=target.x;ty=target.y}let n=norm(tx-u.x,ty-u.y);if(walls.some(w=>circleRect(u.x+n.x*28,u.y+n.y*28,u.r,w))){n={x:-n.y,y:n.x}}const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<95),now=performance.now()/1000;if(danger&&now-u.lastDodge>1.9&&Math.random()<.09){u.lastDodge=now;u.dodgeT=.32;u.inv=.23;n={x:-danger.dy,y:danger.dx}}move(u,n.x,n.y,dt);if(target&&d2(u,target)<530)shoot(u,target,Math.random()<.22)}
 function checkFlags(){for(const u of [player,...allies])if(u&&u.alive&&d2(u,flagRed)<u.r+22)return finish('blue','敵旗を取りました！');for(const u of enemies)if(u.alive&&d2(u,flagBlue)<u.r+22)return finish('red','敵に旗を取られました');if(player&&player.alive&&d2(player,flagBlue)<45)player.mana=Math.min(100,player.mana+36/60)}

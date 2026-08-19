@@ -68,3 +68,35 @@ body{display:flex;align-items:flex-start;justify-content:center}
   width:100%;padding:8px;border:0;border-radius:8px;background:#f5f6fa;color:#1d2638;font-weight:800
 }
 .teamDesc{font-size:11px;line-height:1.4;margin-top:6px;color:#dbe7ff}
+
+/* v2.10: start/setup screen must remain usable on short landscape screens */
+#rolePanel.overlay, #rolePanel{
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  align-items:flex-start !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding-top:max(10px,env(safe-area-inset-top));
+  padding-bottom:max(26px,env(safe-area-inset-bottom));
+}
+#rolePanel .panel{
+  margin:auto;
+  flex:0 0 auto;
+  max-height:none !important;
+}
+#rolePanel .panel::after{
+  content:"";
+  display:block;
+  height:16px;
+}
+@media (orientation:landscape) and (max-height:520px){
+  #rolePanel .panel{
+    margin:8px auto 28px;
+    padding:14px 18px;
+  }
+  #rolePanel .panel h1{font-size:20px;margin-bottom:3px}
+  #rolePanel .panel p{margin:4px 0 8px}
+  #rolePanel .panel label{margin:7px 0}
+  .teamPick{margin:6px 0;padding:7px}
+  .designBtn{margin-bottom:8px}
+}
