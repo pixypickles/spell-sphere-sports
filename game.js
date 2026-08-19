@@ -4,11 +4,22 @@ const c=document.getElementById('game'),g=c.getContext('2d'),W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576}, CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 const walls=[
- {x:372,y:176,w:42,h:128},{x:372,y:416,w:42,h:128},
- {x:537,y:288,w:62,h:144},
- {x:681,y:288,w:62,h:144},
- {x:866,y:176,w:42,h:128},{x:866,y:416,w:42,h:128},
- {x:617,y:128,w:46,h:90}
+ {x:390,y:125,w:70,h:18},
+ {x:390,y:355,w:70,h:18},
+ {x:560,y:195,w:70,h:18},
+ {x:560,y:285,w:70,h:18},
+ {x:730,y:125,w:70,h:18},
+ {x:730,y:355,w:70,h:18},
+
+ // hollow central wall / frame
+ {x:605,y:205,w:125,h:16},
+ {x:605,y:300,w:125,h:16},
+ {x:605,y:221,w:16,h:79},
+ {x:714,y:221,w:16,h:79},
+
+ // thin outer-side walls
+ {x:260,y:205,w:18,h:90},
+ {x:1002,y:205,w:18,h:90}
 ];
 const flagBlue={x:230,y:360}, flagRed={x:1050,y:360};
 let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
@@ -28,7 +39,24 @@ function checkFlags(){for(const u of [player,...allies])if(u&&u.alive&&d2(u,flag
 function checkEnd(){if(enemies.every(e=>!e.alive))finish('blue','敵3人を全員アウト！');else if([player,...allies].every(e=>!e.alive))finish('red','味方が全員アウト')}
 function finish(team,text){if(over)return;over=true;running=false;if(team==='blue')bScore++;else rScore++;score.textContent=`${bScore} - ${rScore}`;setTimeout(()=>{const match=bScore>=2||rScore>=2;$('resultTitle').textContent=match?(bScore>rScore?'MATCH WIN!':'MATCH LOSE'):(team==='blue'?'ROUND WIN!':'ROUND LOSE');$('resultText').textContent=text;$('nextBtn').textContent=match?'最初に戻る':'次のラウンド';$('result').classList.remove('hidden')},350)}
 function flash(t,ms=700){message.textContent=t;msgUntil=performance.now()+ms}function spark(x,y){for(let i=0;i<8;i++)fx.push({x,y,vx:(Math.random()-.5)*150,vy:(Math.random()-.5)*150,t:.4})}
-function update(dt){if(!running)return;secAcc+=dt;if(secAcc>=1){secAcc-=1;left--;clock.textContent='0:'+String(Math.max(0,left)).padStart(2,'0')}if(left<=0){const ba=[player,...allies].filter(u=>u.alive).length,ra=enemies.filter(u=>u.alive).length;finish(ba>=ra?'blue':'red',`時間切れ 生存 ${ba} - ${ra}`);return}player.update(dt);let ix=input.x+(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0),iy=input.y+(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0);if(Math.hypot(ix,iy)>1){let n=norm(ix,iy);ix=n.x;iy=n.y}if(player.dodgeT>0){ix=player.dx;iy=player.dy}move(player,ix,iy,dt);for(const a of allies){a.update(dt);ai(a,dt,false)}for(const e of enemies){e.update(dt);ai(e,dt,true)}for(const b of bullets)b.update(dt);bullets=bullets.filter(b=>b.life>0);for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt}fx=fx.filter(p=>p.t>0);checkFlags();manaFill.style.width=player.mana+'%';if(msgUntil&&performance.now()>msgUntil){message.textContent='';msgUntil=0}}
+function update(dt){if(!running)return;secAcc+=dt;if(secAcc>=1){secAcc-=1;left--;clock.textContent='0:'+String(Math.max(0,left)).padStart(2,'0')}if(left<=0){const ba=[player,...allies].filter(u=>u.alive).length,ra=enemies.filter(u=>u.alive).length;finish(ba>=ra?'blue':'red',`時間切れ 生存 ${ba} - ${ra}`);return}player.update(dt);let ix=input.x+(keys.ArrowRight||keys.d?1:0)-(keys.ArrowLeft||keys.a?1:0),iy=input.y+(keys.ArrowDown||keys.s?1:0)-(keys.ArrowUp||keys.w?1:0);if(Math.hypot(ix,iy)>1){let n=norm(ix,iy);ix=n.x;iy=n.y}if(player.dodgeT>0){ix=player.dx;iy=player.dy}move(player,ix,iy,dt);for(const a of allies){a.update(dt);ai(a,dt,false)}for(const e of enemies){e.update(dt);ai(e,dt,true)}for(const b of bullets)b.update(dt);
+
+// opposing magic bullets cancel each other out
+for(let i=0;i<bullets.length;i++){
+ const a=bullets[i];
+ if(a.life<=0)continue;
+ for(let j=i+1;j<bullets.length;j++){
+  const b=bullets[j];
+  if(b.life<=0||a.team===b.team)continue;
+  if(Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+2){
+   const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+   a.life=0;b.life=0;
+   spark(mx,my);
+   break;
+  }
+ }
+}
+bullets=bullets.filter(b=>b.life>0);for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt}fx=fx.filter(p=>p.t>0);checkFlags();manaFill.style.width=player.mana+'%';if(msgUntil&&performance.now()>msgUntil){message.textContent='';msgUntil=0}}
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);g.strokeStyle='#5d5663';g.lineWidth=5;g.beginPath();g.moveTo(-3,25);g.lineTo(-3,-25);g.stroke();g.fillStyle=team==='blue'?BLUE:RED;g.beginPath();g.moveTo(0,-23);g.lineTo(team==='blue'?25:-25,-13);g.lineTo(0,-3);g.closePath();g.fill();g.restore()}
 function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadraticCurveTo(x+w,y,x+w,y+r);g.lineTo(x+w,y+h-r);g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);g.lineTo(x+r,y+h);g.quadraticCurveTo(x,y+h,x,y+h-r);g.lineTo(x,y+r);g.quadraticCurveTo(x,y,x+r,y);g.closePath();g.fill()}
 function drawUnit(u){if(!u||!u.alive)return;g.save();g.translate(u.x,u.y);
