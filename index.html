@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#17233a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>魔導球技 v2.12</title>
-<link rel="stylesheet" href="style-v2.12.css?v=212">
+<title>魔導球技 v2.13</title>
+<link rel="stylesheet" href="style-v2.13.css?v=213">
 </head>
 <body>
 <div id="rotateNotice">スマホを横向きにしてください</div>
@@ -39,18 +39,13 @@
 
   <div id="menu" class="overlay">
     <section class="panel">
-      <div class="kicker">BEGINNER CUP / TEST MATCH</div>
+      <div class="kicker">BEGINNER CUP</div>
       <h1>魔導球技</h1>
-      <p class="lead">対戦相手と味方の役割を選択</p>
+      <p class="lead">自チーム＋3チームの総当たり大会</p>
 
-      <div class="teamPick">
-        <div class="teamPickTitle">対戦チーム</div>
-        <select id="teamSelect">
-          <option value="rush">ブルームランナーズ（旗取り型）</option>
-          <option value="guard">ストーンウォールズ（守備型）</option>
-          <option value="shoot">スターショッツ（射撃型）</option>
-        </select>
-        <div id="teamDesc" class="teamDesc"></div>
+      <div class="cupInfo">
+        <div><b>ビギナーカップ</b></div>
+        <small>プレイヤーは3試合。敵同士の試合は自動で進行します。</small>
       </div>
 
       <label>味方A
@@ -73,9 +68,34 @@
         </select>
       </label>
 
-      <button id="startBtn" class="menuBtn">試合開始</button>
+      <button id="cupStartBtn" class="menuBtn">ビギナーカップ開始</button>
+      <button id="practiceBtn" class="subBtn">1試合だけ練習</button>
       <p class="note">敵旗に触れるか敵3人を全員アウトで1本。2本先取。</p>
       <div class="menuBottomSpace"></div>
+    </section>
+  </div>
+
+  <div id="cupPanel" class="overlay hidden">
+    <section class="panel cupPanelCard">
+      <div class="kicker">BEGINNER CUP</div>
+      <h1 id="cupTitle">第1試合</h1>
+      <p id="cupOpponent" class="lead"></p>
+
+      <div id="standings" class="standings"></div>
+
+      <button id="cupMatchBtn" class="menuBtn">試合へ</button>
+      <button id="cupBackBtn" class="subBtn">大会を中断</button>
+      <div class="menuBottomSpace"></div>
+    </section>
+  </div>
+
+  <div id="cupEndPanel" class="overlay hidden">
+    <section class="panel cupPanelCard">
+      <div class="kicker">BEGINNER CUP RESULT</div>
+      <h1 id="cupEndTitle">大会終了</h1>
+      <p id="cupEndText" class="lead"></p>
+      <div id="finalStandings" class="standings"></div>
+      <button id="cupFinishBtn" class="menuBtn">メニューへ戻る</button>
     </section>
   </div>
 
@@ -89,7 +109,7 @@
   </div>
 </main>
 
-<div id="versionBadge">v2.12</div>
-<script src="game-v2.12.js?v=212"></script>
+<div id="versionBadge">v2.13</div>
+<script src="game-v2.13.js?v=213"></script>
 </body>
 </html>
