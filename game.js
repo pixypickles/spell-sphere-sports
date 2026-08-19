@@ -5,30 +5,30 @@ const COURT={x:190,y:72,w:900,h:576}, CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 const walls=[
  // LEFT FIELD — symmetric upper/lower cover
- {x:330,y:145,w:18,h:95},
- {x:330,y:320,w:18,h:95},
- {x:420,y:105,w:18,h:85},
- {x:420,y:370,w:18,h:85},
- {x:505,y:125,w:70,h:16},
- {x:505,y:419,w:70,h:16},
+ {x:330,y:195,w:18,h:95},
+ {x:330,y:370,w:18,h:95},
+ {x:420,y:155,w:18,h:85},
+ {x:420,y:420,w:18,h:85},
+ {x:505,y:175,w:70,h:16},
+ {x:505,y:469,w:70,h:16},
 
  // RIGHT FIELD — mirror of left
- {x:932,y:145,w:18,h:95},
- {x:932,y:320,w:18,h:95},
- {x:842,y:105,w:18,h:85},
- {x:842,y:370,w:18,h:85},
- {x:705,y:125,w:70,h:16},
- {x:705,y:419,w:70,h:16},
+ {x:932,y:195,w:18,h:95},
+ {x:932,y:370,w:18,h:95},
+ {x:842,y:155,w:18,h:85},
+ {x:842,y:420,w:18,h:85},
+ {x:705,y:175,w:70,h:16},
+ {x:705,y:469,w:70,h:16},
 
  // CENTRAL HOLLOW BUNKER — centered vertically
- {x:545,y:220,w:190,h:18},
- {x:545,y:322,w:190,h:18},
- {x:545,y:238,w:18,h:84},
- {x:717,y:238,w:18,h:84},
+ {x:545,y:270,w:190,h:18},
+ {x:545,y:372,w:190,h:18},
+ {x:545,y:288,w:18,h:84},
+ {x:717,y:288,w:18,h:84},
 
  // mid-lane short covers, matched top/bottom clearance
- {x:455,y:275,w:62,h:16},
- {x:763,y:275,w:62,h:16}
+ {x:455,y:325,w:62,h:16},
+ {x:763,y:325,w:62,h:16}
 ];
 const flagBlue={x:230,y:360}, flagRed={x:1050,y:360};
 let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
@@ -69,6 +69,15 @@ bullets=bullets.filter(b=>b.life>0);for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);g.strokeStyle='#5d5663';g.lineWidth=5;g.beginPath();g.moveTo(-3,25);g.lineTo(-3,-25);g.stroke();g.fillStyle=team==='blue'?BLUE:RED;g.beginPath();g.moveTo(0,-23);g.lineTo(team==='blue'?25:-25,-13);g.lineTo(0,-3);g.closePath();g.fill();g.restore()}
 function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadraticCurveTo(x+w,y,x+w,y+r);g.lineTo(x+w,y+h-r);g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);g.lineTo(x+r,y+h);g.quadraticCurveTo(x,y+h,x,y+h-r);g.lineTo(x,y+r);g.quadraticCurveTo(x,y,x+r,y);g.closePath();g.fill()}
 function drawUnit(u){if(!u||!u.alive)return;g.save();g.translate(u.x,u.y);
+ // Dodge animation: tumble/forward-roll rather than only sliding.
+ // One full revolution over the dodge window, with a slight squash/bob.
+ if(u.dodgeT>0){
+   const progress=1-Math.min(1,u.dodgeT/.36);
+   const spin=progress*Math.PI*2;
+   g.rotate(spin);
+   const squash=1-.12*Math.sin(progress*Math.PI);
+   g.scale(1/squash,squash);
+ }
  if(u.inv>0)g.globalAlpha=.55;
  if(u.controlled){g.strokeStyle='#ffe66d';g.lineWidth=3;g.beginPath();g.arc(0,4,25,0,Math.PI*2);g.stroke();g.fillStyle='#ffe66d';g.beginPath();g.moveTo(0,-50);g.lineTo(-7,-40);g.lineTo(7,-40);g.closePath();g.fill()}
  g.fillStyle='#0002';g.beginPath();g.ellipse(0,14,18,7,0,0,Math.PI*2);g.fill();
@@ -86,7 +95,14 @@ function drawUnit(u){if(!u||!u.alive)return;g.save();g.translate(u.x,u.y);
 
  // charged curve throw motion
  if(u.charging){const t=performance.now()/1000,spin=t*10;g.strokeStyle='#b9a1ff';g.lineWidth=3;g.beginPath();g.arc(0,-2,24+Math.sin(t*12)*2,spin,spin+Math.PI*1.55);g.stroke();g.fillStyle='#e8ddff';const ox=Math.cos(spin)*21,oy=-2+Math.sin(spin)*12;g.beginPath();g.arc(ox,oy,5+u.chargeT*3,0,Math.PI*2);g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(8,-3);g.lineTo(15+Math.cos(spin)*4,-14+Math.sin(spin)*3);g.stroke()}
- if(u.emote>0){g.font='19px sans-serif';g.fillText('✌',14,-31)}g.restore()}
+ if(u.emote>0){g.font='19px sans-serif';g.fillText('✌',14,-31)}
+ if(u.dodgeT>0){
+   const progress=1-Math.min(1,u.dodgeT/.36);
+   g.strokeStyle='#ffffffaa';g.lineWidth=2.5;
+   g.beginPath();g.arc(0,0,27,-1.2,1.0);g.stroke();
+   g.beginPath();g.arc(0,0,31,1.8,3.8);g.stroke();
+ }
+ g.restore()}
 function draw(){g.fillStyle='#5f7d8a';g.fillRect(0,0,W,H); // UI outside court
  g.fillStyle='#9ad9b8';g.fillRect(COURT.x,COURT.y,COURT.w,COURT.h);g.strokeStyle='#fff9d7';g.lineWidth=4;g.strokeRect(COURT.x,COURT.y,COURT.w,COURT.h);g.setLineDash([12,12]);g.beginPath();g.moveTo(W/2,COURT.y);g.lineTo(W/2,COURT.y+COURT.h);g.stroke();g.setLineDash([]);
  // subtle fantasy markings
