@@ -5,30 +5,30 @@ const COURT={x:190,y:72,w:900,h:576}, CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 const walls=[
  // LEFT FIELD — symmetric upper/lower cover
- {x:330,y:115,w:18,h:95},
- {x:330,y:290,w:18,h:95},
- {x:420,y:75,w:18,h:85},
- {x:420,y:340,w:18,h:85},
- {x:505,y:95,w:70,h:16},
- {x:505,y:389,w:70,h:16},
+ {x:330,y:145,w:18,h:95},
+ {x:330,y:320,w:18,h:95},
+ {x:420,y:105,w:18,h:85},
+ {x:420,y:370,w:18,h:85},
+ {x:505,y:125,w:70,h:16},
+ {x:505,y:419,w:70,h:16},
 
  // RIGHT FIELD — mirror of left
- {x:932,y:115,w:18,h:95},
- {x:932,y:290,w:18,h:95},
- {x:842,y:75,w:18,h:85},
- {x:842,y:340,w:18,h:85},
- {x:705,y:95,w:70,h:16},
- {x:705,y:389,w:70,h:16},
+ {x:932,y:145,w:18,h:95},
+ {x:932,y:320,w:18,h:95},
+ {x:842,y:105,w:18,h:85},
+ {x:842,y:370,w:18,h:85},
+ {x:705,y:125,w:70,h:16},
+ {x:705,y:419,w:70,h:16},
 
  // CENTRAL HOLLOW BUNKER — centered vertically
- {x:545,y:190,w:190,h:18},
- {x:545,y:292,w:190,h:18},
- {x:545,y:208,w:18,h:84},
- {x:717,y:208,w:18,h:84},
+ {x:545,y:220,w:190,h:18},
+ {x:545,y:322,w:190,h:18},
+ {x:545,y:238,w:18,h:84},
+ {x:717,y:238,w:18,h:84},
 
  // mid-lane short covers, matched top/bottom clearance
- {x:455,y:245,w:62,h:16},
- {x:763,y:245,w:62,h:16}
+ {x:455,y:275,w:62,h:16},
+ {x:763,y:275,w:62,h:16}
 ];
 const flagBlue={x:230,y:360}, flagRed={x:1050,y:360};
 let player=null,allies=[],enemies=[],bullets=[],fx=[];let running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0;
