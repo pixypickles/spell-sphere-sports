@@ -1,3 +1,6 @@
+window.MAGIC_BALL_BUILD='v2.84-1787267059';
+console.log('MAGIC BALL BUILD', window.MAGIC_BALL_BUILD);
+document.title='魔導球技 v2.84';
 (()=>{'use strict';
 
 function updateOrientation(){
@@ -1484,7 +1487,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.83: genuine frog mages never use human headwear/outfit head pieces.
+  // v2.84: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
