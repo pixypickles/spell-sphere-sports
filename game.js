@@ -116,6 +116,8 @@ function refreshRecordUI(){
 function specialName(kind){
   if(kind==='double')return '2連射';
   if(kind==='blade')return '魔力剣';
+  if(kind==='phase')return '壁すり抜け弾';
+  if(kind==='bounce')return 'バウンド弾';
   if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
@@ -130,6 +132,10 @@ function updateSpecialButtons(){
       el.innerHTML='×2<small>2連射</small>';
     }else if(kind==='blade'){
       el.innerHTML='剣<small>魔力剣</small>';
+    }else if(kind==='phase'){
+      el.innerHTML='透<small>壁抜け</small>';
+    }else if(kind==='bounce'){
+      el.innerHTML='跳<small>バウンド</small>';
     }else if(kind==='triple'&&saveData.tripleUnlocked){
       el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
@@ -156,9 +162,9 @@ function updateSkillSetUI(){
   b.value=saveData.specialSlot2||'none';
 
   if(!saveData.shieldUnlocked){
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
   }else{
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
   }
 }
 function saveSkillSet(){
@@ -317,7 +323,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -345,9 +351,10 @@ class Unit{
 }
 
 class Bullet{
-  constructor(x,y,dx,dy,team,curve,target){
+  constructor(x,y,dx,dy,team,curve,target,kind='normal'){
     Object.assign(this,{
-      x,y,dx,dy,team,curve,target,r:7,life:3.6,
+      x,y,dx,dy,team,curve,target,kind,r:7,life:3.6,
+      bouncesLeft:kind==='bounce'?4:0,
       speed:curve?315:355,age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
@@ -386,11 +393,36 @@ class Bullet{
     }
 
     for(const w of walls){
-      if(circleRect(this.x,this.y,this.r,w)){
-        this.life=0;
-        spark(this.x,this.y);
-        return;
+      if(!circleRect(this.x,this.y,this.r,w))continue;
+
+      if(this.kind==='phase'){
+        // 壁すり抜け弾：壁では消えない
+        continue;
       }
+
+      if(this.kind==='bounce' && this.bouncesLeft>0){
+        // Determine the closest wall face and reflect from it.
+        const left=Math.abs(this.x-w.x);
+        const right=Math.abs(this.x-(w.x+w.w));
+        const top=Math.abs(this.y-w.y);
+        const bottom=Math.abs(this.y-(w.y+w.h));
+        const m=Math.min(left,right,top,bottom);
+
+        if(m===left || m===right)this.dx*=-1;
+        else this.dy*=-1;
+
+        this.bouncesLeft--;
+        spark(this.x,this.y);
+
+        // move slightly away so it doesn't collide with the same wall every frame
+        this.x+=this.dx*(this.r+4);
+        this.y+=this.dy*(this.r+4);
+        break;
+      }
+
+      this.life=0;
+      spark(this.x,this.y);
+      return;
     }
 
     const targets=this.team==='blue'?enemies:[player,...allies];
@@ -780,6 +812,11 @@ function draw(){
   for(const b of bullets){
     g.save();g.shadowBlur=13;g.shadowColor=b.team==='blue'?'#8fc6ff':'#ff9daa';g.fillStyle=b.team==='blue'?'#d9ecff':'#ffe1e4';
     g.beginPath();g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();
+    if(b.kind==='phase'){
+      g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
+    }else if(b.kind==='bounce'){
+      g.strokeStyle='#ffd36f';g.lineWidth=3;g.setLineDash([4,3]);g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();g.setLineDash([]);
+    }
     if(b.curve){g.strokeStyle=b.team==='blue'?'#826cff':'#e96a93';g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,b.r+4,.3,5.2);g.stroke()}
     g.restore();
   }
@@ -929,6 +966,37 @@ function useTripleShot(u){
   fire();setTimeout(fire,145);setTimeout(fire,290);return true;
 }
 
+
+function usePhaseShot(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastPhase<4.0){flash('壁すり抜け弾クールタイム',380);return false}
+  if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
+  if(u.mana<24){flash('魔力不足',360);return false}
+  const t=nearest(u,enemies);if(!t)return false;
+  u.mana-=24;u.lastPhase=now;
+  const d=norm(t.x-u.x,t.y-u.y);
+  bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'phase'));
+  return true;
+}
+
+function useBounceShot(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastBounce<3.6){flash('バウンド弾クールタイム',380);return false}
+  if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
+  if(u.mana<22){flash('魔力不足',360);return false}
+  const t=nearest(u,enemies);if(!t)return false;
+  u.mana-=22;u.lastBounce=now;
+
+  // Aim a little off-center so wall rebounds are easier to create.
+  const d0=norm(t.x-u.x,t.y-u.y);
+  const side=(Math.random()<.5?-1:1);
+  const d=norm(d0.x-d0.y*.22*side,d0.y+d0.x*.22*side);
+  bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'bounce'));
+  return true;
+}
+
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
 
@@ -939,6 +1007,14 @@ function usePlayerSpecial(kind){
 
   if(kind==='blade'){
     if(useManaBlade(player))flash('魔力剣！',300);
+    return;
+  }
+  if(kind==='phase'){
+    if(usePhaseShot(player))flash('壁すり抜け弾！',320);
+    return;
+  }
+  if(kind==='bounce'){
+    if(useBounceShot(player))flash('バウンド弾！',320);
     return;
   }
   if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
