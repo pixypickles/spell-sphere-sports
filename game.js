@@ -660,6 +660,19 @@ function opponentHasBounce(){
   return !!(d&&d.bounceUsers&&d.bounceUsers.length);
 }
 
+function gainBladeResearch(){
+  if(saveData.bladeUnlocked)return '';
+  saveData.bladeProgress=Math.min(3,(saveData.bladeProgress||0)+1);
+  if(saveData.bladeProgress>=3){
+    saveData.bladeUnlocked=true;
+    saveData.bladeProgress=3;
+    writeSave();
+    return '魔力剣 習得！';
+  }
+  writeSave();
+  return `魔力剣 ${saveData.bladeProgress}/3`;
+}
+
 function gainTripleResearch(){
   if(saveData.tripleUnlocked)return '';
   saveData.tripleProgress=Math.min(3,(saveData.tripleProgress||0)+1);
@@ -671,6 +684,12 @@ function opponentHasTriple(){
   const d=opponentData(currentOpponent);
   return !!(d&&d.tripleUsers&&d.tripleUsers.length);
 }
+function opponentHasBlade(){
+  if(cupKind!=='rookie')return false;
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.bladeUsers&&d.bladeUsers.length);
+}
+
 
 function opponentHasShield(){
   if(cupKind!=='rookie')return false;
@@ -1008,6 +1027,7 @@ function reset(){
   for(const e of enemies)e.outfitKey=`${cupKind}:${currentOpponent}`;
   if(cupKind==='rookie'&&od.shieldUsers)for(const i of od.shieldUsers)if(enemies[i])enemies[i].specialKind='shield';
   if(cupKind==='rookie'&&od.tripleUsers)for(const i of od.tripleUsers)if(enemies[i])enemies[i].specialKind='triple';
+  if(cupKind==='rookie'&&od.bladeUsers)for(const i of od.bladeUsers)if(enemies[i])enemies[i].specialKind='blade';
   if(cupKind==='advanced'&&od.phaseUsers)for(const i of od.phaseUsers)if(enemies[i])enemies[i].specialKind='phase';
   if((cupKind==='advanced'||cupKind==='expert')&&od.bounceUsers)for(const i of od.bounceUsers)if(enemies[i])enemies[i].specialKind='bounce';
   if((cupKind==='advanced'||cupKind==='expert')&&od.blastUsers)for(const i of od.blastUsers)if(enemies[i])enemies[i].specialKind='blast';
@@ -1192,6 +1212,11 @@ function ai(u,dt,isEnemy){
     }
   }
     const nowSpecial=performance.now()/1000;
+  if(u.specialKind==='blade'&&nowSpecial-u.lastBlade>.85&&u.mana>=18){
+    const incoming=bullets.some(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<96);
+    if(incoming&&Math.random()<.22)useManaBlade(u);
+  }
+
 
   if(u.specialKind==='clone'&&u.cloneT<=0&&nowSpecial-u.lastClone>5.8&&u.mana>=50&&Math.random()<.005){
     useClone(u);
@@ -2682,6 +2707,7 @@ bindTap('nextBtn',()=>{
         const msgs=[];
         if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
         if(opponentHasTriple()){const m=gainTripleResearch();if(m)msgs.push(m);}
+        if(opponentHasBlade()){const m=gainBladeResearch();if(m)msgs.push(m);}
         if(opponentHasPhase()){const m=gainPhaseResearch();if(m)msgs.push(m);}
         if(opponentHasBounce()){const m=gainBounceResearch();if(m)msgs.push(m);}
         if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
@@ -2726,6 +2752,7 @@ bindTap('nextBtn',()=>{
         const msgs=[];
         if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
         if(opponentHasTriple()){const m=gainTripleResearch();if(m)msgs.push(m);}
+        if(opponentHasBlade()){const m=gainBladeResearch();if(m)msgs.push(m);}
         if(opponentHasPhase()){const m=gainPhaseResearch();if(m)msgs.push(m);}
         if(opponentHasBounce()){const m=gainBounceResearch();if(m)msgs.push(m);}
         if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
