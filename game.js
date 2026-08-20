@@ -587,36 +587,19 @@ let input={x:0,y:0},keys={},heldAt=0;
 const $=id=>document.getElementById(id);
 
 let introClosed=false;
-
 function closeIntro(){
-  if(introClosed)return;
   const intro=$('introScreen');
   if(!intro)return;
   introClosed=true;
-  intro.classList.add('hidden');
   intro.style.display='none';
 }
-
-// Bind directly to the intro screen itself, plus keyboard fallback.
-// This avoids browser/global pointer-event quirks on mobile.
 function bindIntroStart(){
   const intro=$('introScreen');
   if(!intro)return;
-
-  const go=(e)=>{
-    if(e){
-      e.preventDefault?.();
-      e.stopPropagation?.();
-    }
-    closeIntro();
-  };
-
-  intro.addEventListener('pointerdown',go,{passive:false});
-  intro.addEventListener('touchstart',go,{passive:false});
-  intro.addEventListener('click',go);
-  window.addEventListener('keydown',go);
+  intro.addEventListener('click',closeIntro);
+  intro.addEventListener('pointerup',closeIntro);
+  window.addEventListener('keydown',closeIntro);
 }
-
 if(document.readyState==='loading'){
   document.addEventListener('DOMContentLoaded',bindIntroStart,{once:true});
 }else{

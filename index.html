@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#17233a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>魔導球技 v2.51</title>
-<link rel="stylesheet" href="style.css?v=251">
+<title>魔導球技 v2.52</title>
+<link rel="stylesheet" href="style.css?v=252">
 
 <style id="bootFallback">
 .hidden{display:none!important}
@@ -14,8 +14,8 @@
 
 </head>
 <body>
-<div id="introScreen" class="introScreen" onclick="this.classList.add(\'hidden\');this.style.display=\'none\';">
-  <div class="introVersion">v2.51</div>
+<div id="introScreen" class="introScreen" onclick="this.style.display='none';" ontouchstart="this.style.display='none';" onpointerdown="this.style.display='none';">
+  <div class="introVersion">v2.52</div>
   <div class="introCard">
     <div class="introKicker">MAGIC SPORT</div>
     <h1>魔導球技</h1>
@@ -39,7 +39,11 @@
     <p>これは魔法世界のスポーツ。<br>魔力弾を相手全員にヒットさせるか、<br>相手陣地の魔法陣に浮かぶクリスタルを取れば勝利。</p>
     <p>ルール上、特殊な個性を持つ魔力弾や特殊技も認められている。<br>さまざまな技を使うチームが大会に参加している。</p>
     <p>特殊技を持つ相手に3度勝利すると、<br>その技を学習し、自分でも使えるようになる。</p>
-    <div class="introHint">PUSH ANY BUTTON</div>
+    <button type="button" class="introHint introStartButton"
+      onclick="document.getElementById('introScreen').style.display='none';"
+      ontouchstart="document.getElementById('introScreen').style.display='none';">
+      PUSH ANY BUTTON
+    </button>
     <div class="introSub">画面をタップして開始</div>
     <div class="introLandscape">↔ スマホを横持ちしてください ↔</div>
   </div>
@@ -206,7 +210,7 @@
   </div>
 </main>
 
-<div id="versionBadge">v2.51</div>
-<script src="game.js?v=251"></script>
+<div id="versionBadge">v2.52</div>
+<script src="game.js?v=252"></script>
 </body>
 </html>
