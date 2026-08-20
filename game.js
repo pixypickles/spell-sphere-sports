@@ -1377,7 +1377,46 @@ function drawUnit(u){
   if(u.jumpT>0){const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));g.translate(0,-Math.max(0,jp)*105);}
   if(u.invisT>0)g.globalAlpha=u.controlled?.38:.14;
 
-  if(u.rabbitActive){g.fillStyle='#f5f0e6';g.beginPath();g.ellipse(0,4,15,13,0,0,Math.PI*2);g.fill();g.beginPath();g.ellipse(-6,-18,5,15,-.18,0,Math.PI*2);g.ellipse(6,-18,5,15,.18,0,Math.PI*2);g.fill();g.fillStyle='#222';g.beginPath();g.arc(-4,-3,1.5,0,Math.PI*2);g.arc(4,-3,1.5,0,Math.PI*2);g.fill();g.restore();return;}
+  if(u.rabbitActive){
+    // Full quadruped rabbit form.
+    const hop=u.isMoving?Math.sin((u.runPhase||0)*1.6):0;
+    const facing=u.team==='blue'?1:-1;
+    g.save();g.scale(facing,1);
+
+    g.fillStyle='#0002';g.beginPath();g.ellipse(0,17,25,6,0,0,Math.PI*2);g.fill();
+
+    // rear legs
+    g.fillStyle='#ddd7cf';
+    g.beginPath();g.ellipse(-13,10,10,7,-.25,0,Math.PI*2);g.fill();
+    g.beginPath();g.ellipse(-18+hop*3,18,9,4,-.1,0,Math.PI*2);g.fill();
+
+    // body
+    g.fillStyle='#f5f0e6';g.beginPath();g.ellipse(-1,4,22,13,-.05,0,Math.PI*2);g.fill();
+
+    // front legs
+    g.strokeStyle='#d7d0c8';g.lineWidth=5;g.lineCap='round';
+    g.beginPath();g.moveTo(11,10);g.lineTo(14-hop*3,20);g.moveTo(17,8);g.lineTo(21+hop*3,18);g.stroke();
+
+    // head
+    g.fillStyle='#f5f0e6';g.beginPath();g.ellipse(19,-3,11,10,.05,0,Math.PI*2);g.fill();
+
+    // long ears
+    g.beginPath();g.ellipse(15,-19,4.5,15,-.22,0,Math.PI*2);g.ellipse(23,-19,4.5,15,.15,0,Math.PI*2);g.fill();
+    g.fillStyle='#f2b6c5';g.beginPath();g.ellipse(15,-19,1.8,10,-.22,0,Math.PI*2);g.ellipse(23,-19,1.8,10,.15,0,Math.PI*2);g.fill();
+
+    // face
+    g.fillStyle='#222';g.beginPath();g.arc(23,-5,1.7,0,Math.PI*2);g.fill();
+    g.fillStyle='#ef9baa';g.beginPath();g.arc(30,0,1.7,0,Math.PI*2);g.fill();
+
+    // cotton tail
+    g.fillStyle='#fff';g.beginPath();g.arc(-23,2,7,0,Math.PI*2);g.fill();
+
+    g.restore();
+    if(u.controlled){
+      g.strokeStyle='#ffe66d';g.lineWidth=3;g.beginPath();g.arc(0,3,31,0,Math.PI*2);g.stroke();
+    }
+    g.restore();return;
+  }
   if(u.beastActive){
     // Full transformation: only the quadruped beast is drawn.
     const facing=(u.team==='blue'?1:-1);
@@ -1669,11 +1708,20 @@ for(const a of allies)drawUnit(a);
   for(const p of fx){g.globalAlpha=Math.max(0,p.t/.4);g.fillStyle='#fff';g.beginPath();g.arc(p.x,p.y,4,0,Math.PI*2);g.fill();g.globalAlpha=1}
 }
 
+
+function updateContextButtons(){
+  const d=$('dodgeBtn');
+  if(d){
+    if(player&&player.alive&&player.rabbitActive)d.innerHTML='跳<small>ジャンプ</small>';
+    else d.innerHTML='↻<small>回避</small>';
+  }
+}
+
 function frame(t){
   requestAnimationFrame(frame);
   const dt=Math.min(.033,(t-last)/1000||0);
   last=t;
-  try{update(dt);draw();}
+  try{update(dt);draw();updateContextButtons();}
   catch(err){
     console.error('frame error',err);
   }
@@ -2110,20 +2158,83 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').c
 
 function showWorldMap(){
   running=false;mode='menu';
-  for(const id of ['menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel']){const e=$(id);if(e)e.classList.add('hidden')}
-  $('worldMap').classList.remove('hidden');updateFieldQuestMarks();updateMapAvatar();
+  for(const id of ['menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){const e=$(id);if(e)e.classList.add('hidden')}
+  $('worldMap').classList.remove('hidden');
+  updateFieldQuestMarks();updateMapSkillButtons();updateMapAvatar();
 }
+
+let mapNearPlace=null,mapJoyX=0,mapJoyY=0,mapJoyPointer=null;
+let mapFieldForm='none',mapFieldFormUntil=0,mapFieldJumpUntil=0;
+
+function mapPlaceName(kind){
+  const e=document.querySelector(`[data-place="${kind}"] b`);
+  return e?e.textContent:kind;
+}
+function updateMapSkillButtons(){
+  const kinds=[saveData.specialSlot1||'double',saveData.specialSlot2||'rabbit'];
+  const labels=k=>specialName(k)||'なし';
+  const b1=$('mapSpecial1'),b2=$('mapSpecial2');
+  if(b1)b1.innerHTML=`Ⅰ<small>${labels(kinds[0])}</small>`;
+  if(b2)b2.innerHTML=`Ⅱ<small>${labels(kinds[1])}</small>`;
+  const d=$('mapDodgeBtn');
+  if(d)d.innerHTML=mapFieldForm==='rabbit'?'跳<small>ジャンプ</small>':'↻<small>移動技</small>';
+}
+
 function updateMapAvatar(){
-  const a=$('mapAvatar');if(!a)return;a.style.left=mapX+'%';a.style.top=mapY+'%';
+  const a=$('mapAvatar');if(!a)return;
+  const now=performance.now();
+  if(mapFieldForm!=='none'&&mapFieldFormUntil&&now>mapFieldFormUntil){mapFieldForm='none';mapFieldFormUntil=0}
+  const jumping=now<mapFieldJumpUntil;
+  a.style.left=mapX+'%';a.style.top=mapY+'%';
+  a.className='';
+  a.id='mapAvatar';
+  if(mapFieldForm!=='none')a.classList.add('mapForm-'+mapFieldForm);
+  if(jumping)a.classList.add('mapJumping');
+
   let near=null,best=999;
-  for(const [k,p] of Object.entries(MAP_PLACES)){const d=Math.hypot(mapX-p.x,mapY-p.y);if(d<best){best=d;near=k}}
-  const prompt=$('mapPrompt');
-  if(best<11){prompt.textContent='「'+document.querySelector(`[data-place="${near}"] b`).textContent+'」に入れます';prompt.classList.add('ready')}
-  else{prompt.textContent='施設の近くまで歩いてください';prompt.classList.remove('ready')}
+  for(const [k,p] of Object.entries(MAP_PLACES)){
+    const d=Math.hypot(mapX-p.x,mapY-p.y);
+    if(d<best){best=d;near=k}
+  }
+  mapNearPlace=best<11?near:null;
+
+  const prompt=$('mapPrompt'),enter=$('mapEnterBtn'),label=$('mapNearbyLabel');
+  if(mapNearPlace){
+    const q=FIELD_QUEST_ORDER.includes(mapNearPlace)&&activeFieldQuest()===mapNearPlace;
+    const p=MAP_PLACES[mapNearPlace];
+    const name=mapPlaceName(mapNearPlace);
+    prompt.textContent=(q?'！ 異変発生　':'')+`「${name}」　右の「入る」`;
+    prompt.classList.add('ready');
+    if(enter)enter.classList.add('ready');
+    if(label){
+      label.textContent=(q?'！ ':'')+name;
+      label.style.left=p.x+'%';label.style.top=(p.y-7)+'%';label.classList.add('on');
+    }
+  }else{
+    prompt.textContent='建物や森・洞窟・池へ近づいてください';
+    prompt.classList.remove('ready');
+    if(enter)enter.classList.remove('ready');
+    if(label)label.classList.remove('on');
+  }
+  updateMapSkillButtons();
 }
-function moveMap(dx,dy){mapX=Math.max(5,Math.min(94,mapX+dx));mapY=Math.max(9,Math.min(88,mapY+dy));updateMapAvatar()}
+
+function mapSpeed(){
+  if(mapFieldForm==='wolf')return 1.9;
+  if(mapFieldForm==='rabbit')return 1.22;
+  if(mapFieldForm==='mole')return 1.3;
+  return 1;
+}
+function moveMap(dx,dy){
+  const s=mapSpeed();
+  mapX=Math.max(5,Math.min(94,mapX+dx*s));
+  mapY=Math.max(9,Math.min(88,mapY+dy*s));
+  updateMapAvatar();
+}
+
 function enterMapPlace(kind,force=false){
-  const p=MAP_PLACES[kind];if(!p)return;if(!force&&Math.hypot(mapX-p.x,mapY-p.y)>=11){$('mapPrompt').textContent='もう少し近づいてください';return}
+  const p=MAP_PLACES[kind];if(!p)return;
+  if(!force&&Math.hypot(mapX-p.x,mapY-p.y)>=11){$('mapPrompt').textContent='もう少し近づいてください';return}
   if(FIELD_QUEST_ORDER.includes(kind)){openBossEvent(kind);return}
   $('worldMap').classList.add('hidden');
   if(kind==='home'){$('menu').classList.remove('hidden');refreshRecordUI();return}
@@ -2131,12 +2242,82 @@ function enterMapPlace(kind,force=false){
   $('menu').classList.remove('hidden');refreshRecordUI();
   const ids=kind==='low'?['cupStartBtn','rookieBtn']:kind==='mid'?['advancedBtn','expertBtn']:['masterBtn','grandmasterBtn'];
   for(const id of ['cupStartBtn','rookieBtn','advancedBtn','expertBtn','masterBtn','grandmasterBtn']){const e=$(id);if(e)e.style.display=ids.includes(id)?'':'none'}
-  const info=document.querySelector('#menu .cupInfo small');if(info)info.textContent=kind==='low'?'星見の競技場：ビギナー / ルーキー':kind==='mid'?'蒼塔アリーナ：アドバンス / エキスパート':'天空大闘技場：マスター / グランドマスター';
+  const info=document.querySelector('#menu .cupInfo small');
+  if(info)info.textContent=kind==='low'?'星見の競技場：ビギナー / ルーキー':kind==='mid'?'蒼塔アリーナ：アドバンス / エキスパート':'天空大闘技場：マスター / グランドマスター';
 }
 function restoreAllCupButtons(){for(const id of ['cupStartBtn','rookieBtn','advancedBtn','expertBtn','masterBtn','grandmasterBtn']){const e=$(id);if(e)e.style.display=''}}
-document.querySelectorAll('.mapPlace').forEach(e=>e.addEventListener('click',()=>enterMapPlace(e.dataset.place)));
-document.querySelectorAll('.mapPad button').forEach(e=>{const dirs={up:[0,-2.3],down:[0,2.3],left:[-2.3,0],right:[2.3,0]},d=dirs[e.dataset.dir];const stop=()=>{clearInterval(mapMoveTimer);mapMoveTimer=null};e.addEventListener('pointerdown',ev=>{ev.preventDefault();stop();moveMap(...d);mapMoveTimer=setInterval(()=>moveMap(...d),55)});e.addEventListener('pointerup',stop);e.addEventListener('pointercancel',stop);e.addEventListener('pointerleave',stop)});
-window.addEventListener('keydown',e=>{if($('worldMap')&& !$('worldMap').classList.contains('hidden')){const d={ArrowUp:[0,-2.3],w:[0,-2.3],ArrowDown:[0,2.3],s:[0,2.3],ArrowLeft:[-2.3,0],a:[-2.3,0],ArrowRight:[2.3,0],d:[2.3,0]}[e.key];if(d){e.preventDefault();moveMap(...d)}}});
+
+function useFieldSkill(kind){
+  const now=performance.now();
+  if(kind==='rabbit'){
+    if(mapFieldForm==='rabbit'){mapFieldForm='none';mapFieldFormUntil=0}
+    else{mapFieldForm='rabbit';mapFieldFormUntil=now+4000}
+    updateMapAvatar();return;
+  }
+  if(kind==='beast'){
+    if(mapFieldForm==='wolf'){mapFieldForm='none';mapFieldFormUntil=0}
+    else{mapFieldForm='wolf';mapFieldFormUntil=0}
+    updateMapAvatar();return;
+  }
+  if(kind==='mole'){
+    if(mapFieldForm==='mole'){mapFieldForm='none';mapFieldFormUntil=0}
+    else{mapFieldForm='mole';mapFieldFormUntil=now+3200}
+    updateMapAvatar();return;
+  }
+  if(kind==='jump'){
+    mapFieldJumpUntil=now+900;updateMapAvatar();return;
+  }
+  flash('この技はフィールドでは使えません',420);
+}
+function useFieldSlot(slot){
+  const kind=slot===1?(saveData.specialSlot1||'double'):(saveData.specialSlot2||'rabbit');
+  useFieldSkill(kind);
+}
+
+// circular analogue joystick
+const mapStickZone=$('mapStickZone'),mapStickKnob=$('mapStickKnob');
+function setMapStickFromEvent(e){
+  if(!mapStickZone||!mapStickKnob)return;
+  const r=mapStickZone.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  let dx=e.clientX-cx,dy=e.clientY-cy;
+  const max=39,len=Math.hypot(dx,dy);
+  if(len>max){dx=dx/len*max;dy=dy/len*max}
+  mapJoyX=dx/max;mapJoyY=dy/max;
+  mapStickKnob.style.transform=`translate(${dx}px,${dy}px)`;
+}
+function clearMapStick(){
+  mapJoyPointer=null;mapJoyX=0;mapJoyY=0;
+  if(mapStickKnob)mapStickKnob.style.transform='translate(0px,0px)';
+}
+if(mapStickZone){
+  mapStickZone.addEventListener('pointerdown',e=>{e.preventDefault();mapJoyPointer=e.pointerId;mapStickZone.setPointerCapture?.(e.pointerId);setMapStickFromEvent(e)});
+  mapStickZone.addEventListener('pointermove',e=>{if(e.pointerId===mapJoyPointer)setMapStickFromEvent(e)});
+  mapStickZone.addEventListener('pointerup',clearMapStick);
+  mapStickZone.addEventListener('pointercancel',clearMapStick);
+}
+setInterval(()=>{
+  if($('worldMap')&&!$('worldMap').classList.contains('hidden')&&(Math.abs(mapJoyX)>.08||Math.abs(mapJoyY)>.08)){
+    moveMap(mapJoyX*.55,mapJoyY*.55);
+  }
+},32);
+
+bindTap('mapEnterBtn',()=>{if(mapNearPlace)enterMapPlace(mapNearPlace)});
+bindTap('mapSpecial1',()=>useFieldSlot(1));
+bindTap('mapSpecial2',()=>useFieldSlot(2));
+bindTap('mapDodgeBtn',()=>{
+  const now=performance.now();
+  if(mapFieldForm==='rabbit'){mapFieldJumpUntil=now+650;updateMapAvatar();return}
+  if((saveData.specialSlot1==='jump'||saveData.specialSlot2==='jump')){mapFieldJumpUntil=now+900;updateMapAvatar();return}
+  flash('ウサギ化中、またはジャンプ装備中に使えます',420);
+});
+
+window.addEventListener('keydown',e=>{
+  if($('worldMap')&&!$('worldMap').classList.contains('hidden')){
+    const d={ArrowUp:[0,-2.3],w:[0,-2.3],ArrowDown:[0,2.3],s:[0,2.3],ArrowLeft:[-2.3,0],a:[-2.3,0],ArrowRight:[2.3,0],d:[2.3,0]}[e.key];
+    if(d){e.preventDefault();moveMap(...d)}
+    if(e.key==='Enter'&&mapNearPlace){e.preventDefault();enterMapPlace(mapNearPlace)}
+  }
+});
 
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}

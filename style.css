@@ -284,3 +284,88 @@ body.isLandscape #gameWrap{display:block}
 .worldMapOverlay{background:radial-gradient(circle at 50% 15%,#31406d 0,#18223f 48%,#0d1428 100%);z-index:28;overflow:hidden}.worldMapPanel{position:relative;width:min(1180px,96vw);height:min(650px,92vh);border:3px solid #c9b77a;border-radius:24px;overflow:hidden;box-shadow:0 0 40px #6edcff44 inset,0 16px 60px #0009;background:#18233c}.worldSky{position:absolute;inset:0;background:linear-gradient(#18264a 0 28%,#415b68 28% 34%,#60745d 34% 100%)}.moonRune{position:absolute;right:8%;top:4%;font-size:58px;color:#fff2ad;text-shadow:0 0 25px #fff}.floatingIsle{position:absolute;width:90px;height:20px;border-radius:50%;background:#5f6f65;box-shadow:0 12px 0 -5px #303a39}.i1{left:10%;top:16%}.i2{left:67%;top:12%;transform:scale(.7)}.worldTitle{position:absolute;z-index:4;left:22px;top:14px;padding:8px 16px;border-radius:14px;background:#101a32dd;border:1px solid #d7c58c;color:#fff}.worldTitle b{display:block;font-size:20px}.worldTitle small{color:#bcecff}.mapGround{position:absolute;left:2%;right:2%;top:13%;bottom:14%;border-radius:26px;background:radial-gradient(circle at 48% 52%,#7e986f,#526c58 70%);border:2px solid #819b7d;overflow:hidden;box-shadow:inset 0 0 60px #182c2c99}.mapGround:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 18% 30%,#b6d89733 0 3%,transparent 4%),radial-gradient(circle at 76% 72%,#a4d6ff22 0 4%,transparent 5%);background-size:90px 70px}.mapRoad{position:absolute;background:#c6b58c;border:3px solid #9d8b69;border-radius:40px;opacity:.82}.r1{left:17%;top:28%;width:58%;height:11%;transform:rotate(12deg)}.r2{left:17%;top:54%;width:42%;height:10%;transform:rotate(-8deg)}.r3{left:50%;top:38%;width:11%;height:42%;transform:rotate(18deg)}.mapPlace{position:absolute;z-index:3;min-width:145px;padding:9px 12px;border:2px solid #e8d99d;border-radius:16px;background:linear-gradient(#2c3756ee,#171f38ee);color:#fff;box-shadow:0 7px 0 #11192b,0 0 18px #8de5ff33;user-select:none;-webkit-user-select:none}.mapPlace b,.mapPlace small{display:block}.mapPlace small{color:#bdeaff;font-size:11px}.placeIcon{display:block;font-size:28px;color:#ffe78d}.homePlace{left:10%;top:8%}.practicePlace{left:8%;top:67%}.lowCup{left:44%;top:66%}.midCup{left:70%;top:43%}.highCup{left:48%;top:7%}.mapPlace:active{transform:translateY(3px);box-shadow:0 4px 0 #11192b}.mapPlace:before{content:'✦';position:absolute;right:8px;top:5px;color:#86f3ff}.mapPrompt{position:absolute;z-index:5;left:50%;bottom:10px;transform:translateX(-50%);padding:7px 14px;border-radius:20px;background:#111b32dd;color:#d9e7ff;border:1px solid #7287aa;white-space:nowrap}.mapPrompt.ready{background:#574414ee;color:#fff1a5;border-color:#ffe47b;box-shadow:0 0 18px #ffe57c88}.mapPad{position:absolute;z-index:8;left:18px;bottom:13px;width:128px;height:96px}.mapPad button{position:absolute;width:42px;height:42px;border-radius:12px;border:1px solid #b7c6dd;background:#17233ddd;color:#fff;font-size:20px;touch-action:none;user-select:none;-webkit-user-select:none}.mapPad [data-dir=up]{left:43px;top:0}.mapPad [data-dir=left]{left:0;top:43px}.mapPad [data-dir=down]{left:43px;top:43px}.mapPad [data-dir=right]{left:86px;top:43px}#mapAvatar{position:absolute;z-index:7;width:28px;height:34px;transform:translate(-50%,-50%);transition:left .04s linear,top .04s linear;filter:drop-shadow(0 5px 3px #0008)}.mapHat{position:absolute;left:2px;top:-7px;color:#6540a4;font-size:27px;text-shadow:0 1px #d8baff}.mapBody{position:absolute;left:7px;top:14px;width:15px;height:18px;border-radius:8px 8px 5px 5px;background:#314fb1;border:2px solid #e6e9ff}.mapHint{position:absolute;right:18px;bottom:20px;color:#dbe9ff;font-size:12px}.mapReturnBtn{margin-top:10px}
 
 .adventurePlace{min-width:116px;padding:7px 9px;background:linear-gradient(#244436ee,#132b25ee);border-color:#9fd3a8}.forestPlace{left:30%;top:36%}.cavePlace{left:82%;top:16%}.pondPlace{left:67%;top:72%}.questMark{display:none;position:absolute;left:50%;top:-35px;transform:translateX(-50%);font-size:34px;font-weight:900;color:#fff38b;text-shadow:0 0 7px #ff7b00;animation:questBob .75s ease-in-out infinite alternate}.questMark.on{display:block}@keyframes questBob{to{transform:translate(-50%,-7px)}}.bossPanelCard{max-width:560px}.bossRuleCard{margin:14px 0;padding:12px;border-radius:14px;background:#15233ddd;border:1px solid #8fa6c8;color:#e8f3ff;line-height:1.7}
+
+/* v2.64 pictorial field map */
+.mapPlace{
+  width:92px!important;height:76px!important;min-width:0!important;padding:0!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;
+  overflow:visible!important;pointer-events:none;
+}
+.mapPlace b,.mapPlace small{display:none!important}
+.mapArt{position:absolute;left:50%;top:50%;width:78px;height:62px;transform:translate(-50%,-50%);filter:drop-shadow(0 5px 4px #07111c88)}
+.mapArt i{position:absolute;display:block}
+
+/* home: warm crooked wizard house */
+.artHome .shapeA{left:17px;top:23px;width:47px;height:34px;background:#9a6a47;border:3px solid #e6bd78;border-radius:7px 7px 10px 10px}
+.artHome .shapeB{left:9px;top:8px;width:62px;height:28px;background:#4f3a78;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.artHome .shapeC{left:35px;top:36px;width:13px;height:21px;background:#2b1b39;border-radius:7px 7px 2px 2px}
+
+/* practice: four rune posts + glowing circle */
+.artPractice{border:3px solid #81dcff;border-radius:50%;width:68px;height:50px;background:#153d5a99}
+.artPractice:before,.artPractice:after{content:"";position:absolute;inset:8px;border:2px dashed #bff5ff;border-radius:50%}
+.artPractice .shapeA,.artPractice .shapeB,.artPractice .shapeC{width:8px;height:24px;background:#d9edff;border-radius:4px;top:13px}
+.artPractice .shapeA{left:-4px}.artPractice .shapeB{right:-4px}.artPractice .shapeC{left:30px;top:-11px}
+
+/* low arena */
+.artLowArena .shapeA{left:8px;top:25px;width:62px;height:29px;background:#805f75;border:3px solid #e6cf9b;border-radius:7px}
+.artLowArena .shapeB{left:14px;top:10px;width:14px;height:30px;background:#58426d;border:3px solid #e6cf9b}
+.artLowArena .shapeC{right:14px;top:10px;width:14px;height:30px;background:#58426d;border:3px solid #e6cf9b}
+
+/* mid arena: blue mage tower */
+.artMidArena .shapeA{left:25px;top:8px;width:30px;height:49px;background:linear-gradient(#6cc5e8,#345888);border:3px solid #c9f5ff;border-radius:15px 15px 5px 5px}
+.artMidArena .shapeB{left:12px;top:31px;width:56px;height:21px;background:#325582;border:3px solid #aee9ff;border-radius:10px}
+.artMidArena .shapeC{left:34px;top:-2px;width:11px;height:18px;background:#bff6ff;transform:rotate(45deg)}
+
+/* high arena: floating golden colosseum */
+.artHighArena .shapeA{left:7px;top:24px;width:66px;height:25px;background:#91734e;border:3px solid #ffe0a0;border-radius:50% 50% 8px 8px}
+.artHighArena .shapeB{left:19px;top:8px;width:42px;height:29px;border:5px solid #e0bd72;border-bottom:0;border-radius:50% 50% 0 0}
+.artHighArena .shapeC{left:17px;top:51px;width:48px;height:8px;background:#66717f;border-radius:50%}
+
+/* forest */
+.artForest .shapeA,.artForest .shapeB,.artForest .shapeC{width:32px;height:47px;background:#244f36;clip-path:polygon(50% 0,100% 72%,72% 72%,100% 100%,0 100%,28% 72%,0 72%)}
+.artForest .shapeA{left:3px;top:10px}.artForest .shapeB{left:25px;top:1px;transform:scale(1.15)}.artForest .shapeC{right:1px;top:14px}
+
+/* cave */
+.artCave .shapeA{left:5px;top:10px;width:68px;height:49px;background:#5b5364;clip-path:polygon(10% 100%,18% 33%,38% 3%,61% 18%,85% 8%,98% 100%)}
+.artCave .shapeB{left:23px;top:30px;width:34px;height:30px;background:#17182a;border-radius:18px 18px 2px 2px}
+.artCave .shapeC{left:59px;top:4px;width:9px;height:18px;background:#a2e9ff;transform:rotate(25deg);box-shadow:0 0 8px #7be4ff}
+
+/* pond */
+.artPond .shapeA{left:4px;top:30px;width:70px;height:26px;background:#4fa8c8;border:3px solid #a8eeff;border-radius:50%}
+.artPond .shapeB{left:12px;top:13px;width:19px;height:25px;background:#2f7856;border-radius:50% 50% 5px 5px}
+.artPond .shapeC{right:12px;top:18px;width:14px;height:18px;background:#83e3d3;transform:rotate(45deg);box-shadow:0 0 8px #87fff0}
+
+.mapNearbyLabel{
+  display:none;position:absolute;z-index:8;transform:translate(-50%,-100%);
+  padding:6px 10px;border-radius:10px;background:#101a2be8;border:1px solid #d8e9ff66;
+  color:#fff;font-size:13px;font-weight:900;white-space:nowrap;pointer-events:none;
+}
+.mapNearbyLabel.on{display:block}
+.mapPrompt{bottom:5px!important;max-width:55%;left:50%!important;transform:translateX(-50%)!important}
+
+.mapControls{position:absolute;inset:0;z-index:18;pointer-events:none}
+.mapStickZone{position:absolute;left:18px;bottom:16px;width:128px;height:128px;pointer-events:auto;touch-action:none}
+.mapStickBase{position:absolute;left:12px;top:12px;width:104px;height:104px;border-radius:50%;background:#142239aa;border:3px solid #d3e7ff55;box-shadow:inset 0 0 20px #0008}
+.mapStickKnob{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px;border-radius:50%;background:#d9ebffcc;border:3px solid #fff8;box-shadow:0 3px 10px #0008}
+.mapButtons{position:absolute;right:16px;bottom:15px;width:170px;height:132px;pointer-events:auto}
+.mapGameBtn{position:absolute;width:58px;height:58px;border-radius:50%;border:2px solid #ffffff55;background:#223a63dd;color:#fff;font-weight:1000;font-size:22px;box-shadow:0 5px 10px #0007;touch-action:manipulation}
+.mapGameBtn small{display:block;font-size:8px;font-weight:700}
+.mapSp1{left:0;top:0}.mapSp2{left:62px;top:0}.mapDodge{left:0;top:64px}.mapEnter{left:88px;top:48px;width:72px;height:72px;background:#7b4f9f}
+.mapEnter.ready{background:#b76532;box-shadow:0 0 14px #ffd36b}
+.worldMapPanel{overflow:hidden!important}
+
+@media(orientation:landscape) and (max-height:520px){
+  .mapStickZone{transform:scale(.82);transform-origin:left bottom;bottom:7px}
+  .mapButtons{transform:scale(.85);transform-origin:right bottom;bottom:5px}
+  .mapArt{transform:translate(-50%,-50%) scale(.85)}
+}
+
+/* field avatar transformation forms */
+#mapAvatar.mapJumping{transform:translate(-50%,-75%) scale(1.05);filter:drop-shadow(0 13px 4px #0005)}
+#mapAvatar.mapForm-rabbit .mapBody{width:28px;height:16px;border-radius:55% 45% 50% 50%;background:#f5f0e6}
+#mapAvatar.mapForm-rabbit .mapBody:before{content:"";position:absolute;width:8px;height:23px;background:#f5f0e6;border-radius:60%;left:15px;top:-17px;transform:rotate(15deg);box-shadow:-9px 1px 0 #f5f0e6}
+#mapAvatar.mapForm-rabbit .mapHat{display:none}
+#mapAvatar.mapForm-wolf .mapBody{width:35px;height:17px;border-radius:55% 45% 45% 55%;background:#496fa8}
+#mapAvatar.mapForm-wolf .mapHat{display:none}
+#mapAvatar.mapForm-mole .mapBody{width:30px;height:10px;border-radius:50%;background:#6d513b}
+#mapAvatar.mapForm-mole .mapHat{display:none}
