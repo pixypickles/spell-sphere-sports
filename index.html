@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#17233a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>魔導球技 v2.42</title>
-<link rel="stylesheet" href="style.css?v=242">
+<title>魔導球技 v2.44</title>
+<link rel="stylesheet" href="style.css?v=244">
 
 <style id="bootFallback">
 .hidden{display:none!important}
@@ -14,6 +14,34 @@
 
 </head>
 <body>
+<div id="introScreen" class="introScreen">
+  <div class="introCard">
+    <div class="introKicker">MAGIC SPORT</div>
+    <h1>魔導球技</h1>
+    <div class="introMural" aria-hidden="true">
+      <div class="scrollRod left"></div><div class="scrollRod right"></div>
+      <svg viewBox="0 0 720 180" role="img">
+        <path class="muralCourt" d="M75 30 H645 V150 H75 Z M360 30 V150"/>
+        <path class="muralWall" d="M210 55 v70 M510 55 v70 M345 63 v54"/>
+        <g class="muralMage blue" transform="translate(145 90)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><path d="M-13-31 Q0-48 15-31 Q5-34-5-27Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
+        <g class="muralMage blue" transform="translate(260 120)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
+        <g class="muralMage red" transform="translate(575 85) scale(-1 1)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><path d="M-13-31 Q0-48 15-31 Q5-34-5-27Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
+        <g class="muralMage red" transform="translate(455 120) scale(-1 1)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
+        <path class="magicShot blueShot" d="M175 72 Q260 25 338 72"/><circle class="magicOrb blueOrb" cx="338" cy="72" r="7"/>
+        <path class="magicShot redShot" d="M545 68 Q470 35 392 82"/><circle class="magicOrb redOrb" cx="392" cy="82" r="7"/>
+        <g class="muralCrystal" transform="translate(360 110)"><circle class="magicCircle" r="28"/><path d="M0-27 L14-5 L0 25 L-14-5Z"/></g>
+        <path class="windRune" d="M105 42 q28-22 55 0 M560 142 q28 22 55 0"/>
+      </svg>
+      <div class="muralCaption">古い競技絵巻に描かれた魔導球技</div>
+    </div>
+    <p>これは魔法世界のスポーツ。<br>魔力弾を相手全員にヒットさせるか、<br>相手陣地の魔法陣に浮かぶクリスタルを取れば勝利。</p>
+    <p>ルール上、特殊な個性を持つ魔力弾や特殊技も認められている。<br>さまざまな技を使うチームが大会に参加している。</p>
+    <p>特殊技を持つ相手に3度勝利すると、<br>その技を学習し、自分でも使えるようになる。</p>
+    <div class="introHint">PUSH ANY BUTTON</div>
+    <div class="introSub">画面をタップして開始</div>
+  </div>
+</div>
+
 <div id="rotateNotice">スマホを横向きにしてください</div>
 
 <main id="gameWrap">
@@ -68,7 +96,7 @@
         <button id="cupStartBtn" type="button" class="menuBtn">ビギナーカップ開始</button><button id="rookieBtn" type="button" class="rookieBtn hidden">ルーキーカップへ</button><button id="advancedBtn" type="button" class="rookieBtn hidden">アドバンスカップへ</button><button id="expertBtn" type="button" class="rookieBtn hidden">エキスパートカップへ</button><button id="cupContinueBtn" type="button" class="resumeBtn hidden">大会の続きから</button>
         <button id="practiceBtn" type="button" class="subBtn">練習試合</button>
       </div>
-      <p class="note">敵旗に触れるか敵3人を全員アウトで1本。2本先取。</p>
+      <p class="note">敵クリスタルに触れるか敵3人を全員アウトで1本。2本先取。</p>
       <div class="menuBottomSpace"></div>
     </section>
   </div>
@@ -158,7 +186,7 @@
   </div>
 </main>
 
-<div id="versionBadge">v2.42</div>
-<script src="game.js?v=242"></script>
+<div id="versionBadge">v2.44</div>
+<script src="game.js?v=244"></script>
 </body>
 </html>
