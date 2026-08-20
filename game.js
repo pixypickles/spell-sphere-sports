@@ -317,10 +317,11 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
+    const _oldX=this.x,_oldY=this.y;
     if(!this.alive)return;
     this.mana=Math.min(100,this.mana+8*dt);
     const wasDodging=this.dodgeT>0;
@@ -332,6 +333,7 @@ class Unit{
     if(this.charging)this.chargeT=Math.min(.8,this.chargeT+dt);
     this.shield=Math.max(0,this.shield-dt);
     this.bladeT=Math.max(0,this.bladeT-dt);
+    const _moved=Math.hypot(this.x-_oldX,this.y-_oldY);this.isMoving=_moved>.12;if(this.isMoving)this.runPhase=(this.runPhase||0)+dt*15;
     this.strafeTimer=Math.max(0,this.strafeTimer-dt);
     if(this.strafeTimer<=0){
       this.strafeTimer=.8+Math.random()*1.4;
@@ -699,6 +701,13 @@ function drawFlag(f,team){g.save();g.translate(f.x,f.y);g.strokeStyle='#5d5663';
 function drawUnit(u){
   if(!u||!u.alive)return;
   g.save();g.translate(u.x,u.y);
+  // v2.37: legs and quick alternating running motion
+  const legSwing=u.isMoving?Math.sin(u.runPhase||0)*5:0;
+  g.strokeStyle=u.team==='blue'?'#243f88':'#8b3140';
+  g.lineWidth=5;g.lineCap='round';g.beginPath();
+  g.moveTo(-6,12);g.lineTo(-7-legSwing,24);g.moveTo(6,12);g.lineTo(7+legSwing,24);g.stroke();
+  g.lineWidth=4;g.beginPath();g.moveTo(-7-legSwing,24);g.lineTo(-11-legSwing,25);g.moveTo(7+legSwing,24);g.lineTo(11+legSwing,25);g.stroke();
+  g.scale(1.08,1.08);
   if(u.dodgeT>0)g.rotate(u.rollAngle);
   if(u.inv>0)g.globalAlpha=.55;
 
