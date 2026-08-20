@@ -585,7 +585,45 @@ function finishCup(){
 let input={x:0,y:0},keys={},heldAt=0;
 
 const $=id=>document.getElementById(id);
-let introClosed=false;function closeIntro(){if(introClosed)return;introClosed=true;const x=$('introScreen');if(x)x.classList.add('hidden');}window.addEventListener('pointerdown',closeIntro,{once:true});window.addEventListener('keydown',closeIntro,{once:true});
+
+let introClosed=false;
+
+function closeIntro(){
+  if(introClosed)return;
+  const intro=$('introScreen');
+  if(!intro)return;
+  introClosed=true;
+  intro.classList.add('hidden');
+  intro.style.display='none';
+}
+
+// Bind directly to the intro screen itself, plus keyboard fallback.
+// This avoids browser/global pointer-event quirks on mobile.
+function bindIntroStart(){
+  const intro=$('introScreen');
+  if(!intro)return;
+
+  const go=(e)=>{
+    if(e){
+      e.preventDefault?.();
+      e.stopPropagation?.();
+    }
+    closeIntro();
+  };
+
+  intro.addEventListener('pointerdown',go,{passive:false});
+  intro.addEventListener('touchstart',go,{passive:false});
+  intro.addEventListener('click',go);
+  window.addEventListener('keydown',go);
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',bindIntroStart,{once:true});
+}else{
+  bindIntroStart();
+}
+
+
 const score=$('score'),clock=$('clock'),roundLabel=$('roundLabel'),manaFill=$('manaFill'),message=$('message');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>{const d=Math.hypot(x,y)||1;return{x:x/d,y:y/d}};
