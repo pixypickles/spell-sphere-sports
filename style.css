@@ -372,3 +372,8 @@ body.isLandscape #gameWrap{display:block}
 
 #mapAvatar{opacity:0!important}
 #mapFieldAvatarCanvas{position:absolute;z-index:16;width:76px;height:76px;pointer-events:none;transform:translate(-50%,-58%);filter:drop-shadow(0 5px 4px #0007)}
+
+.fairyPlace{left:48%;top:8%}
+.artFairy .shapeA{left:28px;top:4px;width:23px;height:53px;background:#6d8853;border-radius:45% 45% 15% 15%}
+.artFairy .shapeB{left:5px;top:9px;width:68px;height:36px;background:#5ca870;border-radius:50% 50% 38% 38%;box-shadow:0 0 14px #a7ffcf88}
+.artFairy .shapeC{left:34px;top:17px;width:12px;height:12px;background:#fff5a5;transform:rotate(45deg);box-shadow:0 0 12px #fff8a8,20px 7px 8px #8effff,-19px 10px 8px #ffa8ff}

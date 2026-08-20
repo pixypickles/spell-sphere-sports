@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v2.67</title>
-<link href="style.css?v=267" rel="stylesheet"/>
+<title>魔導球技 v2.68</title>
+<link href="style.css?v=268" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion">v2.67</div>
+<div class="introVersion">v2.68</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -82,8 +82,7 @@
 <button class="mapPlace adventurePlace pondPlace" data-place="pond"><span class="questMark" id="questPond">！</span><span class="mapArt artPond"><i class="shapeA"></i><i class="shapeB"></i><i class="shapeC"></i></span><b>星雫の池</b><small>水辺の異変</small></button>
 <div id="mapAvatar"><span class="mapHat">▲</span><span class="mapBody"></span></div>
 <div class="mapPrompt" id="mapPrompt">施設の近くまで歩いてください</div>
-<div class="mapNearbyLabel" id="mapNearbyLabel"></div><canvas id="mapFieldAvatarCanvas" width="152" height="152"></canvas></div>
-
+<div class="mapNearbyLabel" id="mapNearbyLabel"></div><canvas height="152" id="mapFieldAvatarCanvas" width="152"></canvas><button class="mapPlace adventurePlace fairyPlace" data-place="fairy"><span class="questMark" id="questFairy">！</span><span class="mapArt artFairy"><i class="shapeA"></i><i class="shapeB"></i><i class="shapeC"></i></span><b>妖精樹の聖域</b><small>三異変解決後</small></button></div>
 <div class="mapControls">
 <div class="mapStickZone" id="mapStickZone">
 <div class="mapStickBase" id="mapStickBase"><div class="mapStickKnob" id="mapStickKnob"></div></div>
@@ -142,7 +141,7 @@
 <option value="mine">地雷</option><option value="jump">ジャンプ</option>
 <option value="triple">3連射</option>
 <option value="shield">シールド</option>
-<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option></select>
+<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option><option value="fairy">妖精化</option></select>
 </label>
 <label class="skillSlotLabel">特殊②
         <select id="specialSlot2">
@@ -160,7 +159,7 @@
 <option value="mine">地雷</option><option value="jump">ジャンプ</option>
 <option value="triple">3連射</option>
 <option value="shield">シールド</option>
-<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option></select>
+<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option><option value="fairy">妖精化</option></select>
 </label>
 <div class="skillSetInfo" id="skillSetInfo"></div>
 <button class="menuBtn" id="skillSetSaveBtn" type="button">セットを保存</button>
@@ -190,9 +189,9 @@
 </label>
 </div>
 <div class="skillSetInfo" id="allySkillInfo">
-    習得済みの特殊技だけ選択できます。<br>
+    習得済みの特殊技だけ選択できます。<br/>
     味方AIは状況に応じてA/Bどちらかを使います。
-  </br></div>
+  </div>
 <button class="menuBtn" id="allySkillSaveBtn" type="button">味方スキルを保存</button>
 <button class="subBtn" id="allySkillCloseBtn" type="button">戻る</button>
 </section></div><div class="overlay hidden" id="practicePanel">
@@ -230,7 +229,7 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v2.67</div>
-<script src="game.js?v=267"></script>
+<div id="versionBadge">v2.68</div>
+<script src="game.js?v=268"></script>
 </body>
 </html>

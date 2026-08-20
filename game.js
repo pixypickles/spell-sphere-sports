@@ -188,7 +188,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'rabbit',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fieldBossClears:[],fieldQuestStage:0
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fieldBossClears:[],fieldQuestStage:0
   };
 }
 function loadSave(){
@@ -270,7 +270,8 @@ function refreshRecordUI(){
       + '<br>' + (saveData.cloneUnlocked?'分身　習得済み':`分身　${saveData.cloneProgress||0}/3`)
       + '<br>' + (saveData.reflectBladeUnlocked?'反射の魔力剣　習得済み':`反射の魔力剣　${saveData.reflectBladeProgress||0}/3`)
       + '<br>' + (saveData.windUnlocked?'風起こし　習得済み':`風起こし　${saveData.windProgress||0}/3`)
-      + '<br>' + (saveData.moleUnlocked?'モグラ化　習得済み':`モグラ化　${saveData.moleProgress||0}/3`);
+      + '<br>' + (saveData.moleUnlocked?'モグラ化　習得済み':`モグラ化　${saveData.moleProgress||0}/3`)
+      + '<br>' + (saveData.fairyUnlocked?'妖精化　習得済み':'妖精化　ボス撃破で習得');
     sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
   }
 
@@ -300,7 +301,8 @@ function unlockedSkillChoices(){
     ['clone','分身','cloneUnlocked'],
     ['reflectblade','反射の魔力剣','reflectBladeUnlocked'],
     ['wind','風起こし','windUnlocked'],
-    ['mole','モグラ化','moleUnlocked']
+    ['mole','モグラ化','moleUnlocked'],
+    ['fairy','妖精化','fairyUnlocked']
   ];
   for(const [v,n,k] of defs)if(!k||saveData[k])a.push([v,n]);
   return a;
@@ -346,6 +348,7 @@ function specialName(kind){
   if(kind==='reflectblade')return '反射の魔力剣';
   if(kind==='wind')return '風起こし';
   if(kind==='mole')return 'モグラ化';
+  if(kind==='fairy')return '妖精化';
   if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
@@ -379,6 +382,7 @@ function updateSpecialButtons(){
     }else if(kind==='reflectblade'&&saveData.reflectBladeUnlocked){el.innerHTML='返<small>反射剣</small>';
     }else if(kind==='wind'&&saveData.windUnlocked){el.innerHTML='風<small>風起こし</small>';
     }else if(kind==='mole'&&saveData.moleUnlocked){el.innerHTML='潜<small>モグラ化</small>';
+    }else if(kind==='fairy'&&saveData.fairyUnlocked){el.innerHTML='妖<small>妖精化</small>';
     }else if(kind==='triple'&&saveData.tripleUnlocked){
       el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
@@ -415,6 +419,7 @@ function updateSkillSetUI(){
   const reflectBladeOptionA=[...a.options].find(o=>o.value==='reflectblade'),reflectBladeOptionB=[...b.options].find(o=>o.value==='reflectblade');
   const windOptionA=[...a.options].find(o=>o.value==='wind'),windOptionB=[...b.options].find(o=>o.value==='wind');
   const moleOptionA=[...a.options].find(o=>o.value==='mole'),moleOptionB=[...b.options].find(o=>o.value==='mole');
+  const fairyOptionA=[...a.options].find(o=>o.value==='fairy'),fairyOptionB=[...b.options].find(o=>o.value==='fairy');
   if(bladeOptionA)bladeOptionA.disabled=!saveData.bladeUnlocked;if(bladeOptionB)bladeOptionB.disabled=!saveData.bladeUnlocked;
   if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
   if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
@@ -438,6 +443,7 @@ function updateSkillSetUI(){
   if(reflectBladeOptionA)reflectBladeOptionA.disabled=!saveData.reflectBladeUnlocked;if(reflectBladeOptionB)reflectBladeOptionB.disabled=!saveData.reflectBladeUnlocked;
   if(windOptionA)windOptionA.disabled=!saveData.windUnlocked;if(windOptionB)windOptionB.disabled=!saveData.windUnlocked;
   if(moleOptionA)moleOptionA.disabled=!saveData.moleUnlocked;if(moleOptionB)moleOptionB.disabled=!saveData.moleUnlocked;
+  if(fairyOptionA)fairyOptionA.disabled=!saveData.fairyUnlocked;if(fairyOptionB)fairyOptionB.disabled=!saveData.fairyUnlocked;
 
   a.value=saveData.specialSlot1||'none';
   b.value=saveData.specialSlot2||'none';
@@ -476,6 +482,7 @@ function saveSkillSet(){
   if(s1==='reflectblade'&&!saveData.reflectBladeUnlocked)s1='none';if(s2==='reflectblade'&&!saveData.reflectBladeUnlocked)s2='none';
   if(s1==='wind'&&!saveData.windUnlocked)s1='none';if(s2==='wind'&&!saveData.windUnlocked)s2='none';
   if(s1==='mole'&&!saveData.moleUnlocked)s1='none';if(s2==='mole'&&!saveData.moleUnlocked)s2='none';
+  if(s1==='fairy'&&!saveData.fairyUnlocked)s1='none';if(s2==='fairy'&&!saveData.fairyUnlocked)s2='none';
 
   // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
   if(s1!=='none'&&s1===s2)s1='none';
@@ -734,7 +741,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -955,6 +962,7 @@ function useShield(u,playerUse=false){
 
 function shoot(u,target,curve=false){if(u.moleActive)return false;
   if(!u||!u.alive||!target||!target.alive||u.dodgeT>0||u.dodgeRecover>0||u.beastActive||u.rabbitActive)return;
+  if(u.fairyActive)curve=true;
   const cost=curve?16:11,now=performance.now()/1000;
   if(u.mana<cost||now-u.lastShot<u.shotCd)return;
   u.lastShot=now;u.mana-=cost;
@@ -1399,7 +1407,7 @@ function drawUnit(u){
 
 
   if(u.bossKind){
-    const k=u.bossKind,t=performance.now()/220;g.save();g.scale(k==='cave'?1.18:1.15,k==='cave'?1.18:1.15);
+    const k=u.bossKind,t=performance.now()/220;g.save();g.scale(k==='fairy'?1.18:(k==='cave'?1.18:1.15),k==='fairy'?1.18:(k==='cave'?1.18:1.15));
     if(k==='forest'){
       g.fillStyle='#294f3c';g.beginPath();g.ellipse(0,3,30,17,0,0,Math.PI*2);g.fill();
       g.beginPath();g.moveTo(15,-7);g.lineTo(23,-28);g.lineTo(29,-8);g.closePath();g.fill();
@@ -1417,6 +1425,17 @@ function drawUnit(u){
         g.beginPath();g.moveTo(7,-20);g.lineTo(18,-38);g.lineTo(24,-17);g.closePath();g.fill();
         g.fillStyle='#d9fbff';g.beginPath();g.arc(0,1,9+Math.sin(t)*2,0,Math.PI*2);g.fill();
       }
+    }else if(k==='fairy'){
+      g.save();g.scale(1.25,1.25);
+      g.globalAlpha=.60;g.fillStyle='#bffcff';
+      g.beginPath();g.ellipse(-25,-4,16,32,-.55,0,Math.PI*2);g.ellipse(25,-4,16,32,.55,0,Math.PI*2);g.fill();
+      g.fillStyle='#ffcbff';g.beginPath();g.ellipse(-20,20,12,22,.4,0,Math.PI*2);g.ellipse(20,20,12,22,-.4,0,Math.PI*2);g.fill();
+      g.globalAlpha=1;g.fillStyle='#7451a4';g.beginPath();g.ellipse(0,7,23,30,0,0,Math.PI*2);g.fill();
+      g.fillStyle='#f6d9c8';g.beginPath();g.arc(0,-23,14,0,Math.PI*2);g.fill();
+      g.fillStyle='#fff4a8';g.beginPath();g.moveTo(-17,-34);g.lineTo(-8,-53);g.lineTo(0,-36);g.lineTo(10,-54);g.lineTo(18,-34);g.closePath();g.fill();
+      g.fillStyle='#fff';g.beginPath();g.arc(-5,-25,2,0,Math.PI*2);g.arc(5,-25,2,0,Math.PI*2);g.fill();
+      g.strokeStyle='#fff4a8';g.lineWidth=2;g.beginPath();g.arc(0,3,42+Math.sin(t)*3,0,Math.PI*2);g.stroke();
+      g.restore();
     }else{
       g.fillStyle='#327e9b';g.beginPath();g.ellipse(0,2,28,16,0,0,Math.PI*2);g.fill();
       g.beginPath();g.moveTo(16,-6);g.quadraticCurveTo(33,-28,29,-2);g.quadraticCurveTo(42,2,26,9);g.closePath();g.fill();
@@ -1424,6 +1443,21 @@ function drawUnit(u){
       g.fillStyle='#d9ffff';g.beginPath();g.arc(29,-7,3,0,Math.PI*2);g.fill();
     }
     if(bossBattle){const n=bossBattle.maxHp,have=bossBattle.hp;for(let i=0;i<n;i++){g.fillStyle=i<have?'#ffdd72':'#3b3340';g.fillRect(-n*3+i*6,-48,4,5)}}
+    g.restore();g.restore();return;
+  }
+
+
+  if(u.fairyActive){
+    const t=performance.now()/170;g.save();
+    g.globalAlpha=.55;g.fillStyle='#b8ffff';
+    g.beginPath();g.ellipse(-18,-3,12,24,-.55,0,Math.PI*2);g.ellipse(18,-3,12,24,.55,0,Math.PI*2);g.fill();
+    g.fillStyle='#ffc9ff';g.beginPath();g.ellipse(-15,13,9,17,.45,0,Math.PI*2);g.ellipse(15,13,9,17,-.45,0,Math.PI*2);g.fill();
+    g.globalAlpha=1;
+    const o=outfitFor(u);g.fillStyle=o.base;g.beginPath();g.roundRect(-15,-6,30,34,9);g.fill();
+    g.fillStyle='#f2d4bc';g.beginPath();g.arc(0,-15,10,0,Math.PI*2);g.fill();
+    g.strokeStyle=o.sub;g.lineWidth=5;g.beginPath();g.moveTo(-6,22);g.lineTo(-8,32);g.moveTo(6,22);g.lineTo(8,32);g.stroke();
+    g.strokeStyle='#fff3a2';g.lineWidth=2;g.beginPath();g.arc(0,1,28+Math.sin(t)*2,0,Math.PI*2);g.stroke();
+    g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     g.restore();g.restore();return;
   }
 
@@ -1788,6 +1822,15 @@ function updateFieldBossAI(){
     }
   }
 
+  if(b.bossKind==='fairy'){
+    if(now<(b.bossShotAt||0))return;
+    const t=ts[Math.floor(Math.random()*ts.length)];
+    const fire=()=>{if(running&&b.alive&&t.alive){b.mana=100;b.lastShot=-99;shoot(b,t,true)}};
+    fire();setTimeout(fire,110);setTimeout(fire,220);setTimeout(fire,330);
+    if(Math.random()<.35)setTimeout(()=>{if(running&&b.alive&&t.alive)createLob(b,t,b.team)},420);
+    b.bossShotAt=now+1.05;return;
+  }
+
   if(now<(b.bossShotAt||0))return;
   const t=ts[Math.floor(Math.random()*ts.length)];
   const fire=()=>{if(running&&b.alive&&t.alive)shoot(b,t)};
@@ -1830,15 +1873,27 @@ zone.addEventListener('pointerup',releaseStick);zone.addEventListener('pointerca
 addEventListener('keydown',e=>keys[e.key]=true);addEventListener('keyup',e=>keys[e.key]=false);
 
 // throw
-$('throwBtn').addEventListener('pointerdown',e=>{e.preventDefault();heldAt=performance.now();if(player&&player.alive){player.charging=true;player.chargeT=0}});
+let fairyAutoFire=null;
+$('throwBtn').addEventListener('pointerdown',e=>{
+  e.preventDefault();heldAt=performance.now();
+  if(!player||!player.alive)return;
+  if(player.fairyActive){
+    const fire=()=>{if(running&&player&&player.alive&&player.fairyActive)shoot(player,nearest(player,enemies),true)};
+    fire();clearInterval(fairyAutoFire);fairyAutoFire=setInterval(fire,115);return;
+  }
+  player.charging=true;player.chargeT=0;
+});
 function releaseThrow(e){
-  if(e)e.preventDefault();if(!player)return;
+  if(e)e.preventDefault();clearInterval(fairyAutoFire);fairyAutoFire=null;
+  if(!player)return;
+  if(player.fairyActive){player.charging=false;player.chargeT=0;return;}
   const charged=performance.now()-heldAt>=180;player.charging=false;player.chargeT=0;
   if(!running||!player.alive)return;
   if(player.dodgeT>0||player.dodgeRecover>0){flash('回避中は投げられない',380);return;}
   shoot(player,nearest(player,enemies),charged);if(charged)flash('回転弾！',380);
 }
-$('throwBtn').addEventListener('pointerup',releaseThrow);$('throwBtn').addEventListener('pointercancel',()=>{if(player){player.charging=false;player.chargeT=0}});
+$('throwBtn').addEventListener('pointerup',releaseThrow);
+$('throwBtn').addEventListener('pointercancel',()=>{clearInterval(fairyAutoFire);fairyAutoFire=null;if(player){player.charging=false;player.chargeT=0}});
 
 // dodge
 $('dodgeBtn').addEventListener('pointerdown',e=>{
@@ -2112,6 +2167,23 @@ function updateWindZones(dt){
   windZones=windZones.filter(z=>z.t>0);
 }
 
+
+function toggleFairy(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(u.fairyActive){u.fairyActive=false;u.shotCd=.85;return true}
+  if(now-u.lastFairy<1.0)return false;
+  if(u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
+  u.mana-=50;u.lastFairy=now;u.fairyActive=true;u.shotCd=.10;
+  u.rabbitActive=false;u.beastActive=false;u.moleActive=false;
+  return true;
+}
+function fairyResetOtherCooldown(u,kind){
+  if(!u||!u.fairyActive||kind==='fairy')return;
+  const map={double:'lastDouble',blade:'lastBlade',triple:'lastTriple',phase:'lastPhase',bounce:'lastBounce',blast:'lastBlast',invis:'lastInvis',spread:'lastSpread',rightangle:'lastRightAngle',lob:'lastLob',mine:'lastMine',jump:'lastJump',clone:'lastClone',reflectblade:'lastReflectBlade',wind:'lastWind'};
+  const p=map[kind];if(p)u[p]=-99;
+}
+
 function toggleMole(u){
   if(!u||!u.alive)return false;const now=performance.now()/1000;
   if(u.moleActive){u.moleActive=false;u.moleT=0;return true}
@@ -2121,6 +2193,7 @@ function toggleMole(u){
 }
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
+  if(player.fairyActive&&kind!=='fairy')fairyResetOtherCooldown(player,kind);
   if(player.rabbitActive&&kind!=='rabbit'){flash('ウサギ化中は攻撃できない',360);return;}
   if(kind==='rabbit'){if(toggleRabbit(player))flash(player.rabbitActive?'ウサギ化！':'変身解除',300);return;}
 
@@ -2156,6 +2229,7 @@ function usePlayerSpecial(kind){
   if(kind==='reflectblade'&&saveData.reflectBladeUnlocked){if(useReflectBlade(player))flash('反射剣！',320);return;}
   if(kind==='wind'&&saveData.windUnlocked){if(useWind(player))flash('風起こし！',320);return;}
   if(kind==='mole'&&saveData.moleUnlocked){if(toggleMole(player))flash(player.moleActive?'モグラ化！':'地上へ！',320);return;}
+  if(kind==='fairy'&&saveData.fairyUnlocked){if(toggleFairy(player))flash(player.fairyActive?'妖精化！':'妖精化解除',360);return;}
   if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
 
   if(kind==='shield'&&saveData.shieldUnlocked){
@@ -2231,10 +2305,15 @@ function returnToMainMenu(){
 
 // world map v2.61
 let mapX=20,mapY=70,mapMoveTimer=null;
-const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78}};
-const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'}};
-const FIELD_QUEST_ORDER=['forest','cave','pond'];let pendingBossKind=null,bossBattle=null;
-function activeFieldQuest(){const c=saveData.fieldBossClears||[],a=Math.min(3,saveData.fieldQuestStage||0);for(let i=0;i<a;i++)if(!c.includes(FIELD_QUEST_ORDER[i]))return FIELD_QUEST_ORDER[i];return null}
+const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:48,y:8}};
+const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'}};
+const FIELD_QUEST_ORDER=['forest','cave','pond','fairy'];let pendingBossKind=null,bossBattle=null;
+function activeFieldQuest(){
+  const c=saveData.fieldBossClears||[],a=Math.min(3,saveData.fieldQuestStage||0);
+  for(let i=0;i<a;i++)if(!c.includes(FIELD_QUEST_ORDER[i]))return FIELD_QUEST_ORDER[i];
+  if(['forest','cave','pond'].every(k=>c.includes(k))&&!c.includes('fairy'))return 'fairy';
+  return null;
+}
 function updateFieldQuestMarks(){const a=activeFieldQuest();for(const k of FIELD_QUEST_ORDER){const e=$('quest'+k[0].toUpperCase()+k.slice(1));if(e)e.classList.toggle('on',k===a)}}
 function openBossEvent(k){const b=FIELD_BOSSES[k];if(!b)return;if(activeFieldQuest()!==k){$('mapPrompt').textContent=(saveData.fieldBossClears||[]).includes(k)?'この異変は解決済みです':'今は特に異変はないようです';return}pendingBossKind=k;$('worldMap').classList.add('hidden');$('bossTitle').textContent=b.name;$('bossDesc').textContent=b.desc;$('bossPanel').classList.remove('hidden')}
 function bossTakeHit(source='bullet'){
@@ -2255,9 +2334,10 @@ function bossTakeHit(source='bullet'){
 
     let learned='';
     if(k==='cave'&&!saveData.moleUnlocked){
-      saveData.moleUnlocked=true;
-      saveData.moleProgress=3;
-      learned='　モグラ化を習得！';
+      saveData.moleUnlocked=true;saveData.moleProgress=3;learned='　モグラ化を習得！';
+    }
+    if(k==='fairy'&&!saveData.fairyUnlocked){
+      saveData.fairyUnlocked=true;learned='　妖精化を習得！';
     }
 
     writeSave();
@@ -2272,12 +2352,13 @@ function bossTakeHit(source='bullet'){
   return true;
 }
 function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').classList.add('hidden');bossBattle={kind:k,hp:b.hp,maxHp:b.hp,revives:2,nextDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){
-    enemies[0].r=k==='cave'?46:42;
-    enemies[0].speed*=k==='cave'?.90:.82;
+    enemies[0].r=k==='fairy'?52:(k==='cave'?46:42);
+    enemies[0].speed*=k==='fairy'?1.08:(k==='cave'?.90:.82);
     enemies[0].inv=.2;
     enemies[0].bossKind=k;
     enemies[0].bossShotAt=performance.now()/1000+1.2;
     enemies[0].bossBurrowAt=performance.now()/1000+2.4;
+    if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}
   }left=90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
 
 function showWorldMap(){
@@ -2319,7 +2400,7 @@ function drawMapFieldAvatar(){
   cv.style.transform=now<mapFieldJumpUntil?'translate(-50%,-82%)':'translate(-50%,-58%)';
   ctx.clearRect(0,0,cv.width,cv.height);
   u.x=76;u.y=82;u.alive=true;u.controlled=true;u.inv=0;u.team='blue';u.outfitKey=null;
-  u.rabbitActive=mapFieldForm==='rabbit';u.beastActive=mapFieldForm==='wolf';u.moleActive=mapFieldForm==='mole';
+  u.rabbitActive=mapFieldForm==='rabbit';u.beastActive=mapFieldForm==='wolf';u.moleActive=mapFieldForm==='mole';u.fairyActive=mapFieldForm==='fairy';
   u.jumpT=now<mapFieldJumpUntil?.5:0;u.isMoving=Math.abs(mapJoyX)>.08||Math.abs(mapJoyY)>.08;
   if(u.isMoving)u.runPhase=(u.runPhase||0)+.18;
   const old=g;try{g=ctx;drawUnit(u)}finally{g=old}
@@ -2369,6 +2450,7 @@ function mapSpeed(){
   if(mapFieldForm==='wolf')return 1.9;
   if(mapFieldForm==='rabbit')return 1.22;
   if(mapFieldForm==='mole')return 1.3;
+  if(mapFieldForm==='fairy')return 1.35;
   return 1;
 }
 function moveMap(dx,dy){
@@ -2409,6 +2491,10 @@ function useFieldSkill(kind){
     if(mapFieldForm==='mole'){mapFieldForm='none';mapFieldFormUntil=0}
     else{mapFieldForm='mole';mapFieldFormUntil=now+3200}
     updateMapAvatar();return;
+  }
+  if(kind==='fairy'){
+    if(!saveData.fairyUnlocked){flash('まだ習得していません',350);return}
+    mapFieldForm=mapFieldForm==='fairy'?'none':'fairy';mapFieldFormUntil=0;updateMapAvatar();return;
   }
   if(kind==='jump'){
     mapFieldJumpUntil=now+900;updateMapAvatar();return;
