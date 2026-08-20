@@ -373,7 +373,7 @@ function updateSpecialButtons(){
     const el=$(id);
     if(!el)return;
     const kind=slots[i];
-    if(player&&player.alive&&player.frogActive){if(kind==='frog'){el.innerHTML='人<small>元に戻る</small>';return;}el.innerHTML='舌<small>丸呑み</small>';return;}
+    if(player&&player.alive&&player.frogActive){if(kind==='frog'){el.innerHTML='人<small>元に戻る</small>';return;}el.innerHTML='舌<small>長舌丸呑み</small>';return;}
     if(kind==='double'){
       el.innerHTML='×2<small>2連射</small>';
     }else if(kind==='rabbit'){el.innerHTML='兎<small>ウサギ化</small>';
@@ -1537,7 +1537,7 @@ function drawUnit(u){
     g.lineWidth=5;g.beginPath();g.moveTo(-11,0);g.lineTo(-20,10+walk*2);g.moveTo(11,0);g.lineTo(20,10-walk*2);g.stroke();
     g.fillStyle='#7ac95a';g.beginPath();g.ellipse(0,-18,17,15,0,0,Math.PI*2);g.fill();g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-30,6,0,Math.PI*2);g.arc(8,-30,6,0,Math.PI*2);g.fill();g.fillStyle='#172318';g.beginPath();g.arc(-8,-30,2.4,0,Math.PI*2);g.arc(8,-30,2.4,0,Math.PI*2);g.fill();g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-18,7,.15,Math.PI-.15);g.stroke();
     if(u.frogMage){g.fillStyle=u.team==='red'?'#6e4b98':'#416e9e';g.beginPath();g.moveTo(-13,-1);g.lineTo(13,-1);g.lineTo(17,22);g.lineTo(-17,22);g.closePath();g.fill();g.strokeStyle='#e6cf72';g.lineWidth=2;g.beginPath();g.moveTo(-12,5);g.lineTo(12,5);g.stroke();g.fillStyle='#47366f';g.beginPath();g.moveTo(-17,-31);g.lineTo(0,-52);g.lineTo(17,-31);g.closePath();g.fill();g.fillRect(-18,-32,36,5);}
-    if(u.frogTongueT>0){const target=nearest(u,u.team==='blue'?enemies:[player,...allies]),d=target?norm(target.x-u.x,target.y-u.y):{x:u.team==='blue'?1:-1,y:0};g.strokeStyle='#ee7f99';g.lineWidth=4;g.beginPath();g.moveTo(d.x*8,-17+d.y*8);g.lineTo(d.x*58,-17+d.y*58);g.stroke();}
+    if(u.frogTongueT>0){const target=nearest(u,u.team==='blue'?enemies:[player,...allies]),d=target?norm(target.x-u.x,target.y-u.y):{x:u.team==='blue'?1:-1,y:0};g.strokeStyle='#ee7f99';g.lineWidth=4;g.beginPath();g.moveTo(d.x*8,-17+d.y*8);g.lineTo(d.x*96,-17+d.y*96);g.stroke();}
     g.restore();g.restore();return;
   }
   if(u.rabbitActive){
@@ -1980,21 +1980,124 @@ addEventListener('keydown',e=>keys[e.key]=true);addEventListener('keyup',e=>keys
 // throw
 let fairyAutoFire=null;
 $('throwBtn').addEventListener('pointerdown',e=>{
-  e.preventDefault();heldAt=performance.now();
+  e.preventDefault();
+  heldAt=performance.now();
   if(!player||!player.alive)return;
-  if(player.frogActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastFrogJump<1.35)return;player.lastFrogJump=n;player.jumpT=1.85;player.inv=Math.max(player.inv,1.70);flash('カエル大大大ジャンプ！',300);return;}
-  if(player.rabbitActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastJump<1.05)return;if(!player.fairyActive&&player.mana<10){flash('魔力不足',300);return}if(!player.fairyActive)player.mana-=10;player.lastJump=n;player.jumpT=.72;player.inv=Math.max(player.inv,.72);flash('ウサギジャンプ！',260);return;}
-  if(player.beastActive){flash('オオカミ化中は回避できない',360);return;}
-  const now=performance.now()/1000;if(now-player.lastDodge<1.8){flash('回避クールタイム',430);return}
+
+  // カエル化中の通常投球はバブルショット。
+  if(player.frogActive){
+    const t=nearest(player,enemies);
+    if(t)shootBubble(player,t);
+    return;
+  }
+
+  // 妖精化中はチャージ不要の回転弾を高速連射。
+  if(player.fairyActive){
+    const fire=()=>{
+      if(running&&player&&player.alive&&player.fairyActive){
+        const t=nearest(player,enemies);
+        if(t)shoot(player,t,true);
+      }
+    };
+    fire();
+    clearInterval(fairyAutoFire);
+    fairyAutoFire=setInterval(fire,115);
+    return;
+  }
+
+  player.charging=true;
+  player.chargeT=0;
+});
+
+function releaseThrow(e){
+  if(e)e.preventDefault();
+  clearInterval(fairyAutoFire);
+  fairyAutoFire=null;
+  if(!player)return;
+
+  // カエル/妖精は押した時点で発射済み。
+  if(player.frogActive||player.fairyActive){
+    player.charging=false;
+    player.chargeT=0;
+    return;
+  }
+
+  const charged=performance.now()-heldAt>=180;
+  player.charging=false;
+  player.chargeT=0;
+  if(!running||!player.alive)return;
+  if(player.dodgeT>0||player.dodgeRecover>0){
+    flash('回避中は投げられない',380);
+    return;
+  }
+  shoot(player,nearest(player,enemies),charged);
+  if(charged)flash('回転弾！',380);
+}
+$('throwBtn').addEventListener('pointerup',releaseThrow);
+$('throwBtn').addEventListener('pointercancel',()=>{
+  clearInterval(fairyAutoFire);
+  fairyAutoFire=null;
+  if(player){player.charging=false;player.chargeT=0}
+});
+
+// dodge / movement ability
+$('dodgeBtn').addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  if(!running||!player||!player.alive)return;
+
+  if(player.fairyActive){
+    const n=performance.now()/1000;
+    if(player.jumpT>0||n-player.lastDodge<.45)return;
+    player.lastDodge=n;
+    player.jumpT=1.55;
+    player.inv=Math.max(player.inv,1.55);
+    flash('妖精浮遊！',260);
+    return;
+  }
+
+  if(player.frogActive){
+    const n=performance.now()/1000;
+    if(player.jumpT>0||n-player.lastFrogJump<1.35)return;
+    player.lastFrogJump=n;
+    player.jumpT=1.85;
+    player.inv=Math.max(player.inv,1.70);
+    flash('カエル大大大ジャンプ！',300);
+    return;
+  }
+
+  if(player.rabbitActive){
+    const n=performance.now()/1000;
+    if(player.jumpT>0||n-player.lastJump<1.05)return;
+    if(player.mana<10){flash('魔力不足',300);return}
+    player.mana-=10;
+    player.lastJump=n;
+    player.jumpT=.72;
+    player.inv=Math.max(player.inv,.72);
+    flash('ウサギジャンプ！',260);
+    return;
+  }
+
+  if(player.beastActive){
+    flash('オオカミ化中は回避できない',360);
+    return;
+  }
+
+  const now=performance.now()/1000;
+  if(now-player.lastDodge<1.8){
+    flash('回避クールタイム',430);
+    return;
+  }
+
   let x=input.x,y=input.y;
-  // 青チームの攻撃方向は画面右。回避中のX速度は必ず0以下にする。
-  // 上下入力があれば純粋な横回避。上下入力がなければ後方（左）へ回避。
   if(Math.abs(y)>=.15){x=0;y=y>0?1:-1;}
   else{x=-1;y=0;}
+
   const n=norm(x,y);
   player.dx=Math.min(0,n.x);
   player.dy=n.y;
-  player.lastDodge=now;player.dodgeT=.34;player.inv=.24;
+  player.lastDodge=now;
+  player.dodgeT=.34;
+  player.inv=.24;
 });
 
 
@@ -2281,7 +2384,7 @@ function toggleFairy(u){
   if(now-u.lastFairy<1.0)return false;
   if(!u.fairyActive&&u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
   if(!u.fairyActive)u.mana-=50;u.lastFairy=now;u.fairyActive=true;u.shotCd=.10;
-  u.rabbitActive=false;u.beastActive=false;u.moleActive=false;
+  u.rabbitActive=false;u.beastActive=false;u.moleActive=false;u.frogActive=false;u.frogTongueT=0;
   return true;
 }
 function fairyResetOtherCooldown(u,kind){
@@ -2310,7 +2413,7 @@ function maintainFairyCooldowns(u){
 
 function shootBubble(u,target){if(!u||!u.alive||!target||!target.alive)return false;const now=performance.now()/1000;if(now-u.lastFrogBubble<.42)return false;if(!u.fairyActive&&u.mana<8){if(u.controlled)flash('魔力不足',260);return false}if(!u.fairyActive)u.mana-=8;u.lastFrogBubble=now;const d=norm(target.x-u.x,target.y-u.y);bullets.push(new Bullet(u.x+d.x*28,u.y+d.y*28,d.x,d.y,u.team,false,target,'bubble'));return true;}
 function linePointDistance(px,py,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,wx=px-ax,wy=py-ay,vv=vx*vx+vy*vy||1,t=clamp((wx*vx+wy*vy)/vv,0,1),x=ax+vx*t,y=ay+vy*t;return {d:Math.hypot(px-x,py-y),t};}
-function useFrogTongue(u){if(!u||!u.alive||!u.frogActive)return false;const now=performance.now()/1000;if(now-u.lastFrogTongue<.9)return false;if(!u.fairyActive&&u.mana<10){if(u.controlled)flash('魔力不足',260);return false}if(!u.fairyActive)u.mana-=10;u.lastFrogTongue=now;u.frogTongueT=.28;const targets=u.team==='blue'?enemies:[player,...allies],t=nearest(u,targets),dir=t?norm(t.x-u.x,t.y-u.y):{x:u.team==='blue'?1:-1,y:0},ax=u.x,ay=u.y-3,bx=ax+dir.x*165,by=ay+dir.y*165;let eaten=0;for(const b of bullets){if(b.life<=0||b.team===u.team)continue;const q=linePointDistance(b.x,b.y,ax,ay,bx,by);if(q.d<=16+b.r){b.life=0;eaten++;}}let victim=null,best=2;for(const v of targets){if(!v||!v.alive||v.moleActive||v.jumpT>0)continue;const q=linePointDistance(v.x,v.y,ax,ay,bx,by);if(q.d<=16+v.r&&q.t<best){best=q.t;victim=v;}}if(victim){if(mode==='boss'&&victim.team==='red')bossTakeHit('bullet');else{const was=victim.controlled;victim.alive=false;spark(victim.x,victim.y);if(was){flash('丸呑み OUT!',420);transferControl();}else flash(victim.team==='red'?'ENEMY 丸呑み!':'ALLY 丸呑み!',520);checkEnd();}}if(u.controlled&&!victim)flash(eaten?`舌で弾を${eaten}発丸呑み！`:'舌！',280);return true;}
+function useFrogTongue(u){if(!u||!u.alive||!u.frogActive)return false;const now=performance.now()/1000;if(now-u.lastFrogTongue<.9)return false;if(!u.fairyActive&&u.mana<10){if(u.controlled)flash('魔力不足',260);return false}if(!u.fairyActive)u.mana-=10;u.lastFrogTongue=now;u.frogTongueT=.28;const targets=u.team==='blue'?enemies:[player,...allies],t=nearest(u,targets),dir=t?norm(t.x-u.x,t.y-u.y):{x:u.team==='blue'?1:-1,y:0},ax=u.x,ay=u.y-3,bx=ax+dir.x*225,by=ay+dir.y*225;let eaten=0;for(const b of bullets){if(b.life<=0||b.team===u.team)continue;const q=linePointDistance(b.x,b.y,ax,ay,bx,by);if(q.d<=16+b.r){b.life=0;eaten++;}}let victim=null,best=2;for(const v of targets){if(!v||!v.alive||v.moleActive||v.jumpT>0)continue;const q=linePointDistance(v.x,v.y,ax,ay,bx,by);if(q.d<=16+v.r&&q.t<best){best=q.t;victim=v;}}if(victim){if(mode==='boss'&&victim.team==='red')bossTakeHit('bullet');else{const was=victim.controlled;victim.alive=false;spark(victim.x,victim.y);if(was){flash('丸呑み OUT!',420);transferControl();}else flash(victim.team==='red'?'ENEMY 丸呑み!':'ALLY 丸呑み!',520);checkEnd();}}if(u.controlled&&!victim)flash(eaten?`舌で弾を${eaten}発丸呑み！`:'舌！',280);return true;}
 function launchMiniFrog(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMiniFrog<4.2)return false;u.lastMiniFrog=now;const target=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!target)return false;miniFrogs.push({x:u.x,y:u.y+14,team:u.team,target,r:10,life:7,dead:false,phase:Math.random()*6.28});return true;}
 function updateMiniFrogs(dt){for(const m of miniFrogs){if(m.dead)continue;m.life-=dt;if(m.life<=0){m.dead=true;continue}if(!m.target||!m.target.alive)m.target=nearest({x:m.x,y:m.y},m.team==='red'?[player,...allies]:enemies);if(!m.target){m.dead=true;continue}m.phase+=dt*10;const d=norm(m.target.x-m.x,m.target.y-m.y);m.x+=d.x*112*dt;m.y+=d.y*112*dt;if(Math.hypot(m.x-m.target.x,m.y-m.target.y)<m.r+m.target.r+2&&m.target.inv<=0&&m.target.jumpT<=0){const v=m.target;m.dead=true;const was=v.controlled;v.alive=false;spark(v.x,v.y);if(was){flash('ミニ蛙に捕まった！',420);transferControl();}else flash(v.team==='red'?'ミニ蛙 HIT!':'ALLY OUT',500);checkEnd();}}miniFrogs=miniFrogs.filter(m=>!m.dead);}
 
@@ -2333,6 +2436,7 @@ function toggleMole(u){
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
   if(player.fairyActive&&kind!=='fairy')fairyResetOtherCooldown(player,kind);
+  // カエル専用の「もう1枠=舌」は、実際に変身中だけ有効。
   if(player.frogActive&&kind!=='frog'){useFrogTongue(player);return;}
   if(player.rabbitActive&&kind!=='rabbit'){flash('ウサギ化中は攻撃できない',360);return;}
   if(kind==='rabbit'){if(toggleRabbit(player))flash(player.rabbitActive?'ウサギ化！':'変身解除',300);return;}
