@@ -33,8 +33,8 @@ const walls=[
 
 const flagBlue={x:230,y:360},flagRed={x:1050,y:360};
 const TEAMS={
-  rush:{name:'ブルームランナーズ',desc:'クリスタル狙い型：前へ出る選手が多く、クリスタルを積極的に狙います。',roles:['attacker','attacker','support']},
-  guard:{name:'ストーンウォールズ',desc:'守備型：自陣クリスタルと壁裏を重視して戦います。',roles:['guard','guard','shooter']},
+  rush:{name:'ブルームランナーズ',desc:'旗取り型：前へ出る選手が多く、旗を積極的に狙います。',roles:['attacker','attacker','support']},
+  guard:{name:'ストーンウォールズ',desc:'守備型：自陣旗と壁裏を重視して戦います。',roles:['guard','guard','shooter']},
   shoot:{name:'スターショッツ',desc:'射撃型：距離を取り、アウトを優先して狙います。',roles:['shooter','shooter','balance']}
 };
 const ROOKIE_TEAMS={
@@ -93,17 +93,27 @@ const EXPERT_TEAMS={
     bounceUsers:[1]
   }
 };
+const MASTER_TEAMS={
+  invis:{name:'ヴェイルシーカーズ',desc:'透明化型：一時的に姿を消して位置をずらします。',roles:['attacker','balance','support'],invisUsers:[0]},
+  trick:{name:'トリックスターズ',desc:'変則弾型：ブーメラン弾と直角弾で回避先を狙います。',roles:['shooter','shooter','balance'],boomerangUsers:[0],rightAngleUsers:[1]},
+  lob:{name:'スカイアーク',desc:'投射型：壁を越える放物線爆弾を投げ、着地点で爆発させます。',roles:['shooter','balance','guard'],lobUsers:[0,1]},
+  mine:{name:'グリフマイナーズ',desc:'地雷型：魔法地雷を最大2個設置します。クリスタル付近には置けません。',roles:['guard','support','balance'],mineUsers:[0,1]},
+  grand:{name:'グランドアルカナ',desc:'複合型：透明化・ブーメラン弾・地雷を組み合わせます。',roles:['balance','shooter','attacker'],invisUsers:[0],boomerangUsers:[1],mineUsers:[2]}
+};
+
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
+let mines=[],lobShots=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
 const CUP_ORDER=['rush','guard','shoot'];
 const ROOKIE_ORDER=['shield','rush','mix','triple'];
 const ADVANCED_ORDER=['phase','bounce','hybrid','blast'];
 const EXPERT_ORDER=['beast','blastbeast','apex'];
+const MASTER_ORDER=['invis','trick','lob','mine','grand'];
 const CUP_NAMES={player:'プレイヤーチーム',rush:TEAMS.rush.name,guard:TEAMS.guard.name,shoot:TEAMS.shoot.name};
-function currentCupOrder(){return cupKind==='expert'?EXPERT_ORDER:(cupKind==='advanced'?ADVANCED_ORDER:(cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER))}
-function opponentData(id){return cupKind==='expert'?EXPERT_TEAMS[id]:(cupKind==='advanced'?ADVANCED_TEAMS[id]:(cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]))}
+function currentCupOrder(){return cupKind==='master'?MASTER_ORDER:(cupKind==='expert'?EXPERT_ORDER:(cupKind==='advanced'?ADVANCED_ORDER:(cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER)))}
+function opponentData(id){return cupKind==='master'?MASTER_TEAMS[id]:(cupKind==='expert'?EXPERT_TEAMS[id]:(cupKind==='advanced'?ADVANCED_TEAMS[id]:(cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])))}
 const SAVE_KEY='magic_ball_save_v216';
 let saveData=loadSave();
 
@@ -113,7 +123,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false
   };
 }
 function loadSave(){
@@ -125,7 +135,7 @@ function loadSave(){
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
     if(data.encounteredTeams.length===0){
       if((data.beginnerWins||0)>0||data.rookieUnlocked){
-        for(const id of BEGINNER_ORDER)data.encounteredTeams.push(`beginner:${id}`);
+        for(const id of CUP_ORDER)data.encounteredTeams.push(`beginner:${id}`);
       }
       if(data.rookieUnlocked)data.encounteredTeams.push('rookie:shield');
       data.encounteredTeams=[...new Set(data.encounteredTeams)];
@@ -157,6 +167,7 @@ function refreshRecordUI(){
   const rb=$('rookieBtn');if(rb)rb.classList.toggle('hidden',!saveData.rookieUnlocked);
   const ab=$('advancedBtn');if(ab)ab.classList.toggle('hidden',!saveData.advancedUnlocked);
   const eb=$('expertBtn');if(eb)eb.classList.toggle('hidden',!saveData.expertUnlocked);
+  const mb=$('masterBtn');if(mb)mb.classList.toggle('hidden',!saveData.masterUnlocked);
 
   const sp=$('shieldProgressText');
   if(sp){
@@ -166,7 +177,12 @@ function refreshRecordUI(){
       + '<br>' + (saveData.phaseUnlocked?'壁すり抜け弾　習得済み':`壁すり抜け弾　${saveData.phaseProgress||0}/3`)
       + '<br>' + (saveData.bounceUnlocked?'バウンド弾　習得済み':`バウンド弾　${saveData.bounceProgress||0}/3`)
       + '<br>' + (saveData.blastUnlocked?'爆裂弾　習得済み':`爆裂弾　${saveData.blastProgress||0}/3`)
-      + '<br>' + (saveData.beastUnlocked?'獣化　習得済み':`獣化　${saveData.beastProgress||0}/3`);
+      + '<br>' + (saveData.beastUnlocked?'獣化　習得済み':`獣化　${saveData.beastProgress||0}/3`)
+      + '<br>' + (saveData.invisUnlocked?'透明化　習得済み':`透明化　${saveData.invisProgress||0}/3`)
+      + '<br>' + (saveData.boomerangUnlocked?'ブーメラン弾　習得済み':`ブーメラン弾　${saveData.boomerangProgress||0}/3`)
+      + '<br>' + (saveData.rightAngleUnlocked?'直角弾　習得済み':`直角弾　${saveData.rightAngleProgress||0}/3`)
+      + '<br>' + (saveData.lobUnlocked?'放物線爆弾　習得済み':`放物線爆弾　${saveData.lobProgress||0}/3`)
+      + '<br>' + (saveData.mineUnlocked?'地雷　習得済み':`地雷　${saveData.mineProgress||0}/3`);
     sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
   }
 
@@ -180,6 +196,11 @@ function specialName(kind){
   if(kind==='bounce')return 'バウンド弾';
   if(kind==='blast')return '爆裂弾';
   if(kind==='beast')return '獣化';
+  if(kind==='invis')return '透明化';
+  if(kind==='boomerang')return 'ブーメラン弾';
+  if(kind==='rightangle')return '直角弾';
+  if(kind==='lob')return '放物線爆弾';
+  if(kind==='mine')return '地雷';
   if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
@@ -202,6 +223,11 @@ function updateSpecialButtons(){
       el.innerHTML='爆<small>爆裂弾</small>';
     }else if(kind==='beast'&&saveData.beastUnlocked){
       el.innerHTML='獣<small>獣化</small>';
+    }else if(kind==='invis'&&saveData.invisUnlocked){el.innerHTML='透<small>透明化</small>';
+    }else if(kind==='boomerang'&&saveData.boomerangUnlocked){el.innerHTML='戻<small>ブーメラン</small>';
+    }else if(kind==='rightangle'&&saveData.rightAngleUnlocked){el.innerHTML='┐<small>直角弾</small>';
+    }else if(kind==='lob'&&saveData.lobUnlocked){el.innerHTML='弧<small>放物線</small>';
+    }else if(kind==='mine'&&saveData.mineUnlocked){el.innerHTML='雷<small>地雷</small>';
     }else if(kind==='triple'&&saveData.tripleUnlocked){
       el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
@@ -227,6 +253,11 @@ function updateSkillSetUI(){
   const blastOptionB=[...b.options].find(o=>o.value==='blast');
   const beastOptionA=[...a.options].find(o=>o.value==='beast');
   const beastOptionB=[...b.options].find(o=>o.value==='beast');
+  const invisOptionA=[...a.options].find(o=>o.value==='invis'),invisOptionB=[...b.options].find(o=>o.value==='invis');
+  const boomerangOptionA=[...a.options].find(o=>o.value==='boomerang'),boomerangOptionB=[...b.options].find(o=>o.value==='boomerang');
+  const rightAngleOptionA=[...a.options].find(o=>o.value==='rightangle'),rightAngleOptionB=[...b.options].find(o=>o.value==='rightangle');
+  const lobOptionA=[...a.options].find(o=>o.value==='lob'),lobOptionB=[...b.options].find(o=>o.value==='lob');
+  const mineOptionA=[...a.options].find(o=>o.value==='mine'),mineOptionB=[...b.options].find(o=>o.value==='mine');
   if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
   if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
   if(tripleOptionA)tripleOptionA.disabled=!saveData.tripleUnlocked;
@@ -239,6 +270,11 @@ function updateSkillSetUI(){
   if(blastOptionB)blastOptionB.disabled=!saveData.blastUnlocked;
   if(beastOptionA)beastOptionA.disabled=!saveData.beastUnlocked;
   if(beastOptionB)beastOptionB.disabled=!saveData.beastUnlocked;
+  if(invisOptionA)invisOptionA.disabled=!saveData.invisUnlocked;if(invisOptionB)invisOptionB.disabled=!saveData.invisUnlocked;
+  if(boomerangOptionA)boomerangOptionA.disabled=!saveData.boomerangUnlocked;if(boomerangOptionB)boomerangOptionB.disabled=!saveData.boomerangUnlocked;
+  if(rightAngleOptionA)rightAngleOptionA.disabled=!saveData.rightAngleUnlocked;if(rightAngleOptionB)rightAngleOptionB.disabled=!saveData.rightAngleUnlocked;
+  if(lobOptionA)lobOptionA.disabled=!saveData.lobUnlocked;if(lobOptionB)lobOptionB.disabled=!saveData.lobUnlocked;
+  if(mineOptionA)mineOptionA.disabled=!saveData.mineUnlocked;if(mineOptionB)mineOptionB.disabled=!saveData.mineUnlocked;
 
   a.value=saveData.specialSlot1||'none';
   b.value=saveData.specialSlot2||'none';
@@ -266,6 +302,11 @@ function saveSkillSet(){
   if(s2==='blast'&&!saveData.blastUnlocked)s2='none';
   if(s1==='beast'&&!saveData.beastUnlocked)s1='none';
   if(s2==='beast'&&!saveData.beastUnlocked)s2='none';
+  if(s1==='invis'&&!saveData.invisUnlocked)s1='none';if(s2==='invis'&&!saveData.invisUnlocked)s2='none';
+  if(s1==='boomerang'&&!saveData.boomerangUnlocked)s1='none';if(s2==='boomerang'&&!saveData.boomerangUnlocked)s2='none';
+  if(s1==='rightangle'&&!saveData.rightAngleUnlocked)s1='none';if(s2==='rightangle'&&!saveData.rightAngleUnlocked)s2='none';
+  if(s1==='lob'&&!saveData.lobUnlocked)s1='none';if(s2==='lob'&&!saveData.lobUnlocked)s2='none';
+  if(s1==='mine'&&!saveData.mineUnlocked)s1='none';if(s2==='mine'&&!saveData.mineUnlocked)s2='none';
 
   // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
   if(s1!=='none'&&s1===s2)s1='none';
@@ -291,28 +332,12 @@ function practiceEntries(){
   const list=[];
   for(const key of keys){
     const [kind,id]=key.split(':');
-    const data=kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]));
+    const data=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));
     if(data)list.push({kind,id,name:data.name,desc:data.desc});
   }
   return list;
 }
-function teamSkillList(kind,id){
-  let d=null;
-  if(kind==='expert')d=EXPERT_TEAMS[id];
-  else if(kind==='advanced')d=ADVANCED_TEAMS[id];
-  else if(kind==='rookie')d=ROOKIE_TEAMS[id];
-  else d=TEAMS[id];
-  if(!d)return ['特殊技なし'];
-  const skills=[];
-  if(d.shieldUsers&&d.shieldUsers.length)skills.push('シールド');
-  if(d.tripleUsers&&d.tripleUsers.length)skills.push('3連射');
-  if(d.phaseUsers&&d.phaseUsers.length)skills.push('壁すり抜け弾');
-  if(d.bounceUsers&&d.bounceUsers.length)skills.push('バウンド弾');
-  if(d.blastUsers&&d.blastUsers.length)skills.push('爆裂弾');
-  if(d.beastUsers&&d.beastUsers.length)skills.push('獣化');
-  return skills.length?skills:['特殊技なし'];
-}
-
+function teamSkillList(kind,id){let d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));if(!d)return ['特殊技なし'];const x=[];for(const [p,n] of [['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['boomerangUsers','ブーメラン弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷']])if(d[p]&&d[p].length)x.push(n);return x.length?x:['特殊技なし'];}
 function updatePracticeMenu(){
   const sel=$('practiceTeamSelect'),info=$('practiceTeamInfo');
   if(!sel||!info)return;
@@ -336,7 +361,7 @@ function updatePracticeMenu(){
   }
   const refresh=()=>{
     const [kind,id]=sel.value.split(':');
-    const d=kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]));
+    const d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));
     info.innerHTML=d?`<b>${d.name}</b><br>使用スキル：${teamSkillList(kind,id).join(' / ')}<br><span>${d.desc}</span>`:'';
   };
   sel.onchange=refresh;
@@ -361,7 +386,7 @@ function recordMatch(a,b,as,bs){const A=cupTable[a],B=cupTable[b];A.rf+=as;A.ra+
 function simulateCpu(a,b){const aw=Math.random()<.5,ls=Math.random()<.55?1:0;recordMatch(a,b,aw?2:ls,aw?ls:2)}
 function sortedTable(){return Object.values(cupTable).sort((a,b)=>b.w-a.w||((b.rf-b.ra)-(a.rf-a.ra))||b.rf-a.rf)}
 function tableHTML(){return '<div class="standingRow standingHead"><span></span><span>チーム</span><span>勝敗</span><span>得失</span></div>'+sortedTable().map((r,i)=>`<div class="standingRow ${r.id==='player'?'me':''}"><span class="rank">${i+1}</span><span class="teamName">${r.name}</span><span class="stat">${r.w}-${r.l}</span><span class="stat">${r.rf-r.ra>=0?'+':''}${r.rf-r.ra}</span></div>`).join('')}
-function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='expert'?'エキスパート':(cupKind==='advanced'?'アドバンス':(cupKind==='rookie'?'ルーキー':'ビギナー'))} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
+function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='master'?'マスター':(cupKind==='expert'?'エキスパート':(cupKind==='advanced'?'アドバンス':(cupKind==='rookie'?'ルーキー':'ビギナー')))} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
 
 function gainShieldResearch(){
   if(saveData.shieldUnlocked)return '';
@@ -387,6 +412,8 @@ function gainShieldResearch(){
 
 
 
+function gainSimpleResearch(key,label){const p=key+'Progress',u=key+'Unlocked';if(saveData[u])return '';saveData[p]=Math.min(3,(saveData[p]||0)+1);if(saveData[p]>=3){saveData[u]=true;writeSave();return `${label} 習得！`;}writeSave();return `${label} ${saveData[p]}/3`;}
+function opponentHasKey(prop){const d=opponentData(currentOpponent);return !!(d&&d[prop]&&d[prop].length);}
 function gainBlastResearch(){
   if(saveData.blastUnlocked)return '';
   saveData.blastProgress=Math.min(3,(saveData.blastProgress||0)+1);
@@ -468,21 +495,14 @@ function finishCup(){
     if(place===1)saveData.expertUnlocked=true;
     $('cupEndTitle').textContent=place===1?'アドバンスカップ優勝！':`アドバンスカップ ${place}位`;
     $('cupEndText').textContent=place===1?'エキスパートカップへの挑戦権を獲得しました！':'特殊弾の軌道を読んで再挑戦しましょう。';
-  }else{
-    $('cupEndTitle').textContent=place===1?'エキスパートカップ優勝！':`エキスパートカップ ${place}位`;
-    $('cupEndText').textContent=place===1?'獣化を使う相手にも勝利！':'獣化の高速移動を読んで再挑戦しましょう。';
-  }
+  }else if(cupKind==='expert'){if(place===1)saveData.masterUnlocked=true;$('cupEndTitle').textContent=place===1?'エキスパートカップ優勝！':`エキスパートカップ ${place}位`;$('cupEndText').textContent=place===1?'マスターカップへの挑戦権を獲得しました！':'獣化の高速移動を読んで再挑戦しましょう。';}else{$('cupEndTitle').textContent=place===1?'マスターカップ優勝！':`マスターカップ ${place}位`;$('cupEndText').textContent=place===1?'変則技を使う強豪にも勝利！':'技の軌道と設置位置を読んで再挑戦しましょう。';}
   saveData.cupResume=null;writeSave();$('cupEndPanel').classList.remove('hidden');
 }
 
 let input={x:0,y:0},keys={},heldAt=0;
 
 const $=id=>document.getElementById(id);
-let introClosed=false;
-function closeIntro(){if(introClosed)return;introClosed=true;const intro=$('introScreen');if(intro)intro.classList.add('hidden');}
-window.addEventListener('pointerdown',closeIntro,{once:true});
-window.addEventListener('keydown',closeIntro,{once:true});
-
+let introClosed=false;function closeIntro(){if(introClosed)return;introClosed=true;const x=$('introScreen');if(x)x.classList.add('hidden');}window.addEventListener('pointerdown',closeIntro,{once:true});window.addEventListener('keydown',closeIntro,{once:true});
 const score=$('score'),clock=$('clock'),roundLabel=$('roundLabel'),manaFill=$('manaFill'),message=$('message');
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const norm=(x,y)=>{const d=Math.hypot(x,y)||1;return{x:x/d,y:y/d}};
@@ -490,7 +510,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastBoomerang:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -507,6 +527,7 @@ class Unit{
     this.shield=Math.max(0,this.shield-dt);
     this.bladeT=Math.max(0,this.bladeT-dt);
     if(this.beastActive&&this.beastT>0){this.beastT=Math.max(0,this.beastT-dt);if(this.beastT<=0)this.beastActive=false;}
+    if(this.invisT>0)this.invisT=Math.max(0,this.invisT-dt);
     const _moved=Math.hypot(this.x-_oldX,this.y-_oldY);this.isMoving=_moved>.12;if(this.isMoving)this.runPhase=(this.runPhase||0)+dt*15;
     this.strafeTimer=Math.max(0,this.strafeTimer-dt);
     if(this.strafeTimer<=0){
@@ -542,6 +563,7 @@ class Bullet{
       x,y,dx,dy,team,curve,target,kind,r:7,life:3.6,
       bouncesLeft:kind==='bounce'?4:0,
       blastRadius:kind==='blast'?58:0,
+      originX:x,originY:y,phase2:0,
       speed:curve?315:355,age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
@@ -571,6 +593,7 @@ class Bullet{
       this.dy=Math.sin(nextA);
     }
 
+    if(this.kind==='boomerang'&&this.age>.62){const back=norm(this.originX-this.x,this.originY-this.y),k=Math.min(1,dt*3.2);this.dx=this.dx*(1-k)+back.x*k;this.dy=this.dy*(1-k)+back.y*k;const q=norm(this.dx,this.dy);this.dx=q.x;this.dy=q.y;}else if(this.kind==='rightangle'&&this.phase2===0&&this.age>.48){const ox=this.dx,oy=this.dy,side=(this.target&&this.target.y>this.y)?1:-1;this.dx=-oy*side;this.dy=ox*side;this.phase2=1;}
     this.x+=this.dx*this.speed*dt;
     this.y+=this.dy*this.speed*dt;
 
@@ -648,7 +671,7 @@ class Bullet{
 function circleRect(x,y,r,w){const cx=clamp(x,w.x,w.x+w.w),cy=clamp(y,w.y,w.y+w.h);return Math.hypot(x-cx,y-cy)<r}
 function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COURT.y+COURT.h-r)return false;return !walls.some(w=>circleRect(x,y,r,w))}
 function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.beastActive?2.05:(u.dodgeT>0?2.25:1)),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
-function nearest(u,arr){let best=null,bd=1e9;for(const v of arr){if(!v||!v.alive)continue;const d=dist(u,v);if(d<bd){bd=d;best=v}}return best}
+function nearest(u,arr){let best=null,bd=1e9;for(const v of arr){if(!v||!v.alive||v.invisT>0)continue;const d=dist(u,v);if(d<bd){bd=d;best=v}}return best}
 
 function useShield(u,playerUse=false){
   if(!u||!u.alive)return false;
@@ -690,7 +713,7 @@ function shoot(u,target,curve=false){
 
 function reset(){
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
-  bullets=[];fx=[];left=60;secAcc=0;over=false;running=true;
+  bullets=[];fx=[];mines=[];lobShots=[];left=60;secAcc=0;over=false;running=true;
   player=new Unit(300,360,'blue',true);
   allies=[
     new Unit(280,235,'blue',false,$('roleA').value),
@@ -708,6 +731,11 @@ function reset(){
   if((cupKind==='advanced'||cupKind==='expert')&&od.bounceUsers)for(const i of od.bounceUsers)if(enemies[i])enemies[i].specialKind='bounce';
   if((cupKind==='advanced'||cupKind==='expert')&&od.blastUsers)for(const i of od.blastUsers)if(enemies[i])enemies[i].specialKind='blast';
   if(cupKind==='expert'&&od.beastUsers)for(const i of od.beastUsers)if(enemies[i])enemies[i].specialKind='beast';
+  if(cupKind==='master'&&od.invisUsers)for(const i of od.invisUsers)if(enemies[i])enemies[i].specialKind='invis';
+  if(cupKind==='master'&&od.boomerangUsers)for(const i of od.boomerangUsers)if(enemies[i])enemies[i].specialKind='boomerang';
+  if(cupKind==='master'&&od.rightAngleUsers)for(const i of od.rightAngleUsers)if(enemies[i])enemies[i].specialKind='rightangle';
+  if(cupKind==='master'&&od.lobUsers)for(const i of od.lobUsers)if(enemies[i])enemies[i].specialKind='lob';
+  if(cupKind==='master'&&od.mineUsers)for(const i of od.mineUsers)if(enemies[i])enemies[i].specialKind='mine';
   clock.textContent='1:00';
   roundLabel.textContent='ROUND '+round;
   flash(opponentData(currentOpponent).name,900);
@@ -746,6 +774,8 @@ function cpuBlastShot(u){
   bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'blast'));
 }
 
+function cpuBoomerang(u){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'boomerang'));}
+function cpuRightAngle(u){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));}
 function ai(u,dt,isEnemy){
   if(!u.alive)return;
   u.think-=dt;
@@ -820,6 +850,11 @@ function ai(u,dt,isEnemy){
     }
   }
     const nowSpecial=performance.now()/1000;
+  if(u.specialKind==='invis'&&u.invisT<=0&&nowSpecial-u.lastInvis>5.5&&Math.random()<.006){u.lastInvis=nowSpecial;u.invisT=2.6;}
+  if(u.specialKind==='boomerang'&&nowSpecial-u.lastBoomerang>2.4&&Math.random()<.009){u.lastBoomerang=nowSpecial;cpuBoomerang(u);}
+  if(u.specialKind==='rightangle'&&nowSpecial-u.lastRightAngle>2.4&&Math.random()<.009){u.lastRightAngle=nowSpecial;cpuRightAngle(u);}
+  if(u.specialKind==='lob'&&nowSpecial-u.lastLob>3.2&&Math.random()<.008){const q=nearest(u,u.team==='red'?[player,...allies]:enemies);if(q){u.lastLob=nowSpecial;createLob(u,q,u.team);}}
+  if(u.specialKind==='mine'&&nowSpecial-u.lastMine>3&&Math.random()<.007){if(placeMine(u))u.lastMine=nowSpecial;}
   if(u.specialKind==='blast'&&nowSpecial-u.lastBlast>5.5&&Math.random()<.010){
     const targets=u.team==='red'?[player,...allies]:enemies,t=nearest(u,targets);
     if(t&&dist(u,t)<520){u.lastBlast=nowSpecial;cpuBlastShot(u);flash('爆裂弾！',260);}
@@ -959,6 +994,7 @@ function update(dt){
   for(const a of allies){a.update(dt);if(!a.controlled)ai(a,dt,false)}
   for(const e of enemies){e.update(dt);ai(e,dt,true)}
   for(const b of bullets)b.update(dt);
+  updateLobs(dt);updateMines(dt);
 
   for(let i=0;i<bullets.length;i++){
     const a=bullets[i];if(a.life<=0)continue;
@@ -977,21 +1013,148 @@ function update(dt){
 }
 
 function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lineTo(x+w-r,y);g.quadraticCurveTo(x+w,y,x+w,y+r);g.lineTo(x+w,y+h-r);g.quadraticCurveTo(x+w,y+h,x+w-r,y+h);g.lineTo(x+r,y+h);g.quadraticCurveTo(x,y+h,x,y+h-r);g.lineTo(x,y+r);g.quadraticCurveTo(x,y,x+r,y);g.closePath();g.fill()}
-function drawFlag(f,team){
-  g.save();g.translate(f.x,f.y);
-  const col=team==='blue'?'#86c7ff':'#ff9aa8';
-  const glow=team==='blue'?'#cfeaff':'#ffd6dc';
-  const t=performance.now()/1000;
-  g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;
-  g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();
-  for(let i=0;i<6;i++){const a=i*Math.PI/3;g.beginPath();g.moveTo(Math.cos(a)*18,10+Math.sin(a)*18);g.lineTo(Math.cos(a+Math.PI/3)*18,10+Math.sin(a+Math.PI/3)*18);g.stroke();}
-  g.restore();
-  const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;
-  g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();
-  g.globalAlpha=.7;g.strokeStyle='#fff';g.beginPath();g.moveTo(0,-25);g.lineTo(0,22);g.moveTo(-13,-4);g.lineTo(13,-4);g.stroke();
+function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
+
+function drawUnit(u){
+  if(!u||!u.alive)return;
+  g.save();g.translate(u.x,u.y);
+  if(u.invisT>0)g.globalAlpha=u.controlled?.38:.14;
+
+  if(u.beastActive){
+    // Full transformation: only the quadruped beast is drawn.
+    const facing=(u.team==='blue'?1:-1);
+    const gallop=u.isMoving?Math.sin((u.runPhase||0)*1.35):0;
+
+    if(u.controlled){
+      g.strokeStyle='#ffe66d';g.lineWidth=3;
+      g.beginPath();g.arc(0,3,32,0,Math.PI*2);g.stroke();
+      g.fillStyle='#ffe66d';g.beginPath();
+      g.moveTo(0,-44);g.lineTo(-7,-35);g.lineTo(7,-35);g.closePath();g.fill();
+    }
+
+    g.save();
+    g.scale(facing,1);
+    const fur=u.team==='blue'?'#496fa8':'#9b5058';
+    const dark=u.team==='blue'?'#263f69':'#63343b';
+
+    g.fillStyle='#0002';
+    g.beginPath();g.ellipse(0,18,29,7,0,0,Math.PI*2);g.fill();
+
+    g.strokeStyle=fur;g.lineWidth=7;g.lineCap='round';
+    g.beginPath();g.moveTo(-20,2);g.quadraticCurveTo(-33,-9-gallop*2,-38,-2);g.stroke();
+
+    g.strokeStyle=dark;g.lineWidth=5;
+    const a=gallop*7,b=-gallop*7;
+    g.beginPath();
+    g.moveTo(-15,8);g.lineTo(-19+a,23);
+    g.moveTo(-5,9);g.lineTo(-2+b,24);
+    g.moveTo(9,9);g.lineTo(6+b,24);
+    g.moveTo(17,7);g.lineTo(21+a,22);
+    g.stroke();
+
+    g.fillStyle=fur;
+    g.beginPath();g.ellipse(0,1,26,14,0,0,Math.PI*2);g.fill();
+
+    g.beginPath();
+    g.moveTo(16,-8);g.lineTo(23,-20);g.lineTo(27,-8);
+    g.lineTo(38,-3);g.lineTo(29,7);g.lineTo(18,7);g.closePath();g.fill();
+
+    g.beginPath();
+    g.moveTo(20,-9);g.lineTo(17,-20);g.lineTo(30,-10);g.closePath();g.fill();
+
+    g.fillStyle='#fff';g.beginPath();g.arc(26,-5,2.4,0,Math.PI*2);g.fill();
+    g.fillStyle='#202735';g.beginPath();g.arc(38,-2,2.4,0,Math.PI*2);g.fill();
+
+    if(u.isMoving){
+      g.globalAlpha=.45;g.strokeStyle='#fff';g.lineWidth=2;
+      for(let i=0;i<3;i++){
+        g.beginPath();
+        g.moveTo(-30-i*5,-8+i*7);
+        g.lineTo(-45-i*6,-8+i*7);
+        g.stroke();
+      }
+    }
+    g.restore();
+
+    if(u.shield>0){
+      g.strokeStyle='#8fe5ff';g.lineWidth=4;g.globalAlpha=.8;
+      g.beginPath();g.arc(0,0,35,0,Math.PI*2);g.stroke();
+    }
+
+    g.restore();
+    return;
+  }
+  // v2.37: legs and quick alternating running motion
+  const legSwing=u.isMoving?Math.sin(u.runPhase||0)*5:0;
+  g.strokeStyle=u.team==='blue'?'#243f88':'#8b3140';
+  g.lineWidth=5;g.lineCap='round';g.beginPath();
+  g.moveTo(-6,12);g.lineTo(-7-legSwing,24);g.moveTo(6,12);g.lineTo(7+legSwing,24);g.stroke();
+  g.lineWidth=4;g.beginPath();g.moveTo(-7-legSwing,24);g.lineTo(-11-legSwing,25);g.moveTo(7+legSwing,24);g.lineTo(11+legSwing,25);g.stroke();
+  g.scale(1.08,1.08);
+  if(u.dodgeT>0)g.rotate(u.rollAngle);
+  if(u.inv>0)g.globalAlpha=.55;
+
+  if(u.shield>0){g.save();g.strokeStyle='#8fe5ff';g.lineWidth=4;g.globalAlpha=.8;g.beginPath();g.arc(0,0,29,0,Math.PI*2);g.stroke();g.restore();}
+  if(u.specialKind==='triple'&&u.tripleReady>=0){
+    g.save();g.globalAlpha=.45+.35*Math.sin(performance.now()/55);g.strokeStyle='#ffe8a8';g.lineWidth=3;g.beginPath();g.arc(0,0,34,0,Math.PI*2);g.stroke();g.fillStyle='#fff3c8';g.font='bold 11px sans-serif';g.textAlign='center';g.fillText('×3',0,-38);g.restore();
+  }
+  if(u.bladeT>0){
+    const p=1-u.bladeT/.34;
+    g.save();
+    g.rotate(u.bladeAngle);
+    g.globalAlpha=Math.max(.15,1-p);
+    g.lineWidth=8;
+    g.lineCap='round';
+    g.strokeStyle='#dff8ff';
+    g.beginPath();
+    g.arc(0,0,72,-Math.PI*.55,Math.PI*.55);
+    g.stroke();
+    g.lineWidth=3;
+    g.strokeStyle='#ffffff';
+    g.beginPath();
+    g.arc(0,0,82,-Math.PI*.55,Math.PI*.55);
+    g.stroke();
+    g.restore();
+  }
+  if(u.dodgeT>0){
+    g.strokeStyle=u.team==='blue'?'#d7e7ff99':'#ffd9dd99';g.lineWidth=4;g.beginPath();g.arc(0,0,25,-2.5,1.8);g.stroke();
+  }
+  if(u.controlled){
+    g.strokeStyle='#ffe66d';g.lineWidth=3;g.beginPath();g.arc(0,4,25,0,Math.PI*2);g.stroke();
+    g.fillStyle='#ffe66d';g.beginPath();g.moveTo(0,-50);g.lineTo(-7,-40);g.lineTo(7,-40);g.closePath();g.fill();
+  }
+
+  g.fillStyle='#0002';g.beginPath();g.ellipse(0,14,18,7,0,0,Math.PI*2);g.fill();
+  g.fillStyle=u.team==='blue'?BLUE:RED;rr(-14,-8,28,29,8);
+
+  if(u.team==='blue'){
+    g.save();g.beginPath();g.rect(-14,-8,28,29);g.clip();g.strokeStyle='#dceaff';g.lineWidth=4;
+    for(let k=-28;k<32;k+=12){g.beginPath();g.moveTo(k,-10);g.lineTo(k+24,24);g.stroke()}g.restore();
+    g.fillStyle='#ffe66d';g.beginPath();g.arc(0,4,3.5,0,Math.PI*2);g.fill();
+  }else{
+    g.strokeStyle='#ffd4d7';g.lineWidth=3;g.beginPath();g.moveTo(-10,1);g.lineTo(10,1);g.stroke();
+  }
+
+  g.fillStyle=SKIN;g.beginPath();g.arc(0,-17,12,0,Math.PI*2);g.fill();
+  g.fillStyle=u.team==='blue'?'#3158ac':'#b74250';
+  g.beginPath();g.moveTo(-13,-24);g.quadraticCurveTo(-5,-43,7,-35);g.quadraticCurveTo(19,-31,12,-21);g.closePath();g.fill();
+  g.strokeStyle='#f4ead9';g.lineWidth=4;g.beginPath();g.moveTo(-13,-25);g.lineTo(13,-25);g.stroke();
+  g.fillStyle=EYE;g.beginPath();g.arc(-4,-18,1.8,0,Math.PI*2);g.arc(4,-18,1.8,0,Math.PI*2);g.fill();
+
+  if(u.charging){
+    const t=performance.now()/1000,spin=t*10;
+    g.strokeStyle='#b9a1ff';g.lineWidth=3;g.beginPath();g.arc(0,-2,24+Math.sin(t*12)*2,spin,spin+Math.PI*1.55);g.stroke();
+    g.fillStyle='#e8ddff';const ox=Math.cos(spin)*21,oy=-2+Math.sin(spin)*12;g.beginPath();g.arc(ox,oy,5+u.chargeT*3,0,Math.PI*2);g.fill();
+  }
+  if(u.emote>0){g.font='19px sans-serif';g.fillText('✌',14,-31)}
   g.restore();
 }
 
+
+function createLob(u,target,team){lobShots.push({sx:u.x,sy:u.y,tx:target.x,ty:target.y,x:u.x,y:u.y,t:0,dur:.82,team});}
+function updateLobs(dt){for(const l of lobShots){l.t+=dt;const p=Math.min(1,l.t/l.dur);l.x=l.sx+(l.tx-l.sx)*p;l.y=l.sy+(l.ty-l.sy)*p-Math.sin(Math.PI*p)*95;if(p>=1&&!l.done){l.done=true;explodeAt(l.tx,l.ty,l.team,64);}}lobShots=lobShots.filter(l=>!l.done);}
+function placeMine(u){if(dist(u,flagBlue)<95||dist(u,flagRed)<95){if(u.controlled)flash('クリスタル付近には設置できない',520);return false;}const own=mines.filter(m=>m.owner===u);if(own.length>=2){const oldest=own.reduce((x,y)=>x.age>y.age?x:y);mines=mines.filter(m=>m!==oldest);}mines.push({x:u.x,y:u.y,team:u.team,age:0,owner:u});return true;}
+function updateMines(dt){for(const m of mines)m.age+=dt;for(const m of [...mines]){const targets=m.team==='blue'?enemies:[player,...allies];if(targets.some(u=>u&&u.alive&&Math.hypot(u.x-m.x,u.y-m.y)<38)){explodeAt(m.x,m.y,m.team,58);mines=mines.filter(x=>x!==m);}}}
 
 function arenaTheme(){
   if(mode==='practice')return {court:'#b9d6f2',wall:'#e7edf5',bg:'#5f7c92'};
@@ -999,6 +1162,7 @@ function arenaTheme(){
   if(cupKind==='rookie')return {court:'#b7a8e8',wall:'#eee7ff',bg:'#655f86'};
   if(cupKind==='advanced')return {court:'#d9b77b',wall:'#f5e2b8',bg:'#7c6848'};
   if(cupKind==='expert')return {court:'#9fbc8f',wall:'#d8e4cf',bg:'#4f6652'};
+  if(cupKind==='master')return {court:'#b7a0c9',wall:'#efe3f5',bg:'#594a68'};
   return {court:'#9ad9b8',wall:'#f1e6cc',bg:'#5f7d8a'};
 }
 
@@ -1017,6 +1181,8 @@ function draw(){
     g.beginPath();g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();
     if(b.kind==='phase'){
       g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
+    }else if(b.kind==='boomerang'){g.strokeStyle='#ffb0f1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+6,0,Math.PI*1.45);g.stroke();
+    }else if(b.kind==='rightangle'){g.strokeStyle='#b9ff75';g.lineWidth=3;g.strokeRect(b.x-10,b.y-10,20,20);
      }else if(b.kind==='blast'){
       g.strokeStyle='#ff9b5a';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+6,0,Math.PI*2);g.stroke();
     }else if(b.kind==='bounce'){
@@ -1026,6 +1192,8 @@ function draw(){
     g.restore();
   }
 
+  for(const l of lobShots){g.save();g.shadowBlur=12;g.shadowColor='#ffb45f';g.fillStyle='#ffd9a0';g.beginPath();g.arc(l.x,l.y,8,0,Math.PI*2);g.fill();g.restore();}
+  for(const m of mines){g.save();g.translate(m.x,m.y);g.strokeStyle=m.team==='blue'?'#6ebcff':'#ff8c98';g.lineWidth=2;g.beginPath();g.arc(0,0,13,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(-8,0);g.lineTo(8,0);g.moveTo(0,-8);g.lineTo(0,8);g.stroke();g.restore();}
   for(const a of allies)drawUnit(a);
   for(const e of enemies)drawUnit(e);
   drawUnit(player);
@@ -1228,6 +1396,12 @@ function toggleBeast(u){
   u.mana-=34;u.lastBeast=now;u.beastActive=true;u.beastT=4.2;u.dodgeRecover=.18;return true;
 }
 
+function useInvis(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastInvis<1)return false;if(u.mana<28){flash('魔力不足',360);return false}u.mana-=28;u.lastInvis=now;u.invisT=3;return true;}
+function useBoomerang(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastBoomerang<.65)return false;if(u.mana<24){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=24;u.lastBoomerang=now;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'boomerang'));return true;}
+function useRightAngle(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastRightAngle<.65)return false;if(u.mana<23){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=23;u.lastRightAngle=now;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));return true;}
+function useLob(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastLob<.8)return false;if(u.mana<32){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=32;u.lastLob=now;createLob(u,t,u.team);return true;}
+function useMine(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMine<.55)return false;if(u.mana<20){flash('魔力不足',360);return false}if(!placeMine(u))return false;u.mana-=20;u.lastMine=now;return true;}
+
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
 
@@ -1252,10 +1426,12 @@ function usePlayerSpecial(kind){
     if(useBlastShot(player))flash('爆裂弾！',320);
     return;
   }
-  if(kind==='beast'&&saveData.beastUnlocked){
-    if(toggleBeast(player))flash(player.beastActive?'獣化！':'獣化解除',320);
-    return;
-  }
+  if(kind==='beast'&&saveData.beastUnlocked){if(toggleBeast(player))flash(player.beastActive?'獣化！':'獣化解除',320);return;}
+  if(kind==='invis'&&saveData.invisUnlocked){if(useInvis(player))flash('透明化！',320);return;}
+  if(kind==='boomerang'&&saveData.boomerangUnlocked){if(useBoomerang(player))flash('ブーメラン弾！',320);return;}
+  if(kind==='rightangle'&&saveData.rightAngleUnlocked){if(useRightAngle(player))flash('直角弾！',320);return;}
+  if(kind==='lob'&&saveData.lobUnlocked){if(useLob(player))flash('放物線爆弾！',320);return;}
+  if(kind==='mine'&&saveData.mineUnlocked){if(useMine(player))flash('地雷設置！',320);return;}
   if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
 
   if(kind==='shield'&&saveData.shieldUnlocked){
@@ -1356,7 +1532,7 @@ bindTap('practiceStartBtn',()=>{
   mode='practice';
   // cupKind is used only to identify the opponent's league/skills during the practice match.
   // It must not turn the match into a tournament.
-  cupKind=kind==='expert'?'expert':(kind==='advanced'?'advanced':(kind==='rookie'?'rookie':'beginner'));
+  cupKind=kind==='master'?'master':(kind==='expert'?'expert':(kind==='advanced'?'advanced':(kind==='rookie'?'rookie':'beginner')));
   currentOpponent=id;
   bScore=0;rScore=0;round=1;
   score.textContent='0 - 0';
@@ -1395,6 +1571,8 @@ bindTap('expertBtn',()=>{
   $('menu').classList.add('hidden');
   refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();
 });
+bindTap('masterBtn',()=>{if(!saveData.masterUnlocked)return;mode='cup';cupKind='master';cupIndex=0;cupTable=newCupTable();currentOpponent=MASTER_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();});
+
 
 
 bindTap('practiceBtn',()=>{
@@ -1433,6 +1611,11 @@ bindTap('nextBtn',()=>{
         if(opponentHasBounce()){const m=gainBounceResearch();if(m)msgs.push(m);}
         if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
         if(opponentHasBeast()){const m=gainBeastResearch();if(m)msgs.push(m);}
+        if(opponentHasKey('invisUsers')){const m=gainSimpleResearch('invis','透明化');if(m)msgs.push(m);}
+        if(opponentHasKey('boomerangUsers')){const m=gainSimpleResearch('boomerang','ブーメラン弾');if(m)msgs.push(m);}
+        if(opponentHasKey('rightAngleUsers')){const m=gainSimpleResearch('rightAngle','直角弾');if(m)msgs.push(m);}
+        if(opponentHasKey('lobUsers')){const m=gainSimpleResearch('lob','放物線爆弾');if(m)msgs.push(m);}
+        if(opponentHasKey('mineUsers')){const m=gainSimpleResearch('mine','地雷');if(m)msgs.push(m);}
         pendingLearnMessage=msgs.join(' / ');
       }
     }else{
@@ -1467,6 +1650,11 @@ bindTap('nextBtn',()=>{
         if(opponentHasBounce()){const m=gainBounceResearch();if(m)msgs.push(m);}
         if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
         if(opponentHasBeast()){const m=gainBeastResearch();if(m)msgs.push(m);}
+        if(opponentHasKey('invisUsers')){const m=gainSimpleResearch('invis','透明化');if(m)msgs.push(m);}
+        if(opponentHasKey('boomerangUsers')){const m=gainSimpleResearch('boomerang','ブーメラン弾');if(m)msgs.push(m);}
+        if(opponentHasKey('rightAngleUsers')){const m=gainSimpleResearch('rightAngle','直角弾');if(m)msgs.push(m);}
+        if(opponentHasKey('lobUsers')){const m=gainSimpleResearch('lob','放物線爆弾');if(m)msgs.push(m);}
+        if(opponentHasKey('mineUsers')){const m=gainSimpleResearch('mine','地雷');if(m)msgs.push(m);}
         pendingLearnMessage=msgs.join(' / ');
       }
     }else{
