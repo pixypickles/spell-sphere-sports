@@ -976,8 +976,8 @@ function useShield(u,playerUse=false){
 
   if(playerUse){
     const cost=30;
-    if(u.mana<cost){flash('魔力不足',400);return false}
-    u.mana-=cost;
+    if(!u.fairyActive&&u.mana<cost){flash('魔力不足',400);return false}
+    if(!u.fairyActive)u.mana-=cost;
   }
 
   u.lastShield=now;
@@ -990,7 +990,7 @@ function shoot(u,target,curve=false){if(u.moleActive)return false;
   if(u.fairyActive)curve=true;
   const cost=curve?16:11,now=performance.now()/1000;
   if(u.mana<cost||now-u.lastShot<u.shotCd)return;
-  u.lastShot=now;u.mana-=cost;
+  u.lastShot=now;if(!u.fairyActive)u.mana-=cost;
   const direct=norm(target.x-u.x,target.y-u.y);
   let dx=direct.x,dy=direct.y;
   if(curve){
@@ -1960,15 +1960,15 @@ $('dodgeBtn').addEventListener('pointerdown',e=>{
   if(player.fairyActive){
     const n=performance.now()/1000;
     if(player.jumpT>0||n-player.lastDodge<.45)return;
-    if(player.mana<8){flash('魔力不足',300);return;}
-    player.mana-=8;
+    if(!player.fairyActive&&player.mana<8){flash('魔力不足',300);return;}
+    if(!player.fairyActive)player.mana-=8;
     player.lastDodge=n;
     player.jumpT=1.55;
     player.inv=Math.max(player.inv,1.55);
     flash('妖精浮遊！',260);
     return;
   }
-  if(player.rabbitActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastJump<1.05)return;if(player.mana<10){flash('魔力不足',300);return}player.mana-=10;player.lastJump=n;player.jumpT=.72;player.inv=Math.max(player.inv,.72);flash('ウサギジャンプ！',260);return;}
+  if(player.rabbitActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastJump<1.05)return;if(!player.fairyActive&&player.mana<10){flash('魔力不足',300);return}if(!player.fairyActive)player.mana-=10;player.lastJump=n;player.jumpT=.72;player.inv=Math.max(player.inv,.72);flash('ウサギジャンプ！',260);return;}
   if(player.beastActive){flash('オオカミ化中は回避できない',360);return;}
   const now=performance.now()/1000;if(now-player.lastDodge<1.8){flash('回避クールタイム',430);return}
   let x=input.x,y=input.y;
@@ -1997,7 +1997,7 @@ function useDoubleShot(u){
     flash('回避中は使えない',380);
     return false;
   }
-  if(u.mana<cost){
+  if(!u.fairyActive&&u.mana<cost){
     flash('魔力不足',400);
     return false;
   }
@@ -2006,7 +2006,7 @@ function useDoubleShot(u){
   if(!target)return false;
 
   u.lastDouble=now;
-  u.mana-=cost;
+  if(!u.fairyActive)u.mana-=cost;
 
   // shoot() itself would charge mana and obey normal shot cooldown, so fire the two
   // projectiles directly as a special technique.
@@ -2029,14 +2029,14 @@ function useManaBlade(u){
   const now=performance.now()/1000;
   if(now-u.lastBlade<.75){flash('魔力剣クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
-  if(u.mana<18){flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<18){flash('魔力不足',360);return false}
 
   const target=nearest(u,enemies);
   let ax=1,ay=0;
   if(target){const d=norm(target.x-u.x,target.y-u.y);ax=d.x;ay=d.y}
   else if(u.team==='red'){ax=-1;ay=0}
 
-  u.mana-=18;
+  if(!u.fairyActive)u.mana-=18;
   u.lastBlade=now;
   u.bladeT=.34;
   u.bladeAngle=Math.atan2(ay,ax);
@@ -2067,9 +2067,9 @@ function useTripleShot(u){
   const now=performance.now()/1000;
   if(now-u.lastTriple<.90){flash('3連射クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
-  if(u.mana<38){flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<38){flash('魔力不足',360);return false}
   if(!nearest(u,enemies))return false;
-  u.mana-=38;u.lastTriple=now;
+  if(!u.fairyActive)u.mana-=38;u.lastTriple=now;
   const fire=()=>{if(!u.alive)return;const t=nearest(u,enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t));};
   fire();setTimeout(fire,145);setTimeout(fire,290);return true;
 }
@@ -2080,9 +2080,9 @@ function usePhaseShot(u){
   const now=performance.now()/1000;
   if(now-u.lastPhase<.55){flash('壁すり抜け弾クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
-  if(u.mana<24){flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<24){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
-  u.mana-=24;u.lastPhase=now;
+  if(!u.fairyActive)u.mana-=24;u.lastPhase=now;
   const d=norm(t.x-u.x,t.y-u.y);
   bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'phase'));
   return true;
@@ -2093,9 +2093,9 @@ function useBounceShot(u){
   const now=performance.now()/1000;
   if(now-u.lastBounce<.55){flash('バウンド弾クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
-  if(u.mana<22){flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<22){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
-  u.mana-=22;u.lastBounce=now;
+  if(!u.fairyActive)u.mana-=22;u.lastBounce=now;
 
   // Aim a little off-center so wall rebounds are easier to create.
   const d0=norm(t.x-u.x,t.y-u.y);
@@ -2111,30 +2111,30 @@ function useBlastShot(u){
   const now=performance.now()/1000;
   if(now-u.lastBlast<.70){flash('爆裂弾クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0||u.beastActive){flash('今は使えない',360);return false}
-  if(u.mana<30){flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<30){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
-  u.mana-=30;u.lastBlast=now;
+  if(!u.fairyActive)u.mana-=30;u.lastBlast=now;
   const d=norm(t.x-u.x,t.y-u.y);
   bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'blast'));
   return true;
 }
 
-function toggleRabbit(u){if(!u||!u.alive)return false;const n=performance.now()/1000;if(u.rabbitActive){u.rabbitActive=false;u.rabbitT=0;return true}if(n-u.lastRabbit<.6||u.mana<8)return false;u.mana-=8;u.lastRabbit=n;u.rabbitActive=true;u.rabbitT=4;return true;}
+function toggleRabbit(u){if(!u||!u.alive)return false;const n=performance.now()/1000;if(u.rabbitActive){u.rabbitActive=false;u.rabbitT=0;return true}if(n-u.lastRabbit<.6||u.mana<8)return false;if(!u.fairyActive)u.mana-=8;u.lastRabbit=n;u.rabbitActive=true;u.rabbitT=4;return true;}
 function toggleBeast(u){
   if(!u||!u.alive)return false;
   if(u.beastActive){u.beastActive=false;return true}
-  if(u.mana<10){if(u.controlled)flash('魔力不足',360);return false}
-  u.mana-=10;u.beastActive=true;return true;
+  if(!u.fairyActive&&u.mana<10){if(u.controlled)flash('魔力不足',360);return false}
+  if(!u.fairyActive)u.mana-=10;u.beastActive=true;return true;
 }
 
-function useInvis(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastInvis<1)return false;if(u.mana<28){flash('魔力不足',360);return false}u.mana-=28;u.lastInvis=now;u.invisT=3;return true;}
+function useInvis(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastInvis<1)return false;if(!u.fairyActive&&u.mana<28){flash('魔力不足',360);return false}if(!u.fairyActive)u.mana-=28;u.lastInvis=now;u.invisT=3;return true;}
 function useSpread(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
   if(now-u.lastSpread<.65)return false;
-  if(u.mana<26){flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<26){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
-  u.mana-=26;u.lastSpread=now;
+  if(!u.fairyActive)u.mana-=26;u.lastSpread=now;
   const d0=norm(t.x-u.x,t.y-u.y),base=Math.atan2(d0.y,d0.x);
   for(const off of [-.34,-.17,0,.17,.34]){
     const a=base+off,dx=Math.cos(a),dy=Math.sin(a);
@@ -2142,10 +2142,10 @@ function useSpread(u){
   }
   return true;
 }
-function useRightAngle(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastRightAngle<.65)return false;if(u.mana<23){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=23;u.lastRightAngle=now;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));return true;}
-function useLob(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastLob<.8)return false;if(u.mana<32){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=32;u.lastLob=now;createLob(u,t,u.team);return true;}
-function useMine(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMine<.55)return false;if(u.mana<20){flash('魔力不足',360);return false}if(!placeMine(u))return false;u.mana-=20;u.lastMine=now;return true;}
-function useJump(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastJump<.85){flash('ジャンプクールタイム',260);return false}if(u.mana<20){flash('魔力不足',360);return false}if(u.dodgeT>0||u.beastActive)return false;u.mana-=20;u.lastJump=now;u.jumpT=1.05;u.inv=Math.max(u.inv,1.05);return true;}
+function useRightAngle(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastRightAngle<.65)return false;if(!u.fairyActive&&u.mana<23){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;if(!u.fairyActive)u.mana-=23;u.lastRightAngle=now;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));return true;}
+function useLob(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastLob<.8)return false;if(!u.fairyActive&&u.mana<32){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;if(!u.fairyActive)u.mana-=32;u.lastLob=now;createLob(u,t,u.team);return true;}
+function useMine(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMine<.55)return false;if(!u.fairyActive&&u.mana<20){flash('魔力不足',360);return false}if(!placeMine(u))return false;if(!u.fairyActive)u.mana-=20;u.lastMine=now;return true;}
+function useJump(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastJump<.85){flash('ジャンプクールタイム',260);return false}if(!u.fairyActive&&u.mana<20){flash('魔力不足',360);return false}if(u.dodgeT>0||u.beastActive)return false;if(!u.fairyActive)u.mana-=20;u.lastJump=now;u.jumpT=1.05;u.inv=Math.max(u.inv,1.05);return true;}
 
 
 function endClone(u,hitClone=false){
@@ -2159,8 +2159,8 @@ function useClone(u){
   if(!u||!u.alive||u.cloneT>0)return false;
   const now=performance.now()/1000;
   if(now-u.lastClone<.9)return false;
-  if(u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
-  u.mana-=50;u.lastClone=now;
+  if(!u.fairyActive&&u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
+  if(!u.fairyActive)u.mana-=50;u.lastClone=now;
   u.cloneBody={x:u.x,y:u.y};
   u.cloneT=4.2;
   u.inv=Math.max(u.inv,.14);
@@ -2171,14 +2171,14 @@ function useReflectBlade(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
   if(now-u.lastReflectBlade<.8)return false;
-  if(u.mana<24){if(u.controlled)flash('魔力不足',360);return false}
+  if(!u.fairyActive&&u.mana<24){if(u.controlled)flash('魔力不足',360);return false}
 
   const targets=u.team==='blue'?enemies:[player,...allies];
   const target=nearest(u,targets);
   let ax=u.team==='blue'?1:-1,ay=0;
   if(target){const d=norm(target.x-u.x,target.y-u.y);ax=d.x;ay=d.y}
 
-  u.mana-=24;u.lastReflectBlade=now;
+  if(!u.fairyActive)u.mana-=24;u.lastReflectBlade=now;
   u.bladeT=.36;u.reflectBladeT=.36;u.bladeAngle=Math.atan2(ay,ax);
 
   const range=100,halfArc=Math.PI*.55;
@@ -2233,8 +2233,8 @@ function useWind(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
   if(now-u.lastWind<1.0)return false;
-  if(u.mana<32){if(u.controlled)flash('魔力不足',360);return false}
-  u.mana-=32;u.lastWind=now;
+  if(!u.fairyActive&&u.mana<32){if(u.controlled)flash('魔力不足',360);return false}
+  if(!u.fairyActive)u.mana-=32;u.lastWind=now;
   const x=u.team==='blue'?COURT.x+COURT.w*.72:COURT.x+COURT.w*.28;
   windZones.push({x,y:CY,team:u.team,t:2.35,r:230});
   return true;
@@ -2264,8 +2264,8 @@ function toggleFairy(u){
   const now=performance.now()/1000;
   if(u.fairyActive){u.fairyActive=false;u.shotCd=.85;return true}
   if(now-u.lastFairy<1.0)return false;
-  if(u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
-  u.mana-=50;u.lastFairy=now;u.fairyActive=true;u.shotCd=.10;
+  if(!u.fairyActive&&u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
+  if(!u.fairyActive)u.mana-=50;u.lastFairy=now;u.fairyActive=true;u.shotCd=.10;
   u.rabbitActive=false;u.beastActive=false;u.moleActive=false;
   return true;
 }
@@ -2296,8 +2296,8 @@ function toggleMole(u){
   if(!u||!u.alive)return false;const now=performance.now()/1000;
   if(u.moleActive){u.moleActive=false;u.moleT=0;return true}
   if(now-u.lastMole<1.0)return false;
-  if(u.mana<22){if(u.controlled)flash('魔力不足',360);return false}
-  u.mana-=22;u.lastMole=now;u.moleActive=true;u.moleT=3.2;return true;
+  if(!u.fairyActive&&u.mana<22){if(u.controlled)flash('魔力不足',360);return false}
+  if(!u.fairyActive)u.mana-=22;u.lastMole=now;u.moleActive=true;u.moleT=3.2;return true;
 }
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
