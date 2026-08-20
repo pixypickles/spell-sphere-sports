@@ -777,7 +777,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,lastFrogJump:-99,frogTongueT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -797,6 +797,7 @@ class Unit{
     if(this.rabbitActive&&this.rabbitT>0){this.rabbitT=Math.max(0,this.rabbitT-dt);if(this.rabbitT<=0)this.rabbitActive=false;}
     if(this.invisT>0)this.invisT=Math.max(0,this.invisT-dt);
     if(this.jumpT>0)this.jumpT=Math.max(0,this.jumpT-dt);
+    if(this.frogTongueT>0)this.frogTongueT=Math.max(0,this.frogTongueT-dt);
     if(this.fairyActive)maintainFairyCooldowns(this);
     if(this.beastActive){this.mana=Math.max(0,this.mana-8*dt);if(this.mana<=0){this.beastActive=false;if(this.controlled)flash('MP切れ：オオカミ化解除',360)}}
     if(this.moleActive){this.moleT=Math.max(0,this.moleT-dt);this.mana=Math.max(0,this.mana-18*dt);if(this.mana<=0||this.moleT<=0){this.moleActive=false;this.moleT=0;if(this.controlled&&this.mana<=0)flash('MP切れ：地上へ',360)}}
@@ -1450,13 +1451,7 @@ function drawUnit(u){
   }
   g.save();g.translate(u.x,u.y);
   if(u.jumpT>0){
-    if(u.frogActive){
-    g.save();g.fillStyle='#5f9e45';g.beginPath();g.ellipse(0,5,25,18,0,0,Math.PI*2);g.fill();
-    g.beginPath();g.arc(-12,-8,9,0,Math.PI*2);g.arc(12,-8,9,0,Math.PI*2);g.fill();
-    g.fillStyle='#fff';g.beginPath();g.arc(-12,-9,5,0,Math.PI*2);g.arc(12,-9,5,0,Math.PI*2);g.fill();
-    g.fillStyle='#182418';g.beginPath();g.arc(-12,-9,2,0,Math.PI*2);g.arc(12,-9,2,0,Math.PI*2);g.fill();
-    g.strokeStyle='#355f31';g.lineWidth=7;g.beginPath();g.moveTo(-18,13);g.lineTo(-30,25);g.moveTo(18,13);g.lineTo(30,25);g.stroke();g.restore();g.restore();return;
-  }
+    
 
   if(u.fairyActive){
       const total=1.55,p=Math.max(0,Math.min(1,1-u.jumpT/total));
@@ -1532,6 +1527,18 @@ function drawUnit(u){
     g.restore();g.restore();return;
   }
 
+  if(u.frogActive){
+    g.save();
+    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(0,7,24,18,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#78bd55';g.beginPath();g.arc(0,-7,17,0,Math.PI*2);g.fill();
+    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(-20,17,14,7,-.25,0,Math.PI*2);g.ellipse(20,17,14,7,.25,0,Math.PI*2);g.fill();
+    g.strokeStyle='#4d8c3a';g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(-11,3);g.lineTo(-21,8);g.moveTo(11,3);g.lineTo(21,8);g.stroke();
+    g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-17,6,0,Math.PI*2);g.arc(8,-17,6,0,Math.PI*2);g.fill();
+    g.fillStyle='#172318';g.beginPath();g.arc(-8,-17,2.4,0,Math.PI*2);g.arc(8,-17,2.4,0,Math.PI*2);g.fill();
+    g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-5,8,.2,Math.PI-.2);g.stroke();
+    if(u.frogTongueT>0){g.strokeStyle='#ed7f96';g.lineWidth=3;g.beginPath();g.moveTo(7,-4);g.lineTo(34,-4);g.stroke();}
+    g.restore();g.restore();return;
+  }
   if(u.rabbitActive){
     // Full quadruped rabbit form.
     const hop=u.isMoving?Math.sin((u.runPhase||0)*1.6):0;
@@ -1868,6 +1875,7 @@ function updateContextButtons(){
   const d=$('dodgeBtn');
   if(d){
     if(player&&player.alive&&player.fairyActive)d.innerHTML='浮<small>浮遊</small>';
+    else if(player&&player.alive&&player.frogActive)d.innerHTML='蛙<small>大ジャンプ</small>';
     else if(player&&player.alive&&player.rabbitActive)d.innerHTML='跳<small>ジャンプ</small>';
     else d.innerHTML='↻<small>回避</small>';
   }
@@ -2001,6 +2009,20 @@ $('dodgeBtn').addEventListener('pointerdown',e=>{
     player.jumpT=1.55;
     player.inv=Math.max(player.inv,1.55);
     flash('妖精浮遊！',260);
+    return;
+  }
+  if(player.frogActive){
+    const n=performance.now()/1000;
+    if(player.jumpT>0||n-player.lastFrogJump<1.1)return;
+    player.lastFrogJump=n;player.jumpT=1.15;player.inv=Math.max(player.inv,.95);player.frogTongueT=.30;
+    let eat=null,ed=88;
+    for(const b of bullets){
+      if(!b||b.dead||b.team===player.team)continue;
+      const d=Math.hypot(b.x-player.x,b.y-player.y);
+      if(d<ed){ed=d;eat=b}
+    }
+    if(eat){eat.dead=true;player.mana=Math.min(100,player.mana+8);flash('ぱくっ！　MP +8',260)}
+    else flash('カエル大ジャンプ！',240);
     return;
   }
   if(player.rabbitActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastJump<1.05)return;if(!player.fairyActive&&player.mana<10){flash('魔力不足',300);return}if(!player.fairyActive)player.mana-=10;player.lastJump=n;player.jumpT=.72;player.inv=Math.max(player.inv,.72);flash('ウサギジャンプ！',260);return;}
@@ -2333,7 +2355,8 @@ function toggleFrog(u){
   if(now-u.lastFrog<.8)return false;
   if(!u.fairyActive&&u.mana<12){if(u.controlled)flash('魔力不足',300);return false}
   if(!u.fairyActive)u.mana-=12;u.lastFrog=now;u.frogActive=true;
-  u.rabbitActive=false;u.beastActive=false;u.moleActive=false;u.fairyActive=false;return true;
+  u.rabbitActive=false;u.beastActive=false;u.moleActive=false;u.fairyActive=false;
+  u.frogTongueT=0;return true;
 }
 function toggleMole(u){
   if(!u||!u.alive)return false;const now=performance.now()/1000;
@@ -2517,7 +2540,7 @@ function bossTakeHit(source='bullet'){
     }
     if(k==='frogking'){
       saveData.frogBossWins=(saveData.frogBossWins||0)+1;
-      if(!saveData.frogUnlocked){saveData.frogUnlocked=true;learned='　カエル化を習得！ ……強くはない。';}
+      if(!saveData.frogUnlocked){saveData.frogUnlocked=true;learned='　カエル化を習得！　大ジャンプと舌が使える。……火力は高くない。';}
       else learned=`　ガマグラン撃破 ${saveData.frogBossWins}回目！`;
     }
     if(k==='fairy'){
