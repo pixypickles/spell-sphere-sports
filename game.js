@@ -74,7 +74,7 @@ const ADVANCED_TEAMS={
 const EXPERT_TEAMS={
   beast:{
     name:'フェンリルクラブ',
-    desc:'獣化型：オオカミのような姿になり高速移動します。獣化中は投球・旗取得・回避不可。',
+    desc:'獣化型：四足歩行のオオカミ型に変身して高速移動します。獣化中は投球・旗取得・回避不可。',
     roles:['attacker','balance','support'],
     beastUsers:[0]
   },
@@ -606,13 +606,49 @@ class Bullet{
     for(const u of targets){
       if(u&&u.alive&&u.inv<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
         if(u.beastActive){
+    // v2.41: actual quadruped beast form. Facing follows movement direction.
     g.save();
-    g.globalAlpha=.95;
-    g.fillStyle=u.team==='blue'?'#315a9b':'#8c3f49';
+    const facing=(u.team==='blue'?1:-1);
+    g.scale(facing,1);
+    const gallop=u.isMoving?Math.sin((u.runPhase||0)*1.35):0;
+    const fur=u.team==='blue'?'#496fa8':'#9b5058';
+    const dark=u.team==='blue'?'#263f69':'#63343b';
+
+    // tail
+    g.strokeStyle=fur;g.lineWidth=7;g.lineCap='round';
+    g.beginPath();g.moveTo(-18,2);g.quadraticCurveTo(-30,-8-gallop*2,-34,-2);g.stroke();
+
+    // four running legs
+    g.strokeStyle=dark;g.lineWidth=5;
+    const a=gallop*6,b=-gallop*6;
     g.beginPath();
-    g.moveTo(-18,-6);g.lineTo(-7,-24);g.lineTo(0,-11);g.lineTo(9,-24);g.lineTo(20,-5);
-    g.lineTo(14,16);g.lineTo(-14,16);g.closePath();g.fill();
-    g.fillStyle='#fff';g.beginPath();g.arc(-5,-7,2,0,Math.PI*2);g.arc(5,-7,2,0,Math.PI*2);g.fill();
+    g.moveTo(-12,8);g.lineTo(-16+a,20);
+    g.moveTo(-4,9);g.lineTo(-1+b,21);
+    g.moveTo(8,9);g.lineTo(5+b,21);
+    g.moveTo(15,7);g.lineTo(18+a,19);
+    g.stroke();
+
+    // long horizontal body
+    g.fillStyle=fur;
+    g.beginPath();g.ellipse(0,1,23,13,0,0,Math.PI*2);g.fill();
+
+    // wolf head / muzzle
+    g.beginPath();
+    g.moveTo(15,-7);g.lineTo(22,-17);g.lineTo(25,-7);
+    g.lineTo(34,-3);g.lineTo(26,5);g.lineTo(17,6);g.closePath();g.fill();
+
+    // pointed second ear
+    g.beginPath();g.moveTo(20,-8);g.lineTo(16,-18);g.lineTo(28,-9);g.closePath();g.fill();
+
+    // eye + nose
+    g.fillStyle='#fff';g.beginPath();g.arc(24,-5,2.3,0,Math.PI*2);g.fill();
+    g.fillStyle='#202735';g.beginPath();g.arc(34,-2,2.2,0,Math.PI*2);g.fill();
+
+    // speed streaks make the transformation immediately readable
+    if(u.isMoving){
+      g.globalAlpha=.45;g.strokeStyle='#fff';g.lineWidth=2;
+      for(let i=0;i<3;i++){g.beginPath();g.moveTo(-27-i*5,-8+i*7);g.lineTo(-39-i*6,-8+i*7);g.stroke();}
+    }
     g.restore();
   }
   if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
@@ -635,7 +671,7 @@ class Bullet{
 
 function circleRect(x,y,r,w){const cx=clamp(x,w.x,w.x+w.w),cy=clamp(y,w.y,w.y+w.h);return Math.hypot(x-cx,y-cy)<r}
 function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COURT.y+COURT.h-r)return false;return !walls.some(w=>circleRect(x,y,r,w))}
-function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.beastActive?1.75:(u.dodgeT>0?2.25:1)),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
+function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.beastActive?2.05:(u.dodgeT>0?2.25:1)),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
 function nearest(u,arr){let best=null,bd=1e9;for(const v of arr){if(!v||!v.alive)continue;const d=dist(u,v);if(d<bd){bd=d;best=v}}return best}
 
 function useShield(u,playerUse=false){
