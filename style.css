@@ -162,3 +162,15 @@ body.isLandscape #gameWrap{display:block}
 .introLandscape{margin:14px auto 2px;padding:9px 18px;width:max-content;max-width:92%;border:2px solid #ffe69b;border-radius:999px;background:#ffe69b18;color:#ffe69b;font-size:clamp(15px,2.5vw,22px);font-weight:1000;letter-spacing:.05em;box-shadow:0 0 18px #ffe69b22;animation:introLandscapePulse 1.15s ease-in-out infinite alternate}
 @keyframes introLandscapePulse{from{opacity:.72;transform:scale(.98)}to{opacity:1;transform:scale(1.03)}}
 @media(orientation:landscape) and (max-height:520px){.introLandscape{margin-top:5px;padding:4px 12px;font-size:12px}}
+
+/* v2.49 individual ally skill selection */
+.playerSkillSet{display:grid;gap:9px}
+.playerSkillSet h2{margin:0 0 3px;text-align:center}
+.playerSkillRow label{
+  display:grid;grid-template-columns:92px 1fr;align-items:center;gap:8px;
+  font-weight:800
+}
+.playerSkillRow select{
+  width:100%;min-height:42px;border-radius:10px;padding:5px 10px;font-size:16px
+}
+.skillNote{font-size:12px;opacity:.78;text-align:center}

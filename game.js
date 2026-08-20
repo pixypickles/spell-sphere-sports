@@ -129,6 +129,11 @@ function outfitFor(u){
 
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
+  if(!Array.isArray(saveData.playerSkills))saveData.playerSkills=['none','none','none'];
+  player.specialKind=saveData.playerSkills[0]||'none';
+  if(allies[0])allies[0].specialKind=saveData.playerSkills[1]||'none';
+  if(allies[1])allies[1].specialKind=saveData.playerSkills[2]||'none';
+
 let mines=[],lobShots=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
@@ -149,7 +154,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
   };
 }
 function loadSave(){
@@ -216,6 +221,44 @@ function refreshRecordUI(){
   updateSpecialButtons();
 }
 
+
+function unlockedSkillChoices(){
+  const a=[['none','なし']];
+  const defs=[
+    ['shield','シールド','shieldUnlocked'],
+    ['double','2連射',null],
+    ['triple','3連射','tripleUnlocked'],
+    ['blade','魔力剣','bladeUnlocked'],
+    ['phase','壁すり抜け弾','phaseUnlocked'],
+    ['bounce','バウンド弾','bounceUnlocked'],
+    ['blast','爆裂弾','blastUnlocked'],
+    ['beast','獣化','beastUnlocked'],
+    ['invis','透明化','invisUnlocked'],
+    ['boomerang','ブーメラン弾','boomerangUnlocked'],
+    ['rightangle','直角弾','rightAngleUnlocked'],
+    ['lob','放物線爆弾','lobUnlocked'],
+    ['mine','地雷','mineUnlocked'],
+    ['jump','ジャンプ','jumpUnlocked']
+  ];
+  for(const [v,n,k] of defs)if(!k||saveData[k])a.push([v,n]);
+  return a;
+}
+function refreshPlayerSkillSelectors(){
+  if(!Array.isArray(saveData.playerSkills))saveData.playerSkills=['none','none','none'];
+  const ids=['playerSkill','allyASkill','allyBSkill'];
+  const choices=unlockedSkillChoices();
+  ids.forEach((id,i)=>{
+    const el=$(id);if(!el)return;
+    const cur=saveData.playerSkills[i]||'none';
+    el.innerHTML='';
+    for(const [v,n] of choices){
+      const o=document.createElement('option');o.value=v;o.textContent=n;el.appendChild(o);
+    }
+    el.value=choices.some(x=>x[0]===cur)?cur:'none';
+    saveData.playerSkills[i]=el.value;
+    el.onchange=()=>{saveData.playerSkills[i]=el.value;writeSave();};
+  });
+}
 function specialName(kind){
   if(kind==='double')return '2連射';
   if(kind==='blade')return '魔力剣';
@@ -893,6 +936,20 @@ function ai(u,dt,isEnemy){
     }
   }
     const nowSpecial=performance.now()/1000;
+
+  if(!isEnemy && u.specialKind && u.specialKind!=='none'){
+    if(u.specialKind==='shield'&&u.mana>=20&&u.shield<=0&&Math.random()<.004){u.mana-=20;u.shield=1;}
+    if(u.specialKind==='double'&&u.mana>=18&&Math.random()<.007){const t=nearest(u,enemies);if(t){u.mana-=18;cpuDouble(u,t);}}
+    if(u.specialKind==='triple'&&u.mana>=28&&Math.random()<.005){const t=nearest(u,enemies);if(t){u.mana-=28;cpuTriple(u,t);}}
+    if(u.specialKind==='beast'&&!u.beastActive&&u.mana>=26&&Math.random()<.003){u.mana-=26;toggleBeast(u);}
+    if(u.specialKind==='invis'&&u.invisT<=0&&u.mana>=28&&Math.random()<.003){u.mana-=28;u.invisT=3;}
+    if(u.specialKind==='boomerang'&&u.mana>=24&&Math.random()<.006){u.mana-=24;cpuBoomerang(u);}
+    if(u.specialKind==='rightangle'&&u.mana>=23&&Math.random()<.006){u.mana-=23;cpuRightAngle(u);}
+    if(u.specialKind==='lob'&&u.mana>=32&&Math.random()<.004){const t=nearest(u,enemies);if(t){u.mana-=32;createLob(u,t,u.team);}}
+    if(u.specialKind==='mine'&&u.mana>=20&&Math.random()<.004){if(placeMine(u))u.mana-=20;}
+    if(u.specialKind==='jump'&&u.mana>=20&&u.jumpT<=0&&Math.random()<.004){u.mana-=20;startJump(u);}
+  }
+
   if(u.specialKind==='invis'&&u.invisT<=0&&nowSpecial-u.lastInvis>5.5&&Math.random()<.006){u.lastInvis=nowSpecial;u.invisT=2.6;}
   if(u.specialKind==='boomerang'&&nowSpecial-u.lastBoomerang>2.4&&Math.random()<.009){u.lastBoomerang=nowSpecial;cpuBoomerang(u);}
   if(u.specialKind==='rightangle'&&nowSpecial-u.lastRightAngle>2.4&&Math.random()<.009){u.lastRightAngle=nowSpecial;cpuRightAngle(u);}
@@ -1760,3 +1817,4 @@ for(const ev of ['contextmenu','selectstart','dragstart'])document.addEventListe
 refreshRecordUI();
 window.__gameDebug=()=>({mode,cupIndex,currentOpponent,enemies:enemies.length,aliveEnemies:enemies.filter(e=>e.alive).length,menuHidden:$('menu').classList.contains('hidden'),cupHidden:$('cupPanel').classList.contains('hidden'),running,saveData:JSON.parse(JSON.stringify(saveData))});
 })();
+window.addEventListener('DOMContentLoaded',()=>refreshPlayerSkillSelectors());
