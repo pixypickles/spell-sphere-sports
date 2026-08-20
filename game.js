@@ -43,15 +43,67 @@ const ROOKIE_TEAMS={
   mix:{name:'ルーンスターズ',desc:'混成型：守備と射撃を切り替え、シールドで隙を補います。',roles:['guard','shooter','support'],shieldUsers:[2]},
   triple:{name:'トライボルト',desc:'連射型：予備動作のあと3発を連続で撃ちます。魔力剣ならまとめて斬れます。',roles:['shooter','balance','support'],shieldUsers:[],tripleUsers:[0]}
 };
+const ADVANCED_TEAMS={
+  phase:{
+    name:'ファントムレイ',
+    desc:'壁抜け型：壁の裏にいても直線の壁すり抜け弾で狙ってきます。',
+    roles:['shooter','balance','support'],
+    phaseUsers:[0]
+  },
+  bounce:{
+    name:'リコシェッターズ',
+    desc:'反射型：壁へバウンド弾を当て、横や後ろから弾を通してきます。',
+    roles:['shooter','shooter','guard'],
+    bounceUsers:[0,1]
+  },
+  hybrid:{
+    name:'ミラージュギア',
+    desc:'複合型：壁すり抜け弾とバウンド弾を使い分ける上位チーム。',
+    roles:['balance','shooter','support'],
+    phaseUsers:[0],
+    bounceUsers:[1]
+  },
+  blast:{
+    name:'ボムバースト',
+    desc:'爆裂型：壁や地面に当たると爆風が起きる爆裂弾で壁裏を狙います。',
+    roles:['shooter','balance','guard'],
+    blastUsers:[0,1]
+  }
+};
+
+const EXPERT_TEAMS={
+  beast:{
+    name:'フェンリルクラブ',
+    desc:'獣化型：オオカミのような姿になり高速移動します。獣化中は投球・旗取得・回避不可。',
+    roles:['attacker','balance','support'],
+    beastUsers:[0]
+  },
+  blastbeast:{
+    name:'ワイルドボマー',
+    desc:'爆裂弾と獣化を組み合わせ、壁裏を崩して一気に距離を詰めます。',
+    roles:['shooter','attacker','guard'],
+    blastUsers:[0],
+    beastUsers:[1]
+  },
+  apex:{
+    name:'アークビースト',
+    desc:'上位混成型：獣化と特殊弾を使い分けるエキスパートチーム。',
+    roles:['balance','shooter','attacker'],
+    beastUsers:[0],
+    bounceUsers:[1]
+  }
+};
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
 const CUP_ORDER=['rush','guard','shoot'];
 const ROOKIE_ORDER=['shield','rush','mix','triple'];
+const ADVANCED_ORDER=['phase','bounce','hybrid','blast'];
+const EXPERT_ORDER=['beast','blastbeast','apex'];
 const CUP_NAMES={player:'プレイヤーチーム',rush:TEAMS.rush.name,guard:TEAMS.guard.name,shoot:TEAMS.shoot.name};
-function currentCupOrder(){return cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER}
-function opponentData(id){return cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]}
+function currentCupOrder(){return cupKind==='expert'?EXPERT_ORDER:(cupKind==='advanced'?ADVANCED_ORDER:(cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER))}
+function opponentData(id){return cupKind==='expert'?EXPERT_TEAMS[id]:(cupKind==='advanced'?ADVANCED_TEAMS[id]:(cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]))}
 const SAVE_KEY='magic_ball_save_v216';
 let saveData=loadSave();
 
@@ -61,7 +113,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false
   };
 }
 function loadSave(){
@@ -103,10 +155,18 @@ function refreshRecordUI(){
   }
   if(cb)cb.classList.toggle('hidden',!saveData.cupResume);
   const rb=$('rookieBtn');if(rb)rb.classList.toggle('hidden',!saveData.rookieUnlocked);
+  const ab=$('advancedBtn');if(ab)ab.classList.toggle('hidden',!saveData.advancedUnlocked);
+  const eb=$('expertBtn');if(eb)eb.classList.toggle('hidden',!saveData.expertUnlocked);
 
   const sp=$('shieldProgressText');
   if(sp){
-    sp.innerHTML=(saveData.shieldUnlocked?'シールド　習得済み':`シールド　${saveData.shieldProgress||0}/3`)+'<br>'+(saveData.tripleUnlocked?'3連射　習得済み':`3連射　${saveData.tripleProgress||0}/3`);
+    sp.innerHTML=
+      (saveData.shieldUnlocked?'シールド　習得済み':`シールド　${saveData.shieldProgress||0}/3`)
+      + '<br>' + (saveData.tripleUnlocked?'3連射　習得済み':`3連射　${saveData.tripleProgress||0}/3`)
+      + '<br>' + (saveData.phaseUnlocked?'壁すり抜け弾　習得済み':`壁すり抜け弾　${saveData.phaseProgress||0}/3`)
+      + '<br>' + (saveData.bounceUnlocked?'バウンド弾　習得済み':`バウンド弾　${saveData.bounceProgress||0}/3`)
+      + '<br>' + (saveData.blastUnlocked?'爆裂弾　習得済み':`爆裂弾　${saveData.blastProgress||0}/3`)
+      + '<br>' + (saveData.beastUnlocked?'獣化　習得済み':`獣化　${saveData.beastProgress||0}/3`);
     sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
   }
 
@@ -118,6 +178,8 @@ function specialName(kind){
   if(kind==='blade')return '魔力剣';
   if(kind==='phase')return '壁すり抜け弾';
   if(kind==='bounce')return 'バウンド弾';
+  if(kind==='blast')return '爆裂弾';
+  if(kind==='beast')return '獣化';
   if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
@@ -136,6 +198,10 @@ function updateSpecialButtons(){
       el.innerHTML='透<small>壁抜け</small>';
     }else if(kind==='bounce'){
       el.innerHTML='跳<small>バウンド</small>';
+    }else if(kind==='blast'&&saveData.blastUnlocked){
+      el.innerHTML='爆<small>爆裂弾</small>';
+    }else if(kind==='beast'&&saveData.beastUnlocked){
+      el.innerHTML='獣<small>獣化</small>';
     }else if(kind==='triple'&&saveData.tripleUnlocked){
       el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
@@ -153,18 +219,34 @@ function updateSkillSetUI(){
   const shieldOptionB=[...b.options].find(o=>o.value==='shield');
   const tripleOptionA=[...a.options].find(o=>o.value==='triple');
   const tripleOptionB=[...b.options].find(o=>o.value==='triple');
+  const phaseOptionA=[...a.options].find(o=>o.value==='phase');
+  const phaseOptionB=[...b.options].find(o=>o.value==='phase');
+  const bounceOptionA=[...a.options].find(o=>o.value==='bounce');
+  const bounceOptionB=[...b.options].find(o=>o.value==='bounce');
+  const blastOptionA=[...a.options].find(o=>o.value==='blast');
+  const blastOptionB=[...b.options].find(o=>o.value==='blast');
+  const beastOptionA=[...a.options].find(o=>o.value==='beast');
+  const beastOptionB=[...b.options].find(o=>o.value==='beast');
   if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
   if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
   if(tripleOptionA)tripleOptionA.disabled=!saveData.tripleUnlocked;
   if(tripleOptionB)tripleOptionB.disabled=!saveData.tripleUnlocked;
+  if(phaseOptionA)phaseOptionA.disabled=!saveData.phaseUnlocked;
+  if(phaseOptionB)phaseOptionB.disabled=!saveData.phaseUnlocked;
+  if(bounceOptionA)bounceOptionA.disabled=!saveData.bounceUnlocked;
+  if(bounceOptionB)bounceOptionB.disabled=!saveData.bounceUnlocked;
+  if(blastOptionA)blastOptionA.disabled=!saveData.blastUnlocked;
+  if(blastOptionB)blastOptionB.disabled=!saveData.blastUnlocked;
+  if(beastOptionA)beastOptionA.disabled=!saveData.beastUnlocked;
+  if(beastOptionB)beastOptionB.disabled=!saveData.beastUnlocked;
 
   a.value=saveData.specialSlot1||'none';
   b.value=saveData.specialSlot2||'none';
 
   if(!saveData.shieldUnlocked){
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：アドバンスで習得 / 魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：アドバンスで習得 / 魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
   }else{
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：アドバンスで習得 / 魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：アドバンスで習得 / 魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
   }
 }
 function saveSkillSet(){
@@ -176,6 +258,14 @@ function saveSkillSet(){
   if(s2==='shield'&&!saveData.shieldUnlocked)s2='none';
   if(s1==='triple'&&!saveData.tripleUnlocked)s1='none';
   if(s2==='triple'&&!saveData.tripleUnlocked)s2='none';
+  if(s1==='phase'&&!saveData.phaseUnlocked)s1='none';
+  if(s2==='phase'&&!saveData.phaseUnlocked)s2='none';
+  if(s1==='bounce'&&!saveData.bounceUnlocked)s1='none';
+  if(s2==='bounce'&&!saveData.bounceUnlocked)s2='none';
+  if(s1==='blast'&&!saveData.blastUnlocked)s1='none';
+  if(s2==='blast'&&!saveData.blastUnlocked)s2='none';
+  if(s1==='beast'&&!saveData.beastUnlocked)s1='none';
+  if(s2==='beast'&&!saveData.beastUnlocked)s2='none';
 
   // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
   if(s1!=='none'&&s1===s2)s1='none';
@@ -201,7 +291,7 @@ function practiceEntries(){
   const list=[];
   for(const key of keys){
     const [kind,id]=key.split(':');
-    const data=kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id];
+    const data=kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]));
     if(data)list.push({kind,id,name:data.name,desc:data.desc});
   }
   return list;
@@ -229,7 +319,7 @@ function updatePracticeMenu(){
   }
   const refresh=()=>{
     const [kind,id]=sel.value.split(':');
-    const d=kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id];
+    const d=kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]));
     info.textContent=d?d.desc:'';
   };
   sel.onchange=refresh;
@@ -254,7 +344,7 @@ function recordMatch(a,b,as,bs){const A=cupTable[a],B=cupTable[b];A.rf+=as;A.ra+
 function simulateCpu(a,b){const aw=Math.random()<.5,ls=Math.random()<.55?1:0;recordMatch(a,b,aw?2:ls,aw?ls:2)}
 function sortedTable(){return Object.values(cupTable).sort((a,b)=>b.w-a.w||((b.rf-b.ra)-(a.rf-a.ra))||b.rf-a.rf)}
 function tableHTML(){return '<div class="standingRow standingHead"><span></span><span>チーム</span><span>勝敗</span><span>得失</span></div>'+sortedTable().map((r,i)=>`<div class="standingRow ${r.id==='player'?'me':''}"><span class="rank">${i+1}</span><span class="teamName">${r.name}</span><span class="stat">${r.w}-${r.l}</span><span class="stat">${r.rf-r.ra>=0?'+':''}${r.rf-r.ra}</span></div>`).join('')}
-function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='rookie'?'ルーキー':'ビギナー'} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
+function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='expert'?'エキスパート':(cupKind==='advanced'?'アドバンス':(cupKind==='rookie'?'ルーキー':'ビギナー'))} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
 
 function gainShieldResearch(){
   if(saveData.shieldUnlocked)return '';
@@ -276,6 +366,53 @@ function gainShieldResearch(){
 
   writeSave();
   return `シールド習得 ${saveData.shieldProgress}/3`;
+}
+
+
+
+function gainBlastResearch(){
+  if(saveData.blastUnlocked)return '';
+  saveData.blastProgress=Math.min(3,(saveData.blastProgress||0)+1);
+  if(saveData.blastProgress>=3){saveData.blastUnlocked=true;writeSave();return '爆裂弾 習得！';}
+  writeSave();return `爆裂弾 ${saveData.blastProgress}/3`;
+}
+function gainBeastResearch(){
+  if(saveData.beastUnlocked)return '';
+  saveData.beastProgress=Math.min(3,(saveData.beastProgress||0)+1);
+  if(saveData.beastProgress>=3){saveData.beastUnlocked=true;writeSave();return '獣化 習得！';}
+  writeSave();return `獣化 ${saveData.beastProgress}/3`;
+}
+function opponentHasBlast(){
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.blastUsers&&d.blastUsers.length);
+}
+function opponentHasBeast(){
+  if(cupKind!=='expert')return false;
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.beastUsers&&d.beastUsers.length);
+}
+
+function gainPhaseResearch(){
+  if(saveData.phaseUnlocked)return '';
+  saveData.phaseProgress=Math.min(3,(saveData.phaseProgress||0)+1);
+  if(saveData.phaseProgress>=3){saveData.phaseUnlocked=true;writeSave();return '壁すり抜け弾 習得！';}
+  writeSave();return `壁すり抜け弾 ${saveData.phaseProgress}/3`;
+}
+function gainBounceResearch(){
+  if(saveData.bounceUnlocked)return '';
+  saveData.bounceProgress=Math.min(3,(saveData.bounceProgress||0)+1);
+  if(saveData.bounceProgress>=3){saveData.bounceUnlocked=true;writeSave();return 'バウンド弾 習得！';}
+  writeSave();return `バウンド弾 ${saveData.bounceProgress}/3`;
+}
+function opponentHasPhase(){
+  if(cupKind!=='advanced')return false;
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.phaseUsers&&d.phaseUsers.length);
+}
+function opponentHasBounce(){
+  if(cupKind!=='advanced')return false;
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.bounceUsers&&d.bounceUsers.length);
 }
 
 function gainTripleResearch(){
@@ -306,9 +443,17 @@ function finishCup(){
     if(place===1){saveData.beginnerWins++;saveData.rookieUnlocked=true}
     $('cupEndTitle').textContent=place===1?'ビギナーカップ優勝！':`ビギナーカップ ${place}位`;
     $('cupEndText').textContent=place===1?'ルーキーカップへの挑戦権を獲得しました！':'もう一度挑戦できます。';
-  }else{
+  }else if(cupKind==='rookie'){
+    if(place===1)saveData.advancedUnlocked=true;
     $('cupEndTitle').textContent=place===1?'ルーキーカップ優勝！':`ルーキーカップ ${place}位`;
-    $('cupEndText').textContent=place===1?'特殊技を使う相手にも勝利！':'シールドへの対処を覚えて再挑戦しましょう。';
+    $('cupEndText').textContent=place===1?'アドバンスカップへの挑戦権を獲得しました！':'特殊技への対処を覚えて再挑戦しましょう。';
+  }else if(cupKind==='advanced'){
+    if(place===1)saveData.expertUnlocked=true;
+    $('cupEndTitle').textContent=place===1?'アドバンスカップ優勝！':`アドバンスカップ ${place}位`;
+    $('cupEndText').textContent=place===1?'エキスパートカップへの挑戦権を獲得しました！':'特殊弾の軌道を読んで再挑戦しましょう。';
+  }else{
+    $('cupEndTitle').textContent=place===1?'エキスパートカップ優勝！':`エキスパートカップ ${place}位`;
+    $('cupEndText').textContent=place===1?'獣化を使う相手にも勝利！':'獣化の高速移動を読んで再挑戦しましょう。';
   }
   saveData.cupResume=null;writeSave();$('cupEndPanel').classList.remove('hidden');
 }
@@ -323,7 +468,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -339,6 +484,7 @@ class Unit{
     if(this.charging)this.chargeT=Math.min(.8,this.chargeT+dt);
     this.shield=Math.max(0,this.shield-dt);
     this.bladeT=Math.max(0,this.bladeT-dt);
+    if(this.beastActive&&this.beastT>0){this.beastT=Math.max(0,this.beastT-dt);if(this.beastT<=0)this.beastActive=false;}
     const _moved=Math.hypot(this.x-_oldX,this.y-_oldY);this.isMoving=_moved>.12;if(this.isMoving)this.runPhase=(this.runPhase||0)+dt*15;
     this.strafeTimer=Math.max(0,this.strafeTimer-dt);
     if(this.strafeTimer<=0){
@@ -350,11 +496,30 @@ class Unit{
   }
 }
 
+
+function explodeAt(x,y,team,radius=58){
+  spark(x,y);
+  // visible particles
+  for(let i=0;i<18;i++)fx.push({x,y,vx:(Math.random()-.5)*220,vy:(Math.random()-.5)*220,t:.55});
+  const targets=team==='blue'?enemies:[player,...allies];
+  for(const u of targets){
+    if(!u||!u.alive||u.inv>0)continue;
+    if(Math.hypot(u.x-x,u.y-y)<=radius+u.r){
+      const wasControlled=u.controlled;
+      u.alive=false;
+      if(wasControlled){flash('爆風 OUT!',500);transferControl();}
+      else flash(u.team==='red'?'爆風でENEMY OUT!':'爆風でALLY OUT!',550);
+    }
+  }
+  checkEnd();
+}
+
 class Bullet{
   constructor(x,y,dx,dy,team,curve,target,kind='normal'){
     Object.assign(this,{
       x,y,dx,dy,team,curve,target,kind,r:7,life:3.6,
       bouncesLeft:kind==='bounce'?4:0,
+      blastRadius:kind==='blast'?58:0,
       speed:curve?315:355,age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
@@ -420,15 +585,37 @@ class Bullet{
         break;
       }
 
+      if(this.kind==='blast'){
+        this.life=0;
+        explodeAt(this.x,this.y,this.team,this.blastRadius);
+        return;
+      }
       this.life=0;
       spark(this.x,this.y);
       return;
     }
 
     const targets=this.team==='blue'?enemies:[player,...allies];
+    if(this.kind==='blast'){
+      for(const u of targets){
+        if(u&&u.alive&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
+          this.life=0;explodeAt(this.x,this.y,this.team,this.blastRadius);return;
+        }
+      }
+    }
     for(const u of targets){
       if(u&&u.alive&&u.inv<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
-        if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
+        if(u.beastActive){
+    g.save();
+    g.globalAlpha=.95;
+    g.fillStyle=u.team==='blue'?'#315a9b':'#8c3f49';
+    g.beginPath();
+    g.moveTo(-18,-6);g.lineTo(-7,-24);g.lineTo(0,-11);g.lineTo(9,-24);g.lineTo(20,-5);
+    g.lineTo(14,16);g.lineTo(-14,16);g.closePath();g.fill();
+    g.fillStyle='#fff';g.beginPath();g.arc(-5,-7,2,0,Math.PI*2);g.arc(5,-7,2,0,Math.PI*2);g.fill();
+    g.restore();
+  }
+  if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
         const wasControlled=u.controlled;
         u.alive=false;
         this.life=0;
@@ -448,7 +635,7 @@ class Bullet{
 
 function circleRect(x,y,r,w){const cx=clamp(x,w.x,w.x+w.w),cy=clamp(y,w.y,w.y+w.h);return Math.hypot(x-cx,y-cy)<r}
 function canStand(x,y,r){if(x<COURT.x+r||x>COURT.x+COURT.w-r||y<COURT.y+r||y>COURT.y+COURT.h-r)return false;return !walls.some(w=>circleRect(x,y,r,w))}
-function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.dodgeT>0?2.25:1),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
+function move(u,x,y,dt){if(!u.alive)return;const s=u.speed*(u.beastActive?1.75:(u.dodgeT>0?2.25:1)),nx=u.x+x*s*dt,ny=u.y+y*s*dt;if(canStand(nx,u.y,u.r))u.x=nx;if(canStand(u.x,ny,u.r))u.y=ny}
 function nearest(u,arr){let best=null,bd=1e9;for(const v of arr){if(!v||!v.alive)continue;const d=dist(u,v);if(d<bd){bd=d;best=v}}return best}
 
 function useShield(u,playerUse=false){
@@ -468,7 +655,7 @@ function useShield(u,playerUse=false){
 }
 
 function shoot(u,target,curve=false){
-  if(!u||!u.alive||!target||!target.alive||u.dodgeT>0||u.dodgeRecover>0)return;
+  if(!u||!u.alive||!target||!target.alive||u.dodgeT>0||u.dodgeRecover>0||u.beastActive)return;
   const cost=curve?16:11,now=performance.now()/1000;
   if(u.mana<cost||now-u.lastShot<u.shotCd)return;
   u.lastShot=now;u.mana-=cost;
@@ -505,6 +692,10 @@ function reset(){
   ];
   if(cupKind==='rookie'&&od.shieldUsers)for(const i of od.shieldUsers)if(enemies[i])enemies[i].specialKind='shield';
   if(cupKind==='rookie'&&od.tripleUsers)for(const i of od.tripleUsers)if(enemies[i])enemies[i].specialKind='triple';
+  if(cupKind==='advanced'&&od.phaseUsers)for(const i of od.phaseUsers)if(enemies[i])enemies[i].specialKind='phase';
+  if((cupKind==='advanced'||cupKind==='expert')&&od.bounceUsers)for(const i of od.bounceUsers)if(enemies[i])enemies[i].specialKind='bounce';
+  if((cupKind==='advanced'||cupKind==='expert')&&od.blastUsers)for(const i of od.blastUsers)if(enemies[i])enemies[i].specialKind='blast';
+  if(cupKind==='expert'&&od.beastUsers)for(const i of od.beastUsers)if(enemies[i])enemies[i].specialKind='beast';
   clock.textContent='1:00';
   roundLabel.textContent='ROUND '+round;
   flash(opponentData(currentOpponent).name,900);
@@ -515,6 +706,32 @@ function cpuTripleShot(u){
   const targets=u.team==='red'?[player,...allies]:enemies;
   const fire=()=>{if(!u.alive)return;const t=nearest(u,targets);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t));};
   fire();setTimeout(fire,145);setTimeout(fire,290);
+}
+
+
+function cpuPhaseShot(u){
+  if(!u||!u.alive)return;
+  const targets=u.team==='red'?[player,...allies]:enemies;
+  const t=nearest(u,targets);if(!t)return;
+  const d=norm(t.x-u.x,t.y-u.y);
+  bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'phase'));
+}
+function cpuBounceShot(u){
+  if(!u||!u.alive)return;
+  const targets=u.team==='red'?[player,...allies]:enemies;
+  const t=nearest(u,targets);if(!t)return;
+  const d0=norm(t.x-u.x,t.y-u.y);
+  const side=Math.random()<.5?-1:1;
+  const d=norm(d0.x-d0.y*.28*side,d0.y+d0.x*.28*side);
+  bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'bounce'));
+}
+
+function cpuBlastShot(u){
+  if(!u||!u.alive)return;
+  const targets=u.team==='red'?[player,...allies]:enemies;
+  const t=nearest(u,targets);if(!t)return;
+  const d=norm(t.x-u.x,t.y-u.y);
+  bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'blast'));
 }
 
 function ai(u,dt,isEnemy){
@@ -590,7 +807,27 @@ function ai(u,dt,isEnemy){
       if(tgt&&Math.hypot(tgt.x-u.x,tgt.y-u.y)<520&&Math.random()<.018)u.tripleReady=.62;
     }
   }
-  const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
+    const nowSpecial=performance.now()/1000;
+  if(u.specialKind==='blast'&&nowSpecial-u.lastBlast>5.5&&Math.random()<.010){
+    const targets=u.team==='red'?[player,...allies]:enemies,t=nearest(u,targets);
+    if(t&&dist(u,t)<520){u.lastBlast=nowSpecial;cpuBlastShot(u);flash('爆裂弾！',260);}
+  }
+  if(u.specialKind==='beast'){
+    if(!u.beastActive&&nowSpecial-u.lastBeast>7.2&&Math.random()<.006){
+      u.lastBeast=nowSpecial;u.beastActive=true;u.beastT=3.8;flash('獣化！',260);
+    }
+  }
+  if(u.specialKind==='phase' && nowSpecial-u.lastPhase>5.0 && Math.random()<.010){
+    const targets=u.team==='red'?[player,...allies]:enemies;
+    const t=nearest(u,targets);
+    if(t&&dist(u,t)<560){u.lastPhase=nowSpecial;cpuPhaseShot(u);flash('壁すり抜け弾！',260);}
+  }
+  if(u.specialKind==='bounce' && nowSpecial-u.lastBounce>4.6 && Math.random()<.011){
+    const targets=u.team==='red'?[player,...allies]:enemies;
+    const t=nearest(u,targets);
+    if(t&&dist(u,t)<560){u.lastBounce=nowSpecial;cpuBounceShot(u);flash('バウンド弾！',260);}
+  }
+const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
 
   // シールドAIは弾を見て即発動しない。
   // 認識してから0.25〜0.45秒ほど反応が遅れるため、近距離では間に合わないことがある。
@@ -639,8 +876,8 @@ function ai(u,dt,isEnemy){
 }
 
 function checkFlags(){
-  for(const u of [player,...allies])if(u&&u.alive&&dist(u,flagRed)<u.r+22)return finish('blue','敵旗を取りました！');
-  for(const u of enemies)if(u.alive&&dist(u,flagBlue)<u.r+22)return finish('red','敵に旗を取られました');
+  for(const u of [player,...allies])if(u&&u.alive&&!u.beastActive&&dist(u,flagRed)<u.r+22)return finish('blue','敵旗を取りました！');
+  for(const u of enemies)if(u.alive&&!u.beastActive&&dist(u,flagBlue)<u.r+22)return finish('red','敵に旗を取られました');
   if(player&&player.alive&&dist(player,flagBlue)<45)player.mana=Math.min(100,player.mana+36/60);
 }
 
@@ -799,14 +1036,24 @@ function drawUnit(u){
   g.restore();
 }
 
+
+function arenaTheme(){
+  if(mode==='practice')return {court:'#b9d6f2',wall:'#e7edf5',bg:'#5f7c92'};
+  if(cupKind==='beginner')return {court:'#9ad9b8',wall:'#f1e6cc',bg:'#5f7d8a'};
+  if(cupKind==='rookie')return {court:'#b7a8e8',wall:'#eee7ff',bg:'#655f86'};
+  if(cupKind==='advanced')return {court:'#d9b77b',wall:'#f5e2b8',bg:'#7c6848'};
+  if(cupKind==='expert')return {court:'#9fbc8f',wall:'#d8e4cf',bg:'#4f6652'};
+  return {court:'#9ad9b8',wall:'#f1e6cc',bg:'#5f7d8a'};
+}
+
 function draw(){
-  g.fillStyle='#5f7d8a';g.fillRect(0,0,W,H);
-  g.fillStyle='#9ad9b8';g.fillRect(COURT.x,COURT.y,COURT.w,COURT.h);
+  const theme=arenaTheme();g.fillStyle=theme.bg;g.fillRect(0,0,W,H);
+  g.fillStyle=theme.court;g.fillRect(COURT.x,COURT.y,COURT.w,COURT.h);
   g.strokeStyle='#fff9d7';g.lineWidth=4;g.strokeRect(COURT.x,COURT.y,COURT.w,COURT.h);
   g.setLineDash([12,12]);g.beginPath();g.moveTo(W/2,COURT.y);g.lineTo(W/2,COURT.y+COURT.h);g.stroke();g.setLineDash([]);
   g.strokeStyle='#ffffff28';g.lineWidth=2;g.beginPath();g.arc(W/2,CY,74,0,Math.PI*2);g.stroke();
 
-  for(const w of walls){g.fillStyle='#c7bda5';rr(w.x+5,w.y+6,w.w,w.h,8);g.fillStyle='#f1e6cc';rr(w.x,w.y,w.w,w.h,8)}
+  for(const w of walls){g.fillStyle='#c7bda5';rr(w.x+5,w.y+6,w.w,w.h,8);g.fillStyle=theme.wall;rr(w.x,w.y,w.w,w.h,8)}
   drawFlag(flagBlue,'blue');drawFlag(flagRed,'red');
 
   for(const b of bullets){
@@ -814,6 +1061,8 @@ function draw(){
     g.beginPath();g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();
     if(b.kind==='phase'){
       g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
+     }else if(b.kind==='blast'){
+      g.strokeStyle='#ff9b5a';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+6,0,Math.PI*2);g.stroke();
     }else if(b.kind==='bounce'){
       g.strokeStyle='#ffd36f';g.lineWidth=3;g.setLineDash([4,3]);g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();g.setLineDash([]);
     }
@@ -862,6 +1111,7 @@ $('throwBtn').addEventListener('pointerup',releaseThrow);$('throwBtn').addEventL
 // dodge
 $('dodgeBtn').addEventListener('pointerdown',e=>{
   e.preventDefault();if(!running||!player.alive)return;
+  if(player.beastActive){flash('獣化中は回避できない',360);return;}
   const now=performance.now()/1000;if(now-player.lastDodge<1.8){flash('回避クールタイム',430);return}
   let x=input.x,y=input.y;
   // 青チームの攻撃方向は画面右。回避中のX速度は必ず0以下にする。
@@ -997,6 +1247,31 @@ function useBounceShot(u){
   return true;
 }
 
+
+function useBlastShot(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastBlast<4.8){flash('爆裂弾クールタイム',380);return false}
+  if(u.dodgeT>0||u.dodgeRecover>0||u.beastActive){flash('今は使えない',360);return false}
+  if(u.mana<30){flash('魔力不足',360);return false}
+  const t=nearest(u,enemies);if(!t)return false;
+  u.mana-=30;u.lastBlast=now;
+  const d=norm(t.x-u.x,t.y-u.y);
+  bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'blast'));
+  return true;
+}
+
+function toggleBeast(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(u.beastActive){
+    u.beastActive=false;u.beastT=0;u.dodgeRecover=.22;return true;
+  }
+  if(now-u.lastBeast<7.0){flash('獣化クールタイム',380);return false}
+  if(u.mana<34){flash('魔力不足',360);return false}
+  u.mana-=34;u.lastBeast=now;u.beastActive=true;u.beastT=4.2;u.dodgeRecover=.18;return true;
+}
+
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
 
@@ -1015,6 +1290,14 @@ function usePlayerSpecial(kind){
   }
   if(kind==='bounce'){
     if(useBounceShot(player))flash('バウンド弾！',320);
+    return;
+  }
+  if(kind==='blast'&&saveData.blastUnlocked){
+    if(useBlastShot(player))flash('爆裂弾！',320);
+    return;
+  }
+  if(kind==='beast'&&saveData.beastUnlocked){
+    if(toggleBeast(player))flash(player.beastActive?'獣化！':'獣化解除',320);
     return;
   }
   if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
@@ -1117,7 +1400,7 @@ bindTap('practiceStartBtn',()=>{
   mode='practice';
   // cupKind is used only to identify the opponent's league/skills during the practice match.
   // It must not turn the match into a tournament.
-  cupKind=kind==='rookie'?'rookie':'beginner';
+  cupKind=kind==='expert'?'expert':(kind==='advanced'?'advanced':(kind==='rookie'?'rookie':'beginner'));
   currentOpponent=id;
   bScore=0;rScore=0;round=1;
   score.textContent='0 - 0';
@@ -1138,6 +1421,26 @@ bindTap('cupContinueBtn',()=>{
   $('cupPanel').classList.remove('hidden');
 });
 bindTap('rookieBtn',()=>{if(!saveData.rookieUnlocked)return;mode='cup';cupKind='rookie';cupIndex=0;cupTable=newCupTable();currentOpponent=ROOKIE_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
+
+bindTap('advancedBtn',()=>{
+  if(!saveData.advancedUnlocked)return;
+  mode='cup';cupKind='advanced';cupIndex=0;cupTable=newCupTable();
+  currentOpponent=ADVANCED_ORDER[0];
+  saveData.cupResume=null;writeSave();
+  $('menu').classList.add('hidden');
+  refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();
+});
+
+bindTap('expertBtn',()=>{
+  if(!saveData.expertUnlocked)return;
+  mode='cup';cupKind='expert';cupIndex=0;cupTable=newCupTable();
+  currentOpponent=EXPERT_ORDER[0];
+  saveData.cupResume=null;writeSave();
+  $('menu').classList.add('hidden');
+  refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();
+});
+
+
 bindTap('practiceBtn',()=>{
   mode='menu';
   updatePracticeMenu();
@@ -1170,6 +1473,10 @@ bindTap('nextBtn',()=>{
         const msgs=[];
         if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
         if(opponentHasTriple()){const m=gainTripleResearch();if(m)msgs.push(m);}
+        if(opponentHasPhase()){const m=gainPhaseResearch();if(m)msgs.push(m);}
+        if(opponentHasBounce()){const m=gainBounceResearch();if(m)msgs.push(m);}
+        if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
+        if(opponentHasBeast()){const m=gainBeastResearch();if(m)msgs.push(m);}
         pendingLearnMessage=msgs.join(' / ');
       }
     }else{
@@ -1200,6 +1507,10 @@ bindTap('nextBtn',()=>{
         const msgs=[];
         if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
         if(opponentHasTriple()){const m=gainTripleResearch();if(m)msgs.push(m);}
+        if(opponentHasPhase()){const m=gainPhaseResearch();if(m)msgs.push(m);}
+        if(opponentHasBounce()){const m=gainBounceResearch();if(m)msgs.push(m);}
+        if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
+        if(opponentHasBeast()){const m=gainBeastResearch();if(m)msgs.push(m);}
         pendingLearnMessage=msgs.join(' / ');
       }
     }else{
