@@ -39,14 +39,15 @@ const TEAMS={
 const ROOKIE_TEAMS={
   shield:{name:'アズールガーディアンズ',desc:'シールド使い：魔力盾で1発だけ防ぎます。',roles:['guard','shooter','balance'],shieldUsers:[0]},
   rush:{name:'スカイランナーズ',desc:'機動型：前線を押し上げながらシールドも使います。',roles:['attacker','support','attacker'],shieldUsers:[1]},
-  mix:{name:'ルーンスターズ',desc:'混成型：守備と射撃を切り替え、シールドで隙を補います。',roles:['guard','shooter','support'],shieldUsers:[2]}
+  mix:{name:'ルーンスターズ',desc:'混成型：守備と射撃を切り替え、シールドで隙を補います。',roles:['guard','shooter','support'],shieldUsers:[2]},
+  triple:{name:'トライボルト',desc:'連射型：予備動作のあと3発を連続で撃ちます。魔力剣ならまとめて斬れます。',roles:['shooter','balance','support'],shieldUsers:[],tripleUsers:[0]}
 };
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
 const CUP_ORDER=['rush','guard','shoot'];
-const ROOKIE_ORDER=['shield','rush','mix'];
+const ROOKIE_ORDER=['shield','rush','mix','triple'];
 const CUP_NAMES={player:'プレイヤーチーム',rush:TEAMS.rush.name,guard:TEAMS.guard.name,shoot:TEAMS.shoot.name};
 function currentCupOrder(){return cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER}
 function opponentData(id){return cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]}
@@ -261,7 +262,7 @@ function opponentHasShield(){
 
 function finishCup(){
   const o=currentCupOrder();
-  simulateCpu(o[0],o[1]);simulateCpu(o[1],o[2]);simulateCpu(o[2],o[0]);
+  for(let i=0;i<o.length;i++){for(let j=i+1;j<o.length;j++)simulateCpu(o[i],o[j]);}
   $('finalStandings').innerHTML=tableHTML();
   const place=sortedTable().findIndex(r=>r.id==='player')+1;
   if(cupKind==='beginner'){
@@ -286,7 +287,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -438,9 +439,17 @@ function reset(){
     new Unit(995,500,'red',false,roles[2])
   ];
   if(cupKind==='rookie'&&od.shieldUsers)for(const i of od.shieldUsers)if(enemies[i])enemies[i].specialKind='shield';
+  if(cupKind==='rookie'&&od.tripleUsers)for(const i of od.tripleUsers)if(enemies[i])enemies[i].specialKind='triple';
   clock.textContent='1:00';
   roundLabel.textContent='ROUND '+round;
   flash(opponentData(currentOpponent).name,900);
+}
+
+function cpuTripleShot(u){
+  if(!u||!u.alive)return;
+  const targets=u.team==='red'?[player,...allies]:enemies;
+  const fire=()=>{if(!u.alive)return;const t=nearest(u,targets);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t));};
+  fire();setTimeout(fire,145);setTimeout(fire,290);
 }
 
 function ai(u,dt,isEnemy){
@@ -508,6 +517,14 @@ function ai(u,dt,isEnemy){
   let n=norm(tx-u.x,ty-u.y);
   if(walls.some(w=>circleRect(u.x+n.x*30,u.y+n.y*30,u.r,w)))n={x:-n.y,y:n.x};
 
+  if(u.specialKind==='triple'){
+    const nowTriple=performance.now()/1000;
+    if(u.tripleReady>=0){u.tripleReady-=dt;if(u.tripleReady<=0){cpuTripleShot(u);u.lastTriple=nowTriple;u.tripleReady=-1;flash('3連射！',320);}}
+    else if(nowTriple-u.lastTriple>6.2){
+      const targets=u.team==='red'?[player,...allies]:enemies,tgt=nearest(u,targets);
+      if(tgt&&Math.hypot(tgt.x-u.x,tgt.y-u.y)<520&&Math.random()<.018)u.tripleReady=.62;
+    }
+  }
   const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
 
   // シールドAIは弾を見て即発動しない。
@@ -548,6 +565,7 @@ function ai(u,dt,isEnemy){
     if(isEnemy)n.x=Math.max(0,n.x);
     else n.x=Math.min(0,n.x);
   }
+  if(u.specialKind==='triple'&&u.tripleReady>=0)n={x:0,y:0};
   move(u,n.x,n.y,dt);
   if(t&&dist(u,t)<540){
     const chance=u.role==='shooter'?.42:(u.role==='attacker'?.16:.22);
@@ -654,6 +672,9 @@ function drawUnit(u){
   if(u.inv>0)g.globalAlpha=.55;
 
   if(u.shield>0){g.save();g.strokeStyle='#8fe5ff';g.lineWidth=4;g.globalAlpha=.8;g.beginPath();g.arc(0,0,29,0,Math.PI*2);g.stroke();g.restore();}
+  if(u.specialKind==='triple'&&u.tripleReady>=0){
+    g.save();g.globalAlpha=.45+.35*Math.sin(performance.now()/55);g.strokeStyle='#ffe8a8';g.lineWidth=3;g.beginPath();g.arc(0,0,34,0,Math.PI*2);g.stroke();g.fillStyle='#fff3c8';g.font='bold 11px sans-serif';g.textAlign='center';g.fillText('×3',0,-38);g.restore();
+  }
   if(u.bladeT>0){
     const p=1-u.bladeT/.34;
     g.save();
@@ -990,7 +1011,7 @@ bindTap('nextBtn',()=>{
     }
 
     cupIndex++;
-    if(cupIndex>=3){
+    if(cupIndex>=currentCupOrder().length){
       finishCup();
       if(pendingLearnMessage){
         $('cupEndText').innerHTML += `<br><b>${pendingLearnMessage}</b>`;
