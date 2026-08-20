@@ -1484,6 +1484,8 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
+  // v2.83: genuine frog mages never use human headwear/outfit head pieces.
+  if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
   if(!u||!u.alive)return;
@@ -1570,7 +1572,7 @@ function drawUnit(u){
     g.strokeStyle='#4f963d';g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(-7,16);g.lineTo(-9-walk*4,31);g.lineTo(-14-walk*5,36);g.moveTo(7,16);g.lineTo(9+walk*4,31);g.lineTo(14+walk*5,36);g.stroke();
     g.lineWidth=5;g.beginPath();g.moveTo(-11,0);g.lineTo(-20,10+walk*2);g.moveTo(11,0);g.lineTo(20,10-walk*2);g.stroke();
     g.fillStyle='#7ac95a';g.beginPath();g.ellipse(0,-18,17,15,0,0,Math.PI*2);g.fill();g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-30,6,0,Math.PI*2);g.arc(8,-30,6,0,Math.PI*2);g.fill();g.fillStyle='#172318';g.beginPath();g.arc(-8,-30,2.4,0,Math.PI*2);g.arc(8,-30,2.4,0,Math.PI*2);g.fill();g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-18,7,.15,Math.PI-.15);g.stroke();
-    if(u.frogMage){g.fillStyle=u.team==='red'?'#6e4b98':'#416e9e';g.beginPath();g.moveTo(-13,-1);g.lineTo(13,-1);g.lineTo(17,22);g.lineTo(-17,22);g.closePath();g.fill();g.strokeStyle='#e6cf72';g.lineWidth=2;g.beginPath();g.moveTo(-12,5);g.lineTo(12,5);g.stroke();g.fillStyle='#47366f';g.beginPath();g.moveTo(-17,-31);g.lineTo(0,-52);g.lineTo(17,-31);g.closePath();g.fill();g.fillRect(-18,-32,36,5);}
+    if(u.frogMage){g.fillStyle=u.team==='red'?'#6e4b98':'#416e9e';g.beginPath();g.moveTo(-13,-1);g.lineTo(13,-1);g.lineTo(17,22);g.lineTo(-17,22);g.closePath();g.fill();g.strokeStyle='#e6cf72';g.lineWidth=2;g.beginPath();g.moveTo(-12,5);g.lineTo(12,5);g.stroke();}
     if(u.frogTongueT>0){const target=nearest(u,u.team==='blue'?enemies:[player,...allies]),d=target?norm(target.x-u.x,target.y-u.y):{x:u.team==='blue'?1:-1,y:0};g.strokeStyle='#ee7f99';g.lineWidth=4;g.beginPath();g.moveTo(d.x*8,-17+d.y*8);g.lineTo(d.x*96,-17+d.y*96);g.stroke();}
     g.restore();g.restore();return;
   }
