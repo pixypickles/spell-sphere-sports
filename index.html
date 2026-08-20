@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v2.59</title>
-<link href="style.css?v=259" rel="stylesheet"/>
+<title>魔導球技 v2.62</title>
+<link href="style.css?v=262" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion">v2.59</div>
+<div class="introVersion">v2.62</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -67,7 +67,25 @@
 <button class="gameBtn dodge" id="dodgeBtn">↻<small>回避</small></button>
 </div>
 <div id="message"></div>
-<div class="overlay" id="menu">
+<div class="overlay worldMapOverlay" id="worldMap"><section class="worldMapPanel">
+<div class="worldSky"><span class="moonRune">✦</span><span class="floatingIsle i1"></span><span class="floatingIsle i2"></span></div>
+<div class="worldTitle"><b>魔導都市 アルカナ</b><small>歩いて施設へ向かおう</small></div>
+<div class="mapGround" id="mapGround">
+<div class="mapRoad r1"></div><div class="mapRoad r2"></div><div class="mapRoad r3"></div>
+<button class="mapPlace homePlace" data-place="home"><span class="placeIcon">⌂</span><b>魔導士ホーム</b><small>編成・特殊技</small></button>
+<button class="mapPlace practicePlace" data-place="practice"><span class="placeIcon">◎</span><b>練習会場</b><small>再戦・訓練</small></button>
+<button class="mapPlace cupPlace lowCup" data-place="low"><span class="placeIcon">♜</span><b>星見の競技場</b><small>ビギナー / ルーキー</small></button>
+<button class="mapPlace cupPlace midCup" data-place="mid"><span class="placeIcon">♜</span><b>蒼塔アリーナ</b><small>アドバンス / エキスパート</small></button>
+<button class="mapPlace cupPlace highCup" data-place="high"><span class="placeIcon">♛</span><b>天空大闘技場</b><small>マスター以上</small></button>
+<button class="mapPlace adventurePlace forestPlace" data-place="forest"><span class="questMark" id="questForest">！</span><span class="placeIcon">♣</span><b>月影の森</b><small>森の異変</small></button>
+<button class="mapPlace adventurePlace cavePlace" data-place="cave"><span class="questMark" id="questCave">！</span><span class="placeIcon">◆</span><b>晶石洞窟</b><small>洞窟の異変</small></button>
+<button class="mapPlace adventurePlace pondPlace" data-place="pond"><span class="questMark" id="questPond">！</span><span class="placeIcon">≈</span><b>星雫の池</b><small>水辺の異変</small></button>
+<div id="mapAvatar"><span class="mapHat">▲</span><span class="mapBody"></span></div>
+<div class="mapPrompt" id="mapPrompt">施設の近くまで歩いてください</div>
+</div>
+<div class="mapPad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div>
+<div class="mapHint">左下の方向ボタン / キーボードで移動　・　施設に近づくと入れます</div>
+</section></div><div class="hidden overlay" id="bossPanel"><section class="panel bossPanelCard"><div class="kicker">FIELD EVENT</div><h1 id="bossTitle">中ボス戦</h1><p class="lead" id="bossDesc"></p><div class="bossRuleCard">敵は1体・HP制 / こちらは一撃OUT<br>復活クリスタルからチーム合計2回まで復活</div><button id="bossStartBtn">戦闘開始</button><button id="bossBackBtn">フィールドへ戻る</button></section></div><div class="hidden overlay" id="menu">
 <section class="panel">
 <div class="kicker">TOURNAMENT MENU</div>
 <h1>魔導球技</h1>
@@ -91,7 +109,7 @@
 </div>
 <p class="note">敵クリスタルに触れるか敵3人を全員アウトで1本。2本先取。</p>
 <div class="menuBottomSpace"></div>
-</section>
+<button class="subBtn mapReturnBtn" id="homeMapBtn" type="button">フィールドマップへ戻る</button></section>
 </div>
 <div class="overlay hidden" id="skillSetPanel">
 <section class="panel skillSetPanel">
@@ -101,12 +119,12 @@
 <label class="skillSlotLabel">特殊①
         <select id="specialSlot1">
 <option value="none">なし（✌）</option>
-<option value="double">2連射</option>
+<option value="double">2連射</option><option value="rabbit">ウサギ化</option>
 <option value="blade">魔力剣</option>
 <option value="phase">壁すり抜け弾</option>
 <option value="bounce">バウンド弾</option>
 <option value="blast">爆裂弾</option>
-<option value="beast">獣化</option>
+<option value="beast">オオカミ化</option>
 <option value="invis">透明化</option>
 <option value="spread">拡散弾</option>
 <option value="rightangle">直角弾</option>
@@ -119,12 +137,12 @@
 <label class="skillSlotLabel">特殊②
         <select id="specialSlot2">
 <option value="none">なし（✌）</option>
-<option value="double">2連射</option>
+<option value="double">2連射</option><option value="rabbit">ウサギ化</option>
 <option value="blade">魔力剣</option>
 <option value="phase">壁すり抜け弾</option>
 <option value="bounce">バウンド弾</option>
 <option value="blast">爆裂弾</option>
-<option value="beast">獣化</option>
+<option value="beast">オオカミ化</option>
 <option value="invis">透明化</option>
 <option value="spread">拡散弾</option>
 <option value="rightangle">直角弾</option>
@@ -178,7 +196,7 @@
 <div class="practiceTeamInfo" id="practiceTeamInfo"></div>
 <button class="menuBtn" id="practiceStartBtn" type="button">練習試合開始</button>
 <button class="subBtn" id="practiceCloseBtn" type="button">戻る</button>
-</section>
+<button class="subBtn mapReturnBtn" id="practiceMapBtn" type="button">フィールドマップへ戻る</button></section>
 </div>
 <div class="overlay hidden" id="cupPanel">
 <section class="panel cupPanelCard">
@@ -202,7 +220,7 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v2.59</div>
-<script src="game.js?v=259"></script>
+<div id="versionBadge">v2.62</div>
+<script src="game.js?v=262"></script>
 </body>
 </html>
