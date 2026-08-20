@@ -785,6 +785,7 @@ class Unit{
     if(this.rabbitActive&&this.rabbitT>0){this.rabbitT=Math.max(0,this.rabbitT-dt);if(this.rabbitT<=0)this.rabbitActive=false;}
     if(this.invisT>0)this.invisT=Math.max(0,this.invisT-dt);
     if(this.jumpT>0)this.jumpT=Math.max(0,this.jumpT-dt);
+    if(this.fairyActive)maintainFairyCooldowns(this);
     if(this.beastActive){this.mana=Math.max(0,this.mana-8*dt);if(this.mana<=0){this.beastActive=false;if(this.controlled)flash('MP切れ：オオカミ化解除',360)}}
     if(this.moleActive){this.moleT=Math.max(0,this.moleT-dt);this.mana=Math.max(0,this.mana-18*dt);if(this.mana<=0||this.moleT<=0){this.moleActive=false;this.moleT=0;if(this.controlled&&this.mana<=0)flash('MP切れ：地上へ',360)}}
     this.reflectBladeT=Math.max(0,this.reflectBladeT-dt);
@@ -1436,7 +1437,16 @@ function drawUnit(u){
     g.fillStyle='#e6c49a';g.beginPath();g.arc(u.x,u.y+7,5,0,Math.PI*2);g.fill();g.restore();return;
   }
   g.save();g.translate(u.x,u.y);
-  if(u.jumpT>0){const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));g.translate(0,-Math.max(0,jp)*105);}
+  if(u.jumpT>0){
+    if(u.fairyActive){
+      const total=1.55,p=Math.max(0,Math.min(1,1-u.jumpT/total));
+      const lift=Math.sin(Math.PI*Math.min(1,p*1.35))*78;
+      g.translate(0,-Math.max(22,lift));
+    }else{
+      const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));
+      g.translate(0,-Math.max(0,jp)*105);
+    }
+  }
   if(u.invisT>0)g.globalAlpha=u.controlled?.38:.14;
 
 
@@ -1830,7 +1840,8 @@ for(const a of allies)drawUnit(a);
 function updateContextButtons(){
   const d=$('dodgeBtn');
   if(d){
-    if(player&&player.alive&&player.rabbitActive)d.innerHTML='跳<small>ジャンプ</small>';
+    if(player&&player.alive&&player.fairyActive)d.innerHTML='浮<small>浮遊</small>';
+    else if(player&&player.alive&&player.rabbitActive)d.innerHTML='跳<small>ジャンプ</small>';
     else d.innerHTML='↻<small>回避</small>';
   }
 }
@@ -1946,6 +1957,17 @@ $('throwBtn').addEventListener('pointercancel',()=>{clearInterval(fairyAutoFire)
 // dodge
 $('dodgeBtn').addEventListener('pointerdown',e=>{
   e.preventDefault();if(!running||!player.alive)return;
+  if(player.fairyActive){
+    const n=performance.now()/1000;
+    if(player.jumpT>0||n-player.lastDodge<.45)return;
+    if(player.mana<8){flash('魔力不足',300);return;}
+    player.mana-=8;
+    player.lastDodge=n;
+    player.jumpT=1.55;
+    player.inv=Math.max(player.inv,1.55);
+    flash('妖精浮遊！',260);
+    return;
+  }
   if(player.rabbitActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastJump<1.05)return;if(player.mana<10){flash('魔力不足',300);return}player.mana-=10;player.lastJump=n;player.jumpT=.72;player.inv=Math.max(player.inv,.72);flash('ウサギジャンプ！',260);return;}
   if(player.beastActive){flash('オオカミ化中は回避できない',360);return;}
   const now=performance.now()/1000;if(now-player.lastDodge<1.8){flash('回避クールタイム',430);return}
@@ -2249,8 +2271,25 @@ function toggleFairy(u){
 }
 function fairyResetOtherCooldown(u,kind){
   if(!u||!u.fairyActive||kind==='fairy')return;
-  const map={double:'lastDouble',blade:'lastBlade',triple:'lastTriple',phase:'lastPhase',bounce:'lastBounce',blast:'lastBlast',invis:'lastInvis',spread:'lastSpread',rightangle:'lastRightAngle',lob:'lastLob',mine:'lastMine',jump:'lastJump',clone:'lastClone',reflectblade:'lastReflectBlade',wind:'lastWind'};
-  const p=map[kind];if(p)u[p]=-99;
+  const map={
+    double:'lastDouble',blade:'lastBlade',triple:'lastTriple',phase:'lastPhase',
+    bounce:'lastBounce',blast:'lastBlast',beast:'lastBeast',invis:'lastInvis',
+    spread:'lastSpread',rightangle:'lastRightAngle',lob:'lastLob',mine:'lastMine',
+    jump:'lastJump',clone:'lastClone',reflectblade:'lastReflectBlade',
+    wind:'lastWind',mole:'lastMole',rabbit:'lastRabbit'
+  };
+  const p=map[kind];
+  if(p)u[p]=-99;
+}
+function maintainFairyCooldowns(u){
+  if(!u||!u.fairyActive)return;
+  // 妖精化のもう1枠は「ほぼクールタイム無し」。
+  // 技ごとの実装差に影響されないよう、各フレームで使用時刻を戻す。
+  for(const p of [
+    'lastDouble','lastBlade','lastTriple','lastPhase','lastBounce','lastBlast',
+    'lastBeast','lastInvis','lastSpread','lastRightAngle','lastLob','lastMine',
+    'lastJump','lastClone','lastReflectBlade','lastWind','lastMole','lastRabbit'
+  ])u[p]=-99;
 }
 
 function toggleMole(u){
@@ -2451,7 +2490,7 @@ function updateMapSkillButtons(){
   if(b1)b1.innerHTML=`Ⅰ<small>${labels(kinds[0])}</small>`;
   if(b2)b2.innerHTML=`Ⅱ<small>${labels(kinds[1])}</small>`;
   const d=$('mapDodgeBtn');
-  if(d)d.innerHTML=mapFieldForm==='rabbit'?'跳<small>ジャンプ</small>':'↻<small>移動技</small>';
+  if(d)d.innerHTML=mapFieldForm==='fairy'?'浮<small>浮遊</small>':(mapFieldForm==='rabbit'?'跳<small>ジャンプ</small>':'↻<small>移動技</small>');
 }
 
 
@@ -2607,9 +2646,10 @@ bindTap('mapSpecial1',()=>useFieldSlot(1));
 bindTap('mapSpecial2',()=>useFieldSlot(2));
 bindTap('mapDodgeBtn',()=>{
   const now=performance.now();
+  if(mapFieldForm==='fairy'){mapFieldJumpUntil=now+1350;updateMapAvatar();return}
   if(mapFieldForm==='rabbit'){mapFieldJumpUntil=now+650;updateMapAvatar();return}
   if((saveData.specialSlot1==='jump'||saveData.specialSlot2==='jump')){mapFieldJumpUntil=now+900;updateMapAvatar();return}
-  flash('ウサギ化中、またはジャンプ装備中に使えます',420);
+  flash('変身・ジャンプ装備に応じた移動技を使えます',420);
 });
 
 window.addEventListener('keydown',e=>{
