@@ -129,10 +129,8 @@ function outfitFor(u){
 
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
-  if(!Array.isArray(saveData.playerSkills))saveData.playerSkills=['none','none','none'];
-  player.specialKind=saveData.playerSkills[0]||'none';
-  if(allies[0])allies[0].specialKind=saveData.playerSkills[1]||'none';
-  if(allies[1])allies[1].specialKind=saveData.playerSkills[2]||'none';
+  if(allies[0])allies[0].specialKind=saveData.allySkillA||'none';
+  if(allies[1])allies[1].specialKind=saveData.allySkillB||'none';
 
 let mines=[],lobShots=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
@@ -154,7 +152,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
   };
 }
 function loadSave(){
@@ -219,6 +217,7 @@ function refreshRecordUI(){
   }
 
   updateSpecialButtons();
+  refreshPlayerSkillSelectors();
 }
 
 
@@ -228,7 +227,7 @@ function unlockedSkillChoices(){
     ['shield','シールド','shieldUnlocked'],
     ['double','2連射',null],
     ['triple','3連射','tripleUnlocked'],
-    ['blade','魔力剣','bladeUnlocked'],
+    ['blade','魔力剣',null],
     ['phase','壁すり抜け弾','phaseUnlocked'],
     ['bounce','バウンド弾','bounceUnlocked'],
     ['blast','爆裂弾','blastUnlocked'],
@@ -244,20 +243,34 @@ function unlockedSkillChoices(){
   return a;
 }
 function refreshPlayerSkillSelectors(){
-  if(!Array.isArray(saveData.playerSkills))saveData.playerSkills=['none','none','none'];
-  const ids=['playerSkill','allyASkill','allyBSkill'];
+  // 主人公は従来の特殊①/②画面で設定。ここでは味方A/Bだけ設定する。
+  if(saveData.playerSkills){
+    // v2.49-v2.52の旧設定を一度だけ味方設定へ引き継ぐ
+    if((saveData.allySkillA||'none')==='none' && saveData.playerSkills[1])saveData.allySkillA=saveData.playerSkills[1];
+    if((saveData.allySkillB||'none')==='none' && saveData.playerSkills[2])saveData.allySkillB=saveData.playerSkills[2];
+  }
+
   const choices=unlockedSkillChoices();
-  ids.forEach((id,i)=>{
-    const el=$(id);if(!el)return;
-    const cur=saveData.playerSkills[i]||'none';
+  const defs=[['allyASkill','allySkillA'],['allyBSkill','allySkillB']];
+
+  for(const [id,key] of defs){
+    const el=$(id);if(!el)continue;
+    const current=saveData[key]||'none';
     el.innerHTML='';
-    for(const [v,n] of choices){
-      const o=document.createElement('option');o.value=v;o.textContent=n;el.appendChild(o);
+
+    for(const [value,name] of choices){
+      const o=document.createElement('option');
+      o.value=value;o.textContent=name;
+      el.appendChild(o);
     }
-    el.value=choices.some(x=>x[0]===cur)?cur:'none';
-    saveData.playerSkills[i]=el.value;
-    el.onchange=()=>{saveData.playerSkills[i]=el.value;writeSave();};
-  });
+
+    el.value=choices.some(c=>c[0]===current)?current:'none';
+    saveData[key]=el.value;
+    el.onchange=()=>{
+      saveData[key]=el.value;
+      writeSave();
+    };
+  }
 }
 function specialName(kind){
   if(kind==='double')return '2連射';

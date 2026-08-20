@@ -205,3 +205,40 @@ body.isLandscape #gameWrap{display:block}
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
+
+/* v2.53 ally skill selection */
+.allySkillCard{
+  margin:10px 0;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#1a2745b8;
+  border:1px solid #8fc7ff38;
+}
+.allySkillTitle{
+  text-align:center;
+  font-weight:900;
+  font-size:17px;
+  margin-bottom:9px;
+  color:#dfeeff;
+}
+.allySkillCard label{
+  display:grid;
+  grid-template-columns:72px 1fr;
+  align-items:center;
+  gap:8px;
+  margin:7px 0;
+  font-weight:800;
+}
+.allySkillCard select{
+  width:100%;
+  min-height:40px;
+  padding:5px 9px;
+  border-radius:9px;
+  font-size:15px;
+}
+.allySkillCard small{
+  display:block;
+  margin-top:6px;
+  text-align:center;
+  opacity:.72;
+}

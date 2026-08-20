@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#17233a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>魔導球技 v2.52</title>
-<link rel="stylesheet" href="style.css?v=252">
+<title>魔導球技 v2.53</title>
+<link rel="stylesheet" href="style.css?v=253">
 
 <style id="bootFallback">
 .hidden{display:none!important}
@@ -15,7 +15,7 @@
 </head>
 <body>
 <div id="introScreen" class="introScreen" onclick="this.style.display='none';" ontouchstart="this.style.display='none';" onpointerdown="this.style.display='none';">
-  <div class="introVersion">v2.52</div>
+  <div class="introVersion">v2.53</div>
   <div class="introCard">
     <div class="introKicker">MAGIC SPORT</div>
     <h1>魔導球技</h1>
@@ -83,17 +83,30 @@
       <div class="kicker">TOURNAMENT MENU</div>
       <h1>魔導球技</h1>
       <p class="lead">自チーム＋3チームの総当たり大会</p>
-      <div class="cupInfo"><b>ビギナーカップ</b><small>プレイヤーは3試合。敵同士の試合は自動集計します。</small></div>
+      <div class="cupInfo"><b>大会を選択</b><small>下のボタンから参加する大会を選んでください。上位大会は優勝すると解禁されます。</small></div>
       
       <button id="skillSetBtn" type="button" class="skillSetBtn">特殊技セット</button>
+      <div class="allySkillCard">
+        <div class="allySkillTitle">味方スキル設定</div>
+        <label>味方A
+          <select id="allyASkill">
+            <option value="none">なし</option>
+            <option value="double">2連射</option>
+            <option value="blade">魔力剣</option>
+          </select>
+        </label>
+        <label>味方B
+          <select id="allyBSkill">
+            <option value="none">なし</option>
+            <option value="double">2連射</option>
+            <option value="blade">魔力剣</option>
+          </select>
+        </label>
+        <small>習得した技が増えると選択肢も増えます。</small>
+      </div>
+
       <div class="skillProgressCard">
-        <div class="specialSet playerSkillSet">
-      <h2>味方スキル設定</h2>
-      <div class="playerSkillRow"><label>主人公 <select id="playerSkill"></select></label></div>
-      <div class="playerSkillRow"><label>味方A <select id="allyASkill"></select></label></div>
-      <div class="playerSkillRow"><label>味方B <select id="allyBSkill"></select></label></div>
-      <div class="skillNote">習得済みの特殊技から、3人それぞれ別々に設定できます。</div>
-    </div>
+        
     <div class="skillProgressTitle">特殊技研究</div>
         <div id="shieldProgressText">シールド　0/3</div>
       </div>
@@ -210,7 +223,7 @@
   </div>
 </main>
 
-<div id="versionBadge">v2.52</div>
-<script src="game.js?v=252"></script>
+<div id="versionBadge">v2.53</div>
+<script src="game.js?v=253"></script>
 </body>
 </html>
