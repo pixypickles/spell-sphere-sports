@@ -129,9 +129,6 @@ function outfitFor(u){
 
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
-  if(allies[0])allies[0].specialKind=saveData.allySkillA||'none';
-  if(allies[1])allies[1].specialKind=saveData.allySkillB||'none';
-
 let mines=[],lobShots=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
@@ -682,7 +679,7 @@ class Bullet{
       bouncesLeft:kind==='bounce'?4:0,
       blastRadius:kind==='blast'?58:0,
       originX:x,originY:y,phase2:0,
-      speed:curve?315:355,age:0,
+      speed:kind==='rightangle'?325:(kind==='boomerang'?340:(curve?315:355)),age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
     });
@@ -711,7 +708,7 @@ class Bullet{
       this.dy=Math.sin(nextA);
     }
 
-    if(this.kind==='boomerang'&&this.age>.62){const back=norm(this.originX-this.x,this.originY-this.y),k=Math.min(1,dt*3.2);this.dx=this.dx*(1-k)+back.x*k;this.dy=this.dy*(1-k)+back.y*k;const q=norm(this.dx,this.dy);this.dx=q.x;this.dy=q.y;}else if(this.kind==='rightangle'&&this.phase2===0&&this.age>.48){const ox=this.dx,oy=this.dy,side=(this.target&&this.target.y>this.y)?1:-1;this.dx=-oy*side;this.dy=ox*side;this.phase2=1;}
+    if(this.kind==='boomerang'&&this.age>.62){const back=norm(this.originX-this.x,this.originY-this.y),k=Math.min(1,dt*3.2);this.dx=this.dx*(1-k)+back.x*k;this.dy=this.dy*(1-k)+back.y*k;const q=norm(this.dx,this.dy);this.dx=q.x;this.dy=q.y;}else if(this.kind==='rightangle'&&this.phase2===0&&this.age>.72){const ox=this.dx,oy=this.dy,side=(this.target&&this.target.y>this.y)?1:-1;this.dx=-oy*side;this.dy=ox*side;this.phase2=1;}
     this.x+=this.dx*this.speed*dt;
     this.y+=this.dy*this.speed*dt;
 
@@ -837,6 +834,8 @@ function reset(){
     new Unit(280,235,'blue',false,$('roleA').value),
     new Unit(280,485,'blue',false,$('roleB').value)
   ];
+  if(allies[0])allies[0].specialKind=saveData.allySkillA||'none';
+  if(allies[1])allies[1].specialKind=saveData.allySkillB||'none';
   const od=opponentData(currentOpponent),roles=od.roles;
   enemies=[
     new Unit(995,220,'red',false,roles[0]),
@@ -985,9 +984,9 @@ function ai(u,dt,isEnemy){
   }
 
   if(u.specialKind==='invis'&&u.invisT<=0&&nowSpecial-u.lastInvis>5.5&&Math.random()<.006){u.lastInvis=nowSpecial;u.invisT=2.6;}
-  if(u.specialKind==='boomerang'&&nowSpecial-u.lastBoomerang>2.4&&Math.random()<.009){u.lastBoomerang=nowSpecial;cpuBoomerang(u);}
-  if(u.specialKind==='rightangle'&&nowSpecial-u.lastRightAngle>2.4&&Math.random()<.009){u.lastRightAngle=nowSpecial;cpuRightAngle(u);}
-  if(u.specialKind==='lob'&&nowSpecial-u.lastLob>3.2&&Math.random()<.008){const q=nearest(u,u.team==='red'?[player,...allies]:enemies);if(q){u.lastLob=nowSpecial;createLob(u,q,u.team);}}
+  if(u.specialKind==='boomerang'&&nowSpecial-u.lastBoomerang>3.0&&Math.random()<.0065){u.lastBoomerang=nowSpecial;cpuBoomerang(u);}
+  if(u.specialKind==='rightangle'&&nowSpecial-u.lastRightAngle>3.3&&Math.random()<.0055){u.lastRightAngle=nowSpecial;cpuRightAngle(u);}
+  if(u.specialKind==='lob'&&nowSpecial-u.lastLob>3.8&&Math.random()<.0065){const q=nearest(u,u.team==='red'?[player,...allies]:enemies);if(q){u.lastLob=nowSpecial;createLob(u,q,u.team);}}
   if(u.specialKind==='mine'&&nowSpecial-u.lastMine>3&&Math.random()<.007){if(placeMine(u))u.lastMine=nowSpecial;}
   if(u.specialKind==='blast'&&nowSpecial-u.lastBlast>5.5&&Math.random()<.010){
     const targets=u.team==='red'?[player,...allies]:enemies,t=nearest(u,targets);
@@ -1321,8 +1320,8 @@ function drawUnit(u){
 }
 
 
-function createLob(u,target,team){lobShots.push({sx:u.x,sy:u.y,tx:target.x,ty:target.y,x:u.x,y:u.y,t:0,dur:.82,team});}
-function updateLobs(dt){for(const l of lobShots){l.t+=dt;const p=Math.min(1,l.t/l.dur);l.x=l.sx+(l.tx-l.sx)*p;l.y=l.sy+(l.ty-l.sy)*p-Math.sin(Math.PI*p)*95;if(p>=1&&!l.done){l.done=true;explodeAt(l.tx,l.ty,l.team,64);}}lobShots=lobShots.filter(l=>!l.done);}
+function createLob(u,target,team){lobShots.push({sx:u.x,sy:u.y,tx:target.x,ty:target.y,x:u.x,y:u.y,t:0,dur:1.30,team});}
+function updateLobs(dt){for(const l of lobShots){l.t+=dt;const p=Math.min(1,l.t/l.dur);l.x=l.sx+(l.tx-l.sx)*p;l.y=l.sy+(l.ty-l.sy)*p-Math.sin(Math.PI*p)*115;if(p>=1&&!l.done){l.done=true;explodeAt(l.tx,l.ty,l.team,64);}}lobShots=lobShots.filter(l=>!l.done);}
 function placeMine(u){if(dist(u,flagBlue)<95||dist(u,flagRed)<95){if(u.controlled)flash('クリスタル付近には設置できない',520);return false;}const own=mines.filter(m=>m.owner===u);if(own.length>=2){const oldest=own.reduce((x,y)=>x.age>y.age?x:y);mines=mines.filter(m=>m!==oldest);}mines.push({x:u.x,y:u.y,team:u.team,age:0,owner:u});return true;}
 function updateMines(dt){for(const m of mines)m.age+=dt;for(const m of [...mines]){const targets=m.team==='blue'?enemies:[player,...allies];if(targets.some(u=>u&&u.alive&&Math.hypot(u.x-m.x,u.y-m.y)<38)){explodeAt(m.x,m.y,m.team,58);mines=mines.filter(x=>x!==m);}}}
 
@@ -1353,6 +1352,7 @@ function draw(){
       g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
     }else if(b.kind==='boomerang'){g.strokeStyle='#ffb0f1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+6,0,Math.PI*1.45);g.stroke();
     }else if(b.kind==='rightangle'){g.strokeStyle='#b9ff75';g.lineWidth=3;g.strokeRect(b.x-10,b.y-10,20,20);
+      if(b.phase2===0&&b.age>.48){g.globalAlpha=.45+.45*Math.sin(performance.now()/55);g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,16,0,Math.PI*2);g.stroke();}
      }else if(b.kind==='blast'){
       g.strokeStyle='#ff9b5a';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+6,0,Math.PI*2);g.stroke();
     }else if(b.kind==='bounce'){
@@ -1362,7 +1362,13 @@ function draw(){
     g.restore();
   }
 
-  for(const l of lobShots){g.save();g.shadowBlur=12;g.shadowColor='#ffb45f';g.fillStyle='#ffd9a0';g.beginPath();g.arc(l.x,l.y,8,0,Math.PI*2);g.fill();g.restore();}
+  for(const l of lobShots){
+    const p=Math.min(1,l.t/l.dur);
+    g.save();g.globalAlpha=.28+.48*p;g.strokeStyle=l.team==='blue'?'#8fc6ff':'#ff9b78';g.lineWidth=3;
+    g.setLineDash([6,5]);g.beginPath();g.arc(l.tx,l.ty,30-8*p,0,Math.PI*2);g.stroke();g.setLineDash([]);
+    g.beginPath();g.moveTo(l.tx-10,l.ty);g.lineTo(l.tx+10,l.ty);g.moveTo(l.tx,l.ty-10);g.lineTo(l.tx,l.ty+10);g.stroke();g.restore();
+    g.save();g.shadowBlur=12;g.shadowColor='#ffb45f';g.fillStyle='#ffd9a0';g.beginPath();g.arc(l.x,l.y,8,0,Math.PI*2);g.fill();g.restore();
+  }
   for(const m of mines){g.save();g.translate(m.x,m.y);g.strokeStyle=m.team==='blue'?'#6ebcff':'#ff8c98';g.lineWidth=2;g.beginPath();g.arc(0,0,13,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(-8,0);g.lineTo(8,0);g.moveTo(0,-8);g.lineTo(0,8);g.stroke();g.restore();}
   for(const a of allies)drawUnit(a);
   for(const e of enemies)drawUnit(e);
