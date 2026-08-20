@@ -35,7 +35,8 @@ const flagBlue={x:230,y:360},flagRed={x:1050,y:360};
 const TEAMS={
   rush:{name:'ブルームランナーズ',desc:'旗取り型：前へ出る選手が多く、旗を積極的に狙います。',roles:['attacker','attacker','support']},
   guard:{name:'ストーンウォールズ',desc:'守備型：自陣旗と壁裏を重視して戦います。',roles:['guard','guard','shooter']},
-  shoot:{name:'スターショッツ',desc:'射撃型：距離を取り、アウトを優先して狙います。',roles:['shooter','shooter','balance']}
+  shoot:{name:'スターショッツ',desc:'射撃型：距離を取り、アウトを優先して狙います。',roles:['shooter','shooter','balance']},
+  frogmages:{name:'リビット・ローブズ',desc:'池に棲む本物のカエル魔導師。舌・泡弾・超跳躍を使い、ミニ蛙まで呼び出します。',roles:['attacker','shooter','support'],frogMageUsers:[0,1,2]}
 };
 const ROOKIE_TEAMS={
   shield:{name:'アズールガーディアンズ',desc:'シールド使い：魔力盾で1発だけ防ぎます。',roles:['guard','shooter','balance'],shieldUsers:[0]},
@@ -167,9 +168,9 @@ function outfitFor(u){
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
 let mines=[],lobShots=[];
-let windZones=[];
+let windZones=[],miniFrogs=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
-let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
+let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush',fieldFrogMatch=false;
 const CUP_ORDER=['rush','guard','shoot'];
 const ROOKIE_ORDER=['shield','rush','mix','triple'];
 const ADVANCED_ORDER=['phase','bounce','hybrid','blast'];
@@ -372,6 +373,7 @@ function updateSpecialButtons(){
     const el=$(id);
     if(!el)return;
     const kind=slots[i];
+    if(player&&player.alive&&player.frogActive){if(kind==='frog'){el.innerHTML='人<small>元に戻る</small>';return;}el.innerHTML='舌<small>丸呑み</small>';return;}
     if(kind==='double'){
       el.innerHTML='×2<small>2連射</small>';
     }else if(kind==='rabbit'){el.innerHTML='兎<small>ウサギ化</small>';
@@ -386,7 +388,7 @@ function updateSpecialButtons(){
     }else if(kind==='beast'&&saveData.beastUnlocked){
       el.innerHTML='獣<small>オオカミ化</small>';
     }else if(kind==='invis'&&saveData.invisUnlocked){el.innerHTML='透<small>透明化</small>';
-    }else if(kind==='spread'&&saveData.spreadUnlocked){el.innerHTML='戻<small>拡散</small>';
+    }else if(kind==='spread'&&saveData.spreadUnlocked){el.innerHTML='散<small>拡散弾</small>';
     }else if(kind==='rightangle'&&saveData.rightAngleUnlocked){el.innerHTML='┐<small>直角弾</small>';
     }else if(kind==='lob'&&saveData.lobUnlocked){el.innerHTML='弧<small>放物線</small>';
     }else if(kind==='mine'&&saveData.mineUnlocked){el.innerHTML='雷<small>地雷</small>';
@@ -777,7 +779,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,lastFrogJump:-99,frogTongueT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,lastFrogJump:-99,lastFrogTongue:-99,lastFrogBubble:-99,frogTongueT:0,frogMage:false,lastMiniFrog:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -854,12 +856,12 @@ function explodeAt(x,y,team,radius=58){
 class Bullet{
   constructor(x,y,dx,dy,team,curve,target,kind='normal'){
     Object.assign(this,{
-      x,y,dx,dy,team,curve,target,kind,r:7,life:3.6,
+      x,y,dx,dy,team,curve,target,kind,r:kind==='bubble'?13:7,life:kind==='bubble'?2.8:3.6,
       bouncesLeft:kind==='bounce'?4:0,
       blastRadius:kind==='blast'?58:0,
       spreadLife:kind==='spread'?.46:0,
       originX:x,originY:y,phase2:0,
-      speed:kind==='rightangle'?325:(kind==='spread'?360:(curve?315:355)),age:0,
+      speed:kind==='bubble'?245:(kind==='rightangle'?325:(kind==='spread'?360:(curve?315:355))),age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
     });
@@ -936,6 +938,7 @@ class Bullet{
       return;
     }
 
+    for(const mf of miniFrogs){if(mf.dead||mf.team===this.team)continue;if(Math.hypot(this.x-mf.x,this.y-mf.y)<this.r+mf.r){this.life=0;mf.dead=true;spark(mf.x,mf.y);return;}}
     const targets=this.team==='blue'?enemies:[player,...allies];
     if(this.kind==='blast'){
       for(const u of targets){
@@ -1023,7 +1026,7 @@ function shoot(u,target,curve=false){if(u.moleActive)return false;
 
 function reset(){
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
-  bullets=[];fx=[];mines=[];lobShots=[];windZones=[];left=60;secAcc=0;over=false;running=true;
+  bullets=[];fx=[];mines=[];lobShots=[];windZones=[];miniFrogs=[];left=60;secAcc=0;over=false;running=true;
   player=new Unit(300,360,'blue',true);
   const allyRole1=saveData.allyRole1||$('roleA').value||'support';
   const allyRole2=saveData.allyRole2||$('roleB').value||'guard';
@@ -1048,6 +1051,7 @@ function reset(){
     new Unit(995,500,'red',false,roles[2])
   ];
   for(const e of enemies)e.outfitKey=`${cupKind}:${currentOpponent}`;
+  if(od.frogMageUsers)for(const i of od.frogMageUsers)if(enemies[i]){enemies[i].frogMage=true;enemies[i].frogActive=true;enemies[i].specialKind='frogmage';enemies[i].shotCd=.55;enemies[i].mana=100;}
   if(cupKind==='rookie'&&od.shieldUsers)for(const i of od.shieldUsers)if(enemies[i])enemies[i].specialKind='shield';
   if(cupKind==='rookie'&&od.tripleUsers)for(const i of od.tripleUsers)if(enemies[i])enemies[i].specialKind='triple';
   if(cupKind==='rookie'&&od.bladeUsers)for(const i of od.bladeUsers)if(enemies[i])enemies[i].specialKind='blade';
@@ -1290,6 +1294,7 @@ function ai(u,dt,isEnemy){
     if(t&&dist(u,t)<560){u.lastBounce=nowSpecial;cpuBounceShot(u);flash('バウンド弾！',260);}
   }
 const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
+  if(u.frogMage){const tgt=nearest(u,u.team==='red'?[player,...allies]:enemies);if(tgt&&dist(u,tgt)<155&&nowSpecial-u.lastFrogTongue>1.7&&Math.random()<.05)useFrogTongue(u);if(nowSpecial-u.lastMiniFrog>4.2&&Math.random()<.012)launchMiniFrog(u);if(danger&&u.jumpT<=0&&nowSpecial-u.lastFrogJump>2.2&&Math.random()<.18){u.lastFrogJump=nowSpecial;u.jumpT=1.55;u.inv=Math.max(u.inv,1.35);}}
   if(u.specialKind==='jump'&&u.jumpT<=0&&nowSpecial-u.lastJump>3.0&&danger&&Math.random()<.16){u.lastJump=nowSpecial;u.jumpT=.78;u.inv=Math.max(u.inv,.78);}
 
   // シールドAIは弾を見て即発動しない。
@@ -1334,7 +1339,7 @@ const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
   move(u,n.x,n.y,dt);
   if(t&&dist(u,t)<540){
     const chance=u.role==='shooter'?.42:(u.role==='attacker'?.16:.22);
-    shoot(u,t,Math.random()<chance);
+    if(u.frogMage)shootBubble(u,t);else shoot(u,t,Math.random()<chance);
   }
 }
 
@@ -1417,6 +1422,7 @@ function update(dt){
   for(const a of allies){a.update(dt);if(!a.controlled)ai(a,dt,false)}
   for(const e of enemies){e.update(dt);ai(e,dt,true)}
   for(const b of bullets)b.update(dt);
+  updateMiniFrogs(dt);
   updateLobs(dt);updateMines(dt);
   updateWindZones(dt);
 
@@ -1424,7 +1430,11 @@ function update(dt){
     const a=bullets[i];if(a.life<=0)continue;
     for(let j=i+1;j<bullets.length;j++){
       const b=bullets[j];if(b.life<=0||a.team===b.team)continue;
-      if(Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+2){a.life=0;b.life=0;spark((a.x+b.x)/2,(a.y+b.y)/2);break}
+      if(Math.hypot(a.x-b.x,a.y-b.y)<a.r+b.r+2){
+        if(a.kind==='bubble'&&b.kind!=='bubble'){a.life=0;b.team=a.team;b.dx*=-1;b.dy*=-1;b.curve=false;b.target=nearest({x:b.x,y:b.y},b.team==='blue'?enemies:[player,...allies]);b.life=Math.max(b.life,1.35);spark((a.x+b.x)/2,(a.y+b.y)/2);break;}
+        if(b.kind==='bubble'&&a.kind!=='bubble'){b.life=0;a.team=b.team;a.dx*=-1;a.dy*=-1;a.curve=false;a.target=nearest({x:a.x,y:a.y},a.team==='blue'?enemies:[player,...allies]);a.life=Math.max(a.life,1.35);spark((a.x+b.x)/2,(a.y+b.y)/2);continue;}
+        a.life=0;b.life=0;spark((a.x+b.x)/2,(a.y+b.y)/2);break;
+      }
     }
   }
   bullets=bullets.filter(b=>b.life>0);
@@ -1451,16 +1461,9 @@ function drawUnit(u){
   }
   g.save();g.translate(u.x,u.y);
   if(u.jumpT>0){
-    
-
-  if(u.fairyActive){
-      const total=1.55,p=Math.max(0,Math.min(1,1-u.jumpT/total));
-      const lift=Math.sin(Math.PI*Math.min(1,p*1.35))*78;
-      g.translate(0,-Math.max(22,lift));
-    }else{
-      const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));
-      g.translate(0,-Math.max(0,jp)*105);
-    }
+    if(u.frogActive){const total=1.85,p=Math.max(0,Math.min(1,1-u.jumpT/total));g.translate(0,-Math.sin(Math.PI*p)*165);}
+    else if(u.fairyActive){const total=1.55,p=Math.max(0,Math.min(1,1-u.jumpT/total));const lift=Math.sin(Math.PI*Math.min(1,p*1.35))*78;g.translate(0,-Math.max(22,lift));}
+    else{const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));g.translate(0,-Math.max(0,jp)*105);}
   }
   if(u.invisT>0)g.globalAlpha=u.controlled?.38:.14;
 
@@ -1528,15 +1531,13 @@ function drawUnit(u){
   }
 
   if(u.frogActive){
-    g.save();
-    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(0,6,20,22,0,0,Math.PI*2);g.fill();
-    g.fillStyle='#78bd55';g.beginPath();g.ellipse(0,-11,16,15,0,0,Math.PI*2);g.fill();
-    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(-17,20,12,7,-.45,0,Math.PI*2);g.ellipse(17,20,12,7,.45,0,Math.PI*2);g.fill();
-    g.strokeStyle='#4d8c3a';g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(-10,0);g.lineTo(-17,11);g.moveTo(10,0);g.lineTo(17,11);g.stroke();
-    g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-22,6,0,Math.PI*2);g.arc(8,-22,6,0,Math.PI*2);g.fill();
-    g.fillStyle='#172318';g.beginPath();g.arc(-8,-22,2.4,0,Math.PI*2);g.arc(8,-22,2.4,0,Math.PI*2);g.fill();
-    g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-9,7,.2,Math.PI-.2);g.stroke();
-    if(u.frogTongueT>0){g.strokeStyle='#ed7f96';g.lineWidth=3;g.beginPath();g.moveTo(7,-4);g.lineTo(34,-4);g.stroke();}
+    g.save();const walk=u.isMoving?Math.sin((u.runPhase||0)*2.1):0;
+    g.fillStyle='#69b84f';g.beginPath();g.ellipse(0,2,15,20,0,0,Math.PI*2);g.fill();
+    g.strokeStyle='#4f963d';g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(-7,16);g.lineTo(-9-walk*4,31);g.lineTo(-14-walk*5,36);g.moveTo(7,16);g.lineTo(9+walk*4,31);g.lineTo(14+walk*5,36);g.stroke();
+    g.lineWidth=5;g.beginPath();g.moveTo(-11,0);g.lineTo(-20,10+walk*2);g.moveTo(11,0);g.lineTo(20,10-walk*2);g.stroke();
+    g.fillStyle='#7ac95a';g.beginPath();g.ellipse(0,-18,17,15,0,0,Math.PI*2);g.fill();g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-30,6,0,Math.PI*2);g.arc(8,-30,6,0,Math.PI*2);g.fill();g.fillStyle='#172318';g.beginPath();g.arc(-8,-30,2.4,0,Math.PI*2);g.arc(8,-30,2.4,0,Math.PI*2);g.fill();g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-18,7,.15,Math.PI-.15);g.stroke();
+    if(u.frogMage){g.fillStyle=u.team==='red'?'#6e4b98':'#416e9e';g.beginPath();g.moveTo(-13,-1);g.lineTo(13,-1);g.lineTo(17,22);g.lineTo(-17,22);g.closePath();g.fill();g.strokeStyle='#e6cf72';g.lineWidth=2;g.beginPath();g.moveTo(-12,5);g.lineTo(12,5);g.stroke();g.fillStyle='#47366f';g.beginPath();g.moveTo(-17,-31);g.lineTo(0,-52);g.lineTo(17,-31);g.closePath();g.fill();g.fillRect(-18,-32,36,5);}
+    if(u.frogTongueT>0){const target=nearest(u,u.team==='blue'?enemies:[player,...allies]),d=target?norm(target.x-u.x,target.y-u.y):{x:u.team==='blue'?1:-1,y:0};g.strokeStyle='#ee7f99';g.lineWidth=4;g.beginPath();g.moveTo(d.x*8,-17+d.y*8);g.lineTo(d.x*58,-17+d.y*58);g.stroke();}
     g.restore();g.restore();return;
   }
   if(u.rabbitActive){
@@ -1810,7 +1811,8 @@ function draw(){
   for(const b of bullets){
     g.save();g.shadowBlur=13;g.shadowColor=b.team==='blue'?'#8fc6ff':'#ff9daa';g.fillStyle=b.team==='blue'?'#d9ecff':'#ffe1e4';
     g.beginPath();g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();
-    if(b.kind==='phase'){
+    if(b.kind==='bubble'){g.globalAlpha=.55;g.fillStyle=b.team==='blue'?'#b9efff':'#ffd3e7';g.beginPath();g.arc(b.x,b.y,b.r+2,0,Math.PI*2);g.fill();g.globalAlpha=1;g.strokeStyle='#ffffffcc';g.lineWidth=2;g.beginPath();g.arc(b.x-3,b.y-4,b.r-4,.2,2.0);g.stroke();}
+    else if(b.kind==='phase'){
       g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
     }else if(b.kind==='spread'){g.strokeStyle='#ffb0f1';g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,b.r+3,0,Math.PI*2);g.stroke();
     }else if(b.kind==='rightangle'){g.strokeStyle='#b9ff75';g.lineWidth=3;g.strokeRect(b.x-10,b.y-10,20,20);
@@ -1824,6 +1826,7 @@ function draw(){
     g.restore();
   }
 
+  for(const m of miniFrogs){const hop=Math.abs(Math.sin(m.phase))*13;g.save();g.translate(m.x,m.y-hop);g.fillStyle=m.team==='blue'?'#76c765':'#6db451';g.beginPath();g.ellipse(0,2,10,7,0,0,Math.PI*2);g.fill();g.beginPath();g.arc(-5,-5,4,0,Math.PI*2);g.arc(5,-5,4,0,Math.PI*2);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(-5,-6,2,0,Math.PI*2);g.arc(5,-6,2,0,Math.PI*2);g.fill();g.fillStyle='#222';g.beginPath();g.arc(-5,-6,1,0,Math.PI*2);g.arc(5,-6,1,0,Math.PI*2);g.fill();g.restore();}
   for(const l of lobShots){
     const p=Math.min(1,l.t/l.dur);
     g.save();g.globalAlpha=.28+.48*p;g.strokeStyle=l.team==='blue'?'#8fc6ff':'#ff9b78';g.lineWidth=3;
@@ -1979,52 +1982,7 @@ let fairyAutoFire=null;
 $('throwBtn').addEventListener('pointerdown',e=>{
   e.preventDefault();heldAt=performance.now();
   if(!player||!player.alive)return;
-  if(player.fairyActive){
-    const fire=()=>{if(running&&player&&player.alive&&player.fairyActive)shoot(player,nearest(player,enemies),true)};
-    fire();clearInterval(fairyAutoFire);fairyAutoFire=setInterval(fire,115);return;
-  }
-  player.charging=true;player.chargeT=0;
-});
-function releaseThrow(e){
-  if(e)e.preventDefault();clearInterval(fairyAutoFire);fairyAutoFire=null;
-  if(!player)return;
-  if(player.fairyActive){player.charging=false;player.chargeT=0;return;}
-  const charged=performance.now()-heldAt>=180;player.charging=false;player.chargeT=0;
-  if(!running||!player.alive)return;
-  if(player.dodgeT>0||player.dodgeRecover>0){flash('回避中は投げられない',380);return;}
-  shoot(player,nearest(player,enemies),charged);if(charged)flash('回転弾！',380);
-}
-$('throwBtn').addEventListener('pointerup',releaseThrow);
-$('throwBtn').addEventListener('pointercancel',()=>{clearInterval(fairyAutoFire);fairyAutoFire=null;if(player){player.charging=false;player.chargeT=0}});
-
-// dodge
-$('dodgeBtn').addEventListener('pointerdown',e=>{
-  e.preventDefault();if(!running||!player.alive)return;
-  if(player.fairyActive){
-    const n=performance.now()/1000;
-    if(player.jumpT>0||n-player.lastDodge<.45)return;
-    if(!player.fairyActive&&player.mana<8){flash('魔力不足',300);return;}
-    if(!player.fairyActive)player.mana-=8;
-    player.lastDodge=n;
-    player.jumpT=1.55;
-    player.inv=Math.max(player.inv,1.55);
-    flash('妖精浮遊！',260);
-    return;
-  }
-  if(player.frogActive){
-    const n=performance.now()/1000;
-    if(player.jumpT>0||n-player.lastFrogJump<1.1)return;
-    player.lastFrogJump=n;player.jumpT=1.15;player.inv=Math.max(player.inv,.95);player.frogTongueT=.30;
-    let eat=null,ed=88;
-    for(const b of bullets){
-      if(!b||b.dead||b.team===player.team)continue;
-      const d=Math.hypot(b.x-player.x,b.y-player.y);
-      if(d<ed){ed=d;eat=b}
-    }
-    if(eat){eat.dead=true;player.mana=Math.min(100,player.mana+8);flash('ぱくっ！　MP +8',260)}
-    else flash('カエル大ジャンプ！',240);
-    return;
-  }
+  if(player.frogActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastFrogJump<1.35)return;player.lastFrogJump=n;player.jumpT=1.85;player.inv=Math.max(player.inv,1.70);flash('カエル大大大ジャンプ！',300);return;}
   if(player.rabbitActive){const n=performance.now()/1000;if(player.jumpT>0||n-player.lastJump<1.05)return;if(!player.fairyActive&&player.mana<10){flash('魔力不足',300);return}if(!player.fairyActive)player.mana-=10;player.lastJump=n;player.jumpT=.72;player.inv=Math.max(player.inv,.72);flash('ウサギジャンプ！',260);return;}
   if(player.beastActive){flash('オオカミ化中は回避できない',360);return;}
   const now=performance.now()/1000;if(now-player.lastDodge<1.8){flash('回避クールタイム',430);return}
@@ -2349,6 +2307,13 @@ function maintainFairyCooldowns(u){
   ])u[p]=-99;
 }
 
+
+function shootBubble(u,target){if(!u||!u.alive||!target||!target.alive)return false;const now=performance.now()/1000;if(now-u.lastFrogBubble<.42)return false;if(!u.fairyActive&&u.mana<8){if(u.controlled)flash('魔力不足',260);return false}if(!u.fairyActive)u.mana-=8;u.lastFrogBubble=now;const d=norm(target.x-u.x,target.y-u.y);bullets.push(new Bullet(u.x+d.x*28,u.y+d.y*28,d.x,d.y,u.team,false,target,'bubble'));return true;}
+function linePointDistance(px,py,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,wx=px-ax,wy=py-ay,vv=vx*vx+vy*vy||1,t=clamp((wx*vx+wy*vy)/vv,0,1),x=ax+vx*t,y=ay+vy*t;return {d:Math.hypot(px-x,py-y),t};}
+function useFrogTongue(u){if(!u||!u.alive||!u.frogActive)return false;const now=performance.now()/1000;if(now-u.lastFrogTongue<.9)return false;if(!u.fairyActive&&u.mana<10){if(u.controlled)flash('魔力不足',260);return false}if(!u.fairyActive)u.mana-=10;u.lastFrogTongue=now;u.frogTongueT=.28;const targets=u.team==='blue'?enemies:[player,...allies],t=nearest(u,targets),dir=t?norm(t.x-u.x,t.y-u.y):{x:u.team==='blue'?1:-1,y:0},ax=u.x,ay=u.y-3,bx=ax+dir.x*165,by=ay+dir.y*165;let eaten=0;for(const b of bullets){if(b.life<=0||b.team===u.team)continue;const q=linePointDistance(b.x,b.y,ax,ay,bx,by);if(q.d<=16+b.r){b.life=0;eaten++;}}let victim=null,best=2;for(const v of targets){if(!v||!v.alive||v.moleActive||v.jumpT>0)continue;const q=linePointDistance(v.x,v.y,ax,ay,bx,by);if(q.d<=16+v.r&&q.t<best){best=q.t;victim=v;}}if(victim){if(mode==='boss'&&victim.team==='red')bossTakeHit('bullet');else{const was=victim.controlled;victim.alive=false;spark(victim.x,victim.y);if(was){flash('丸呑み OUT!',420);transferControl();}else flash(victim.team==='red'?'ENEMY 丸呑み!':'ALLY 丸呑み!',520);checkEnd();}}if(u.controlled&&!victim)flash(eaten?`舌で弾を${eaten}発丸呑み！`:'舌！',280);return true;}
+function launchMiniFrog(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMiniFrog<4.2)return false;u.lastMiniFrog=now;const target=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!target)return false;miniFrogs.push({x:u.x,y:u.y+14,team:u.team,target,r:10,life:7,dead:false,phase:Math.random()*6.28});return true;}
+function updateMiniFrogs(dt){for(const m of miniFrogs){if(m.dead)continue;m.life-=dt;if(m.life<=0){m.dead=true;continue}if(!m.target||!m.target.alive)m.target=nearest({x:m.x,y:m.y},m.team==='red'?[player,...allies]:enemies);if(!m.target){m.dead=true;continue}m.phase+=dt*10;const d=norm(m.target.x-m.x,m.target.y-m.y);m.x+=d.x*112*dt;m.y+=d.y*112*dt;if(Math.hypot(m.x-m.target.x,m.y-m.target.y)<m.r+m.target.r+2&&m.target.inv<=0&&m.target.jumpT<=0){const v=m.target;m.dead=true;const was=v.controlled;v.alive=false;spark(v.x,v.y);if(was){flash('ミニ蛙に捕まった！',420);transferControl();}else flash(v.team==='red'?'ミニ蛙 HIT!':'ALLY OUT',500);checkEnd();}}miniFrogs=miniFrogs.filter(m=>!m.dead);}
+
 function toggleFrog(u){
   if(!u||!u.alive)return false;const now=performance.now()/1000;
   if(u.frogActive){u.frogActive=false;return true}
@@ -2368,6 +2333,7 @@ function toggleMole(u){
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
   if(player.fairyActive&&kind!=='fairy')fairyResetOtherCooldown(player,kind);
+  if(player.frogActive&&kind!=='frog'){useFrogTongue(player);return;}
   if(player.rabbitActive&&kind!=='rabbit'){flash('ウサギ化中は攻撃できない',360);return;}
   if(kind==='rabbit'){if(toggleRabbit(player))flash(player.rabbitActive?'ウサギ化！':'変身解除',300);return;}
 
@@ -2688,10 +2654,12 @@ function moveMap(dx,dy){
   updateMapAvatar();
 }
 
+function startFrogMageChallenge(){running=false;over=false;fieldFrogMatch=true;mode='practice';cupKind='beginner';currentOpponent='frogmages';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('worldMap').classList.add('hidden');reset();flash('池のカエル魔導師チームが勝負を挑んできた！',1000);}
 function enterMapPlace(kind,force=false){
   const p=MAP_PLACES[kind];if(!p)return;
   if(!force&&Math.hypot(mapX-p.x,mapY-p.y)>=11){$('mapPrompt').textContent='もう少し近づいてください';return}
   if(kind==='wetlands'){if(!saveData.wetlandsUnlocked){flash('まだ霧が濃くて進めない',450);return}showWetlands();return}
+  if(kind==='pond'&&mapFieldForm==='frog'&&saveData.frogUnlocked){startFrogMageChallenge();return}
   if(FIELD_QUEST_ORDER.includes(kind)){openBossEvent(kind);return}
   $('worldMap').classList.add('hidden');
   if(kind==='home'){$('menu').classList.remove('hidden');refreshRecordUI();return}
@@ -2772,7 +2740,7 @@ bindTap('mapSpecial2',()=>useFieldSlot(2));
 bindTap('mapDodgeBtn',()=>{
   const now=performance.now();
   if(mapFieldForm==='fairy'){mapFieldJumpUntil=now+1350;updateMapAvatar();return}
-  if(mapFieldForm==='frog'){mapFieldJumpUntil=now+1050;updateMapAvatar();flash('ぴょーん！',180);return}
+  if(mapFieldForm==='frog'){mapFieldJumpUntil=now+1650;updateMapAvatar();flash('大大大ジャンプ！',220);return}
   if(mapFieldForm==='rabbit'){mapFieldJumpUntil=now+650;updateMapAvatar();return}
   if((saveData.specialSlot1==='jump'||saveData.specialSlot2==='jump')){mapFieldJumpUntil=now+900;updateMapAvatar();return}
   flash('変身・ジャンプ装備に応じた移動技を使えます',420);
@@ -2991,7 +2959,7 @@ bindTap('nextBtn',()=>{
     writeSave();
 
     const learnMsg=pendingLearnMessage;
-    returnFromPractice();
+    if(fieldFrogMatch){fieldFrogMatch=false;$('result').classList.add('hidden');showWorldMap();mapX=73;mapY=72;updateMapAvatar();}else{returnFromPractice();}
 
     if(learnMsg){
       setTimeout(()=>flash(learnMsg,1300),120);
