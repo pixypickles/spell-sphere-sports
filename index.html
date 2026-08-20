@@ -1,229 +1,199 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#17233a"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<title>魔導球技 v2.54</title>
-<link rel="stylesheet" href="style.css?v=254">
-
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
+<meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
+<title>魔導球技 v2.55</title>
+<link href="style.css?v=255" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
 </style>
-
 </head>
 <body>
-<div id="introScreen" class="introScreen" onclick="this.style.display='none';" ontouchstart="this.style.display='none';" onpointerdown="this.style.display='none';">
-  <div class="introVersion">v2.54</div>
-  <div class="introCard">
-    <div class="introKicker">MAGIC SPORT</div>
-    <h1>魔導球技</h1>
-    <div class="introMural" aria-hidden="true">
-      <div class="scrollRod left"></div><div class="scrollRod right"></div>
-      <svg viewBox="0 0 720 180" role="img">
-        <path class="muralCourt" d="M75 30 H645 V150 H75 Z M360 30 V150"/>
-        <path class="muralWall" d="M210 55 v70 M510 55 v70 M345 63 v54"/>
-        <g class="muralMage blue" transform="translate(145 90)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><path d="M-13-31 Q0-48 15-31 Q5-34-5-27Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
-        <g class="muralMage blue" transform="translate(260 120)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
-        <g class="muralMage red" transform="translate(575 85) scale(-1 1)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><path d="M-13-31 Q0-48 15-31 Q5-34-5-27Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
-        <g class="muralMage red" transform="translate(455 120) scale(-1 1)"><circle cy="-20" r="11"/><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"/><circle class="eye" cx="4" cy="-22" r="2"/><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"/></g>
-        <path class="magicShot blueShot" d="M175 72 Q260 25 338 72"/><circle class="magicOrb blueOrb" cx="338" cy="72" r="7"/>
-        <path class="magicShot redShot" d="M545 68 Q470 35 392 82"/><circle class="magicOrb redOrb" cx="392" cy="82" r="7"/>
-        <g class="muralCrystal" transform="translate(98 108)"><circle class="magicCircle" r="22"/><path d="M0-22 L11-4 L0 20 L-11-4Z"/></g>
-        <g class="muralCrystal" transform="translate(622 108)"><circle class="magicCircle" r="22"/><path d="M0-22 L11-4 L0 20 L-11-4Z"/></g>
-        <path class="windRune" d="M105 42 q28-22 55 0 M560 142 q28 22 55 0"/>
-      </svg>
-      <div class="muralCaption">古い競技絵巻に描かれた魔導球技</div>
-    </div>
-    <p>これは魔法世界のスポーツ。<br>魔力弾を相手全員にヒットさせるか、<br>相手陣地の魔法陣に浮かぶクリスタルを取れば勝利。</p>
-    <p>ルール上、特殊な個性を持つ魔力弾や特殊技も認められている。<br>さまざまな技を使うチームが大会に参加している。</p>
-    <p>特殊技を持つ相手に3度勝利すると、<br>その技を学習し、自分でも使えるようになる。</p>
-    <button type="button" class="introHint introStartButton"
-      onclick="document.getElementById('introScreen').style.display='none';"
-      ontouchstart="document.getElementById('introScreen').style.display='none';">
+<div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
+<div class="introVersion">v2.55</div>
+<div class="introCard">
+<div class="introKicker">MAGIC SPORT</div>
+<h1>魔導球技</h1>
+<div aria-hidden="true" class="introMural">
+<div class="scrollRod left"></div><div class="scrollRod right"></div>
+<svg role="img" viewbox="0 0 720 180">
+<path class="muralCourt" d="M75 30 H645 V150 H75 Z M360 30 V150"></path>
+<path class="muralWall" d="M210 55 v70 M510 55 v70 M345 63 v54"></path>
+<g class="muralMage blue" transform="translate(145 90)"><circle cy="-20" r="11"></circle><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"></path><path d="M-13-31 Q0-48 15-31 Q5-34-5-27Z"></path><circle class="eye" cx="4" cy="-22" r="2"></circle><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"></path></g>
+<g class="muralMage blue" transform="translate(260 120)"><circle cy="-20" r="11"></circle><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"></path><circle class="eye" cx="4" cy="-22" r="2"></circle><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"></path></g>
+<g class="muralMage red" transform="translate(575 85) scale(-1 1)"><circle cy="-20" r="11"></circle><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"></path><path d="M-13-31 Q0-48 15-31 Q5-34-5-27Z"></path><circle class="eye" cx="4" cy="-22" r="2"></circle><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"></path></g>
+<g class="muralMage red" transform="translate(455 120) scale(-1 1)"><circle cy="-20" r="11"></circle><path d="M-13-8 Q0-20 13-8 L10 20 H-10Z"></path><circle class="eye" cx="4" cy="-22" r="2"></circle><path class="limb" d="M-8 18 l-8 17 M8 18 l10 16"></path></g>
+<path class="magicShot blueShot" d="M175 72 Q260 25 338 72"></path><circle class="magicOrb blueOrb" cx="338" cy="72" r="7"></circle>
+<path class="magicShot redShot" d="M545 68 Q470 35 392 82"></path><circle class="magicOrb redOrb" cx="392" cy="82" r="7"></circle>
+<g class="muralCrystal" transform="translate(98 108)"><circle class="magicCircle" r="22"></circle><path d="M0-22 L11-4 L0 20 L-11-4Z"></path></g>
+<g class="muralCrystal" transform="translate(622 108)"><circle class="magicCircle" r="22"></circle><path d="M0-22 L11-4 L0 20 L-11-4Z"></path></g>
+<path class="windRune" d="M105 42 q28-22 55 0 M560 142 q28 22 55 0"></path>
+</svg>
+<div class="muralCaption">古い競技絵巻に描かれた魔導球技</div>
+</div>
+<p>これは魔法世界のスポーツ。<br/>魔力弾を相手全員にヒットさせるか、<br/>相手陣地の魔法陣に浮かぶクリスタルを取れば勝利。</p>
+<p>ルール上、特殊な個性を持つ魔力弾や特殊技も認められている。<br/>さまざまな技を使うチームが大会に参加している。</p>
+<p>特殊技を持つ相手に3度勝利すると、<br/>その技を学習し、自分でも使えるようになる。</p>
+<button class="introHint introStartButton" onclick="document.getElementById('introScreen').style.display='none';" ontouchstart="document.getElementById('introScreen').style.display='none';" type="button">
       PUSH ANY BUTTON
     </button>
-    <div class="introSub">画面をタップして開始</div>
-    <div class="introLandscape">↔ スマホを横持ちしてください ↔</div>
-  </div>
+<div class="introSub">画面をタップして開始</div>
+<div class="introLandscape">↔ スマホを横持ちしてください ↔</div>
 </div>
-
+</div>
 <div id="rotateNotice">スマホを横向きにしてください</div>
-
 <main id="gameWrap">
-  <canvas id="game" width="1280" height="720"></canvas>
+<canvas height="720" id="game" width="1280"></canvas>
+<div id="hud">
+<span id="roundLabel">ROUND 1</span>
+<b id="score">0 - 0</b>
+<span id="clock">1:00</span>
+</div>
+<div id="manaHud">
+<small>MANA</small>
+<div class="mana"><i id="manaFill"></i></div>
+</div>
+<div id="stickZone">
+<div id="stickBase"><div id="stickKnob"></div></div>
+</div>
+<div id="buttons">
+<button class="gameBtn sp s1" id="special1">Ⅰ<small>✌</small></button>
+<button class="gameBtn sp s2" id="special2">Ⅱ<small>✌</small></button>
+<button class="gameBtn throw" id="throwBtn">投<small>短押し / 溜め</small></button>
+<button class="gameBtn dodge" id="dodgeBtn">↻<small>回避</small></button>
+</div>
+<div id="message"></div>
+<div class="overlay" id="menu">
+<section class="panel">
+<div class="kicker">TOURNAMENT MENU</div>
+<h1>魔導球技</h1>
+<p class="lead">自チーム＋3チームの総当たり大会</p>
+<div class="cupInfo"><b>大会を選択</b><small>下のボタンから参加する大会を選んでください。上位大会は優勝すると解禁されます。</small></div>
+<button class="skillSetBtn" id="skillSetBtn" type="button">特殊技セット</button><button class="allySkillBtn" id="allySkillBtn" type="button">味方A・Bの技を設定</button>
 
-  <div id="hud">
-    <span id="roundLabel">ROUND 1</span>
-    <b id="score">0 - 0</b>
-    <span id="clock">1:00</span>
-  </div>
-
-  <div id="manaHud">
-    <small>MANA</small>
-    <div class="mana"><i id="manaFill"></i></div>
-  </div>
-
-  <div id="stickZone">
-    <div id="stickBase"><div id="stickKnob"></div></div>
-  </div>
-
-  <div id="buttons">
-    <button id="special1" class="gameBtn sp s1">Ⅰ<small>✌</small></button>
-    <button id="special2" class="gameBtn sp s2">Ⅱ<small>✌</small></button>
-    <button id="throwBtn" class="gameBtn throw">投<small>短押し / 溜め</small></button>
-    <button id="dodgeBtn" class="gameBtn dodge">↻<small>回避</small></button>
-  </div>
-
-  <div id="message"></div>
-
-  <div id="menu" class="overlay">
-    <section class="panel">
-      <div class="kicker">TOURNAMENT MENU</div>
-      <h1>魔導球技</h1>
-      <p class="lead">自チーム＋3チームの総当たり大会</p>
-      <div class="cupInfo"><b>大会を選択</b><small>下のボタンから参加する大会を選んでください。上位大会は優勝すると解禁されます。</small></div>
-      
-      <button id="skillSetBtn" type="button" class="skillSetBtn">特殊技セット</button>
-      <div class="allySkillCard">
-        <div class="allySkillTitle">味方スキル設定</div>
-        <label>味方A
-          <select id="allyASkill">
-            <option value="none">なし</option>
-            <option value="double">2連射</option>
-            <option value="blade">魔力剣</option>
-          </select>
-        </label>
-        <label>味方B
-          <select id="allyBSkill">
-            <option value="none">なし</option>
-            <option value="double">2連射</option>
-            <option value="blade">魔力剣</option>
-          </select>
-        </label>
-        <small>習得した技が増えると選択肢も増えます。</small>
-      </div>
-
-      <div class="skillProgressCard">
-        
-    <div class="skillProgressTitle">特殊技研究</div>
-        <div id="shieldProgressText">シールド　0/3</div>
-      </div>
-
-      <div class="recordCard">
-        <div class="recordTitle">戦績</div>
-        <div id="recordText" class="recordText">通算 0勝 0敗 / 優勝 0回</div>
-        <div id="rankUnlock" class="rankUnlock locked">次ランク：未解禁</div>
-      </div>
-
-      <label>味方A<select id="roleA"><option value="support">サポート</option><option value="attacker">旗取り</option><option value="guard">守備</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
-      <label>味方B<select id="roleB"><option value="guard">守備</option><option value="attacker">旗取り</option><option value="support">サポート</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
-      <div class="menuActions">
-        <button id="cupStartBtn" type="button" class="menuBtn">ビギナーカップ開始</button><button id="rookieBtn" type="button" class="rookieBtn hidden">ルーキーカップへ</button><button id="advancedBtn" type="button" class="rookieBtn hidden">アドバンスカップへ</button><button id="expertBtn" type="button" class="rookieBtn hidden">エキスパートカップへ</button><button id="masterBtn" type="button" class="rookieBtn hidden">マスターカップへ</button><button id="cupContinueBtn" type="button" class="resumeBtn hidden">大会の続きから</button>
-        <button id="practiceBtn" type="button" class="subBtn">練習試合</button>
-      </div>
-      <p class="note">敵クリスタルに触れるか敵3人を全員アウトで1本。2本先取。</p>
-      <div class="menuBottomSpace"></div>
-    </section>
-  </div>
-
-  
-  <div id="skillSetPanel" class="overlay hidden">
-    <section class="panel skillSetPanel">
-      <div class="kicker">SPECIAL SET</div>
-      <h1>特殊技セット</h1>
-      <p class="lead">試合で使う特殊技を2つまでセットできます。</p>
-
-      <label class="skillSlotLabel">特殊①
+<div class="skillProgressCard">
+<div class="skillProgressTitle">特殊技研究</div>
+<div id="shieldProgressText">シールド　0/3</div>
+</div>
+<div class="recordCard">
+<div class="recordTitle">戦績</div>
+<div class="recordText" id="recordText">通算 0勝 0敗 / 優勝 0回</div>
+<div class="rankUnlock locked" id="rankUnlock">次ランク：未解禁</div>
+</div>
+<label>味方A<select id="roleA"><option value="support">サポート</option><option value="attacker">旗取り</option><option value="guard">守備</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
+<label>味方B<select id="roleB"><option value="guard">守備</option><option value="attacker">旗取り</option><option value="support">サポート</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
+<div class="menuActions">
+<button class="menuBtn" id="cupStartBtn" type="button">ビギナーカップ開始</button><button class="rookieBtn hidden" id="rookieBtn" type="button">ルーキーカップへ</button><button class="rookieBtn hidden" id="advancedBtn" type="button">アドバンスカップへ</button><button class="rookieBtn hidden" id="expertBtn" type="button">エキスパートカップへ</button><button class="rookieBtn hidden" id="masterBtn" type="button">マスターカップへ</button><button class="resumeBtn hidden" id="cupContinueBtn" type="button">大会の続きから</button>
+<button class="subBtn" id="practiceBtn" type="button">練習試合</button>
+</div>
+<p class="note">敵クリスタルに触れるか敵3人を全員アウトで1本。2本先取。</p>
+<div class="menuBottomSpace"></div>
+</section>
+</div>
+<div class="overlay hidden" id="skillSetPanel">
+<section class="panel skillSetPanel">
+<div class="kicker">SPECIAL SET</div>
+<h1>特殊技セット</h1>
+<p class="lead">試合で使う特殊技を2つまでセットできます。</p>
+<label class="skillSlotLabel">特殊①
         <select id="specialSlot1">
-          <option value="none">なし（✌）</option>
-          <option value="double">2連射</option>
-          <option value="blade">魔力剣</option>
-          <option value="phase">壁すり抜け弾</option>
-          <option value="bounce">バウンド弾</option>
-          <option value="blast">爆裂弾</option>
-          <option value="beast">獣化</option>
-          <option value="invis">透明化</option>
-          <option value="boomerang">ブーメラン弾</option>
-          <option value="rightangle">直角弾</option>
-          <option value="lob">放物線爆弾</option>
-          <option value="mine">地雷</option><option value="jump">ジャンプ</option>
-          <option value="triple">3連射</option>
-          <option value="shield">シールド</option>
-        </select>
-      </label>
-
-      <label class="skillSlotLabel">特殊②
+<option value="none">なし（✌）</option>
+<option value="double">2連射</option>
+<option value="blade">魔力剣</option>
+<option value="phase">壁すり抜け弾</option>
+<option value="bounce">バウンド弾</option>
+<option value="blast">爆裂弾</option>
+<option value="beast">獣化</option>
+<option value="invis">透明化</option>
+<option value="boomerang">ブーメラン弾</option>
+<option value="rightangle">直角弾</option>
+<option value="lob">放物線爆弾</option>
+<option value="mine">地雷</option><option value="jump">ジャンプ</option>
+<option value="triple">3連射</option>
+<option value="shield">シールド</option>
+</select>
+</label>
+<label class="skillSlotLabel">特殊②
         <select id="specialSlot2">
-          <option value="none">なし（✌）</option>
-          <option value="double">2連射</option>
-          <option value="blade">魔力剣</option>
-          <option value="phase">壁すり抜け弾</option>
-          <option value="bounce">バウンド弾</option>
-          <option value="blast">爆裂弾</option>
-          <option value="beast">獣化</option>
-          <option value="invis">透明化</option>
-          <option value="boomerang">ブーメラン弾</option>
-          <option value="rightangle">直角弾</option>
-          <option value="lob">放物線爆弾</option>
-          <option value="mine">地雷</option><option value="jump">ジャンプ</option>
-          <option value="triple">3連射</option>
-          <option value="shield">シールド</option>
-        </select>
-      </label>
-
-      <div id="skillSetInfo" class="skillSetInfo"></div>
-
-      <button id="skillSetSaveBtn" type="button" class="menuBtn">セットを保存</button>
-      <button id="skillSetCloseBtn" type="button" class="subBtn">戻る</button>
-    </section>
-  </div>
-
-
-  <div id="practicePanel" class="overlay hidden">
-    <section class="panel practicePanelCard">
-      <div class="kicker">PRACTICE MATCH</div>
-      <h1>練習試合</h1>
-      <p class="lead">大会で一度対戦したチームと再戦できます。</p>
-
-      <label>対戦相手
+<option value="none">なし（✌）</option>
+<option value="double">2連射</option>
+<option value="blade">魔力剣</option>
+<option value="phase">壁すり抜け弾</option>
+<option value="bounce">バウンド弾</option>
+<option value="blast">爆裂弾</option>
+<option value="beast">獣化</option>
+<option value="invis">透明化</option>
+<option value="boomerang">ブーメラン弾</option>
+<option value="rightangle">直角弾</option>
+<option value="lob">放物線爆弾</option>
+<option value="mine">地雷</option><option value="jump">ジャンプ</option>
+<option value="triple">3連射</option>
+<option value="shield">シールド</option>
+</select>
+</label>
+<div class="skillSetInfo" id="skillSetInfo"></div>
+<button class="menuBtn" id="skillSetSaveBtn" type="button">セットを保存</button>
+<button class="subBtn" id="skillSetCloseBtn" type="button">戻る</button>
+</section>
+</div>
+<div class="overlay hidden" id="allySkillPanel">
+<section class="panel allySkillPanelCard">
+<div class="kicker">ALLY SPECIAL SET</div>
+<h1>味方スキル設定</h1>
+<p class="lead">味方Aと味方Bに、それぞれ別の特殊技を設定できます。</p>
+<label class="allySkillLabel">味方A
+      <select id="allyASkill"></select>
+</label>
+<label class="allySkillLabel">味方B
+      <select id="allyBSkill"></select>
+</label>
+<div class="skillSetInfo" id="allySkillInfo">
+      習得済みの特殊技だけ選択できます。<br/>
+      2連射と魔力剣は最初から使用できます。
+    </div>
+<button class="menuBtn" id="allySkillSaveBtn" type="button">味方スキルを保存</button>
+<button class="subBtn" id="allySkillCloseBtn" type="button">戻る</button>
+</section>
+</div><div class="overlay hidden" id="practicePanel">
+<section class="panel practicePanelCard">
+<div class="kicker">PRACTICE MATCH</div>
+<h1>練習試合</h1>
+<p class="lead">大会で一度対戦したチームと再戦できます。</p>
+<label>対戦相手
         <select id="practiceTeamSelect"></select>
-      </label>
-
-      <div id="practiceTeamInfo" class="practiceTeamInfo"></div>
-
-      <button id="practiceStartBtn" type="button" class="menuBtn">練習試合開始</button>
-      <button id="practiceCloseBtn" type="button" class="subBtn">戻る</button>
-    </section>
-  </div>
-
-<div id="cupPanel" class="overlay hidden">
-    <section class="panel cupPanelCard">
-      <div class="kicker">BEGINNER CUP</div><h1 id="cupTitle">第1試合</h1><p id="cupOpponent" class="lead"></p>
-      <div id="standings" class="standings"></div>
-      <div class="menuActions"><button id="cupMatchBtn" type="button" class="menuBtn">試合へ</button><button id="cupBackBtn" type="button" class="subBtn">大会を中断</button></div>
-    </section>
-  </div>
-
-  <div id="cupEndPanel" class="overlay hidden">
-    <section class="panel cupPanelCard">
-      <div class="kicker">BEGINNER CUP RESULT</div><h1 id="cupEndTitle">大会終了</h1><p id="cupEndText" class="lead"></p>
-      <div id="finalStandings" class="standings"></div><button id="cupFinishBtn" type="button" class="menuBtn">メニューへ戻る</button>
-    </section>
-  </div>
-
-  <div id="result" class="overlay hidden">
-    <section class="panel resultPanel">
-      <div class="kicker">RESULT</div>
-      <h1 id="resultTitle">ROUND WIN</h1>
-      <p id="resultText"></p>
-      <button id="nextBtn" class="menuBtn">次のラウンド</button>
-    </section>
-  </div>
+</label>
+<div class="practiceTeamInfo" id="practiceTeamInfo"></div>
+<button class="menuBtn" id="practiceStartBtn" type="button">練習試合開始</button>
+<button class="subBtn" id="practiceCloseBtn" type="button">戻る</button>
+</section>
+</div>
+<div class="overlay hidden" id="cupPanel">
+<section class="panel cupPanelCard">
+<div class="kicker">BEGINNER CUP</div><h1 id="cupTitle">第1試合</h1><p class="lead" id="cupOpponent"></p>
+<div class="standings" id="standings"></div>
+<div class="menuActions"><button class="menuBtn" id="cupMatchBtn" type="button">試合へ</button><button class="subBtn" id="cupBackBtn" type="button">大会を中断</button></div>
+</section>
+</div>
+<div class="overlay hidden" id="cupEndPanel">
+<section class="panel cupPanelCard">
+<div class="kicker">BEGINNER CUP RESULT</div><h1 id="cupEndTitle">大会終了</h1><p class="lead" id="cupEndText"></p>
+<div class="standings" id="finalStandings"></div><button class="menuBtn" id="cupFinishBtn" type="button">メニューへ戻る</button>
+</section>
+</div>
+<div class="overlay hidden" id="result">
+<section class="panel resultPanel">
+<div class="kicker">RESULT</div>
+<h1 id="resultTitle">ROUND WIN</h1>
+<p id="resultText"></p>
+<button class="menuBtn" id="nextBtn">次のラウンド</button>
+</section>
+</div>
 </main>
-
-<div id="versionBadge">v2.54</div>
-<script src="game.js?v=254"></script>
+<div id="versionBadge">v2.55</div>
+<script src="game.js?v=255"></script>
 </body>
 </html>

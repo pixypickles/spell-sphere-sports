@@ -240,33 +240,20 @@ function unlockedSkillChoices(){
   return a;
 }
 function refreshPlayerSkillSelectors(){
-  // 主人公は従来の特殊①/②画面で設定。ここでは味方A/Bだけ設定する。
-  if(saveData.playerSkills){
-    // v2.49-v2.52の旧設定を一度だけ味方設定へ引き継ぐ
-    if((saveData.allySkillA||'none')==='none' && saveData.playerSkills[1])saveData.allySkillA=saveData.playerSkills[1];
-    if((saveData.allySkillB||'none')==='none' && saveData.playerSkills[2])saveData.allySkillB=saveData.playerSkills[2];
-  }
+  const a=$('allyASkill'),b=$('allyBSkill');
+  if(!a||!b)return;
 
   const choices=unlockedSkillChoices();
-  const defs=[['allyASkill','allySkillA'],['allyBSkill','allySkillB']];
+  const defs=[[a,'allySkillA'],[b,'allySkillB']];
 
-  for(const [id,key] of defs){
-    const el=$(id);if(!el)continue;
+  for(const [el,key] of defs){
     const current=saveData[key]||'none';
     el.innerHTML='';
-
     for(const [value,name] of choices){
       const o=document.createElement('option');
-      o.value=value;o.textContent=name;
-      el.appendChild(o);
+      o.value=value;o.textContent=name;el.appendChild(o);
     }
-
     el.value=choices.some(c=>c[0]===current)?current:'none';
-    saveData[key]=el.value;
-    el.onchange=()=>{
-      saveData[key]=el.value;
-      writeSave();
-    };
   }
 }
 function specialName(kind){
@@ -459,6 +446,14 @@ function updatePracticeMenu(){
   };
   sel.onchange=refresh;
   refresh();
+}
+
+function saveAllySkills(){
+  const a=$('allyASkill'),b=$('allyBSkill');
+  if(!a||!b)return;
+  saveData.allySkillA=a.value||'none';
+  saveData.allySkillB=b.value||'none';
+  writeSave();
 }
 
 function saveCupResume(){
@@ -1629,26 +1624,29 @@ function returnFromPractice(){
   running=false;
   over=false;
   mode='menu';
-  bullets=[];
-  fx=[];
+  bullets=[];fx=[];mines=[];lobShots=[];
   pendingLearnMessage='';
 
-  for(const id of ['result','practicePanel','cupPanel','cupEndPanel','skillSetPanel']){
-    const el=$(id);
-    if(el)el.classList.add('hidden');
+  for(const id of ['result','cupPanel','cupEndPanel','skillSetPanel','allySkillPanel']){
+    const el=$(id);if(el)el.classList.add('hidden');
   }
 
-  // Do NOT alter saved cup resume. Practice is independent of tournament state.
-  $('menu').classList.remove('hidden');
-
-  bScore=0;
-  rScore=0;
-  round=1;
+  bScore=0;rScore=0;round=1;
   score.textContent='0 - 0';
   roundLabel.textContent='ROUND 1';
   clock.textContent='1:00';
 
   refreshRecordUI();
+
+  // Always reopen practice opponent selection after a practice match.
+  $('menu').classList.add('hidden');
+  updatePracticeMenu();
+  $('practicePanel').classList.remove('hidden');
+
+  const info=$('practiceTeamInfo');
+  if(info){
+    info.innerHTML='<b>練習試合終了</b><br>同じ相手へ再戦するか、別のチームを選べます。<br><br>'+info.innerHTML;
+  }
 }
 
 function returnToMainMenu(){
@@ -1662,7 +1660,7 @@ function returnToMainMenu(){
   fx=[];
   pendingLearnMessage='';
 
-  for(const id of ['result','cupPanel','cupEndPanel','skillSetPanel','practicePanel']){
+  for(const id of ['result','cupPanel','cupEndPanel','skillSetPanel','practicePanel','allySkillPanel']){
     const el=$(id);
     if(el)el.classList.add('hidden');
   }
@@ -1681,6 +1679,23 @@ function returnToMainMenu(){
 
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
+
+bindTap('allySkillBtn',()=>{
+  refreshPlayerSkillSelectors();
+  $('menu').classList.add('hidden');
+  $('allySkillPanel').classList.remove('hidden');
+});
+bindTap('allySkillSaveBtn',()=>{
+  saveAllySkills();
+  $('allySkillPanel').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+  refreshRecordUI();
+  flash('味方スキルを保存',450);
+});
+bindTap('allySkillCloseBtn',()=>{
+  $('allySkillPanel').classList.add('hidden');
+  $('menu').classList.remove('hidden');
+});
 
 bindTap('skillSetBtn',()=>{
   updateSkillSetUI();
@@ -1704,6 +1719,8 @@ bindTap('practiceCloseBtn',()=>{
   $('menu').classList.remove('hidden');
 });
 bindTap('practiceStartBtn',()=>{
+  running=false;
+  over=false;
   const val=$('practiceTeamSelect').value;
   if(!val)return;
   const [kind,id]=val.split(':');
@@ -1857,4 +1874,4 @@ for(const ev of ['contextmenu','selectstart','dragstart'])document.addEventListe
 refreshRecordUI();
 window.__gameDebug=()=>({mode,cupIndex,currentOpponent,enemies:enemies.length,aliveEnemies:enemies.filter(e=>e.alive).length,menuHidden:$('menu').classList.contains('hidden'),cupHidden:$('cupPanel').classList.contains('hidden'),running,saveData:JSON.parse(JSON.stringify(saveData))});
 })();
-window.addEventListener('DOMContentLoaded',()=>refreshPlayerSkillSelectors());
+
