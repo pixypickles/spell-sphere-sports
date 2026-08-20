@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v2.57</title>
-<link href="style.css?v=257" rel="stylesheet"/>
+<title>魔導球技 v2.58</title>
+<link href="style.css?v=258" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion">v2.57</div>
+<div class="introVersion">v2.58</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -86,7 +86,7 @@
 <label>味方A<select id="roleA"><option value="support">サポート</option><option value="attacker">旗取り</option><option value="guard">守備</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
 <label>味方B<select id="roleB"><option value="guard">守備</option><option value="attacker">旗取り</option><option value="support">サポート</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
 <div class="menuActions">
-<button class="menuBtn" id="cupStartBtn" type="button">ビギナーカップ開始</button><button class="rookieBtn hidden" id="rookieBtn" type="button">ルーキーカップへ</button><button class="rookieBtn hidden" id="advancedBtn" type="button">アドバンスカップへ</button><button class="rookieBtn hidden" id="expertBtn" type="button">エキスパートカップへ</button><button class="rookieBtn hidden" id="masterBtn" type="button">マスターカップへ</button><button class="resumeBtn hidden" id="cupContinueBtn" type="button">大会の続きから</button>
+<button class="menuBtn" id="cupStartBtn" type="button">ビギナーカップ開始</button><button class="rookieBtn hidden" id="rookieBtn" type="button">ルーキーカップへ</button><button class="rookieBtn hidden" id="advancedBtn" type="button">アドバンスカップへ</button><button class="rookieBtn hidden" id="expertBtn" type="button">エキスパートカップへ</button><button class="rookieBtn hidden" id="masterBtn" type="button">マスターカップへ</button><button class="rookieBtn hidden" id="grandmasterBtn" type="button">グランドマスターカップへ</button><button class="resumeBtn hidden" id="cupContinueBtn" type="button">大会の続きから</button>
 <button class="subBtn" id="practiceBtn" type="button">練習試合</button>
 </div>
 <p class="note">敵クリスタルに触れるか敵3人を全員アウトで1本。2本先取。</p>
@@ -114,7 +114,7 @@
 <option value="mine">地雷</option><option value="jump">ジャンプ</option>
 <option value="triple">3連射</option>
 <option value="shield">シールド</option>
-</select>
+<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option></select>
 </label>
 <label class="skillSlotLabel">特殊②
         <select id="specialSlot2">
@@ -132,7 +132,7 @@
 <option value="mine">地雷</option><option value="jump">ジャンプ</option>
 <option value="triple">3連射</option>
 <option value="shield">シールド</option>
-</select>
+<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option></select>
 </label>
 <div class="skillSetInfo" id="skillSetInfo"></div>
 <button class="menuBtn" id="skillSetSaveBtn" type="button">セットを保存</button>
@@ -202,7 +202,7 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v2.57</div>
-<script src="game.js?v=257"></script>
+<div id="versionBadge">v2.58</div>
+<script src="game.js?v=258"></script>
 </body>
 </html>

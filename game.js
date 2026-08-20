@@ -99,7 +99,37 @@ const MASTER_TEAMS={
   lob:{name:'スカイアーク',desc:'投射型：壁を越える放物線爆弾を投げ、着地点で爆発させます。',roles:['shooter','balance','guard'],lobUsers:[0,1]},
   mine:{name:'グリフマイナーズ',desc:'地雷型：魔法地雷を最大2個設置します。クリスタル付近には置けません。',roles:['guard','support','balance'],mineUsers:[0,1]},
   grand:{name:'グランドアルカナ',desc:'複合型：3人がそれぞれ透明化・拡散弾・ジャンプを担当します。',roles:['balance','shooter','attacker'],invisUsers:[0],spreadUsers:[1],jumpUsers:[2]}
-};// v2.48: opponent-specific 2-3 color uniforms. Each team gets its own motif.
+};
+
+const GRANDMASTER_TEAMS={
+  clone:{
+    name:'ミラージュツインズ',
+    desc:'分身型：本体をその場に残し、分身体で攻めます。本体を狙うのが攻略の鍵です。',
+    roles:['attacker','balance','support'],
+    cloneUsers:[0,1]
+  },
+  reflect:{
+    name:'リフレクトセイバーズ',
+    desc:'反射剣型：半円状の魔力剣で飛んできた弾を斬り返します。',
+    roles:['guard','shooter','balance'],
+    reflectBladeUsers:[0,1]
+  },
+  wind:{
+    name:'テンペストサークル',
+    desc:'風術型：相手陣に風の渦を発生させ、壁の陰から押し出して射線を作ります。',
+    roles:['support','balance','shooter'],
+    windUsers:[0,1]
+  },
+  arcana:{
+    name:'アークミラージュ',
+    desc:'最上位混成型：分身・反射剣・風起こしを3人が別々に使います。',
+    roles:['attacker','guard','support'],
+    cloneUsers:[0],
+    reflectBladeUsers:[1],
+    windUsers:[2]
+  }
+};
+// v2.48: opponent-specific 2-3 color uniforms. Each team gets its own motif.
 const OUTFITS={
   'beginner:rush': {base:'#e85d5d',sub:'#ffd166',accent:'#fff1c7',pattern:'chevron'},
   'beginner:guard':{base:'#58677c',sub:'#aeb8c6',accent:'#f0d49a',pattern:'bars'},
@@ -119,7 +149,12 @@ const OUTFITS={
   'master:trick':   {base:'#7d3f82',sub:'#45c4ad',accent:'#ffe26e',pattern:'spiral'},
   'master:lob':     {base:'#315d8a',sub:'#a9d7e8',accent:'#f5e6a8',pattern:'arc'},
   'master:mine':    {base:'#4c5848',sub:'#b6a14d',accent:'#e7e1ad',pattern:'rune'},
-  'master:grand':   {base:'#392f56',sub:'#c39a48',accent:'#e6d8ff',pattern:'crown'}
+  'master:grand':   {base:'#392f56',sub:'#c39a48',accent:'#e6d8ff',pattern:'crown'},
+  'grandmaster:clone': {base:'#405bc7',sub:'#9bd4ff',accent:'#f8fbff',pattern:'split'},
+  'grandmaster:reflect': {base:'#d4a62a',sub:'#fff0a6',accent:'#6d4e00',pattern:'chevron'},
+  'grandmaster:wind': {base:'#3ca889',sub:'#d0fff2',accent:'#386f9a',pattern:'wave'},
+  'grandmaster:arcana': {base:'#7b4ca8',sub:'#43c7b4',accent:'#ffd96b',pattern:'star'},
+
 };
 function outfitFor(u){
   if(u.team==='blue')return {base:BLUE,sub:'#dceaff',accent:'#ffe66d',pattern:'player'};
@@ -130,6 +165,7 @@ function outfitFor(u){
 
 let player=null,allies=[],enemies=[],bullets=[],fx=[];
 let mines=[],lobShots=[];
+let windZones=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush';
 const CUP_ORDER=['rush','guard','shoot'];
@@ -137,9 +173,10 @@ const ROOKIE_ORDER=['shield','rush','mix','triple'];
 const ADVANCED_ORDER=['phase','bounce','hybrid','blast'];
 const EXPERT_ORDER=['beast','blastbeast','apex'];
 const MASTER_ORDER=['invis','trick','lob','mine','grand'];
+const GRANDMASTER_ORDER=['clone','reflect','wind','arcana'];
 const CUP_NAMES={player:'プレイヤーチーム',rush:TEAMS.rush.name,guard:TEAMS.guard.name,shoot:TEAMS.shoot.name};
-function currentCupOrder(){return cupKind==='master'?MASTER_ORDER:(cupKind==='expert'?EXPERT_ORDER:(cupKind==='advanced'?ADVANCED_ORDER:(cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER)))}
-function opponentData(id){return cupKind==='master'?MASTER_TEAMS[id]:(cupKind==='expert'?EXPERT_TEAMS[id]:(cupKind==='advanced'?ADVANCED_TEAMS[id]:(cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])))}
+function currentCupOrder(){return cupKind==='grandmaster'?GRANDMASTER_ORDER:(cupKind==='master'?MASTER_ORDER:(cupKind==='expert'?EXPERT_ORDER:(cupKind==='advanced'?ADVANCED_ORDER:(cupKind==='rookie'?ROOKIE_ORDER:CUP_ORDER))))}
+function opponentData(id){return cupKind==='grandmaster'?GRANDMASTER_TEAMS[id]:(cupKind==='master'?MASTER_TEAMS[id]:(cupKind==='expert'?EXPERT_TEAMS[id]:(cupKind==='advanced'?ADVANCED_TEAMS[id]:(cupKind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]))))}
 const SAVE_KEY='magic_ball_save_v216';
 let saveData=loadSave();
 
@@ -149,7 +186,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false
   };
 }
 function loadSave(){
@@ -199,6 +236,7 @@ function refreshRecordUI(){
   const ab=$('advancedBtn');if(ab)ab.classList.toggle('hidden',!saveData.advancedUnlocked);
   const eb=$('expertBtn');if(eb)eb.classList.toggle('hidden',!saveData.expertUnlocked);
   const mb=$('masterBtn');if(mb)mb.classList.toggle('hidden',!saveData.masterUnlocked);
+  const gb=$('grandmasterBtn');if(gb)gb.classList.toggle('hidden',!saveData.grandmasterUnlocked);
 
   const sp=$('shieldProgressText');
   if(sp){
@@ -214,7 +252,10 @@ function refreshRecordUI(){
       + '<br>' + (saveData.rightAngleUnlocked?'直角弾　習得済み':`直角弾　${saveData.rightAngleProgress||0}/3`)
       + '<br>' + (saveData.lobUnlocked?'放物線爆弾　習得済み':`放物線爆弾　${saveData.lobProgress||0}/3`)
       + '<br>' + (saveData.mineUnlocked?'地雷　習得済み':`地雷　${saveData.mineProgress||0}/3`)
-      + '<br>' + (saveData.jumpUnlocked?'ジャンプ　習得済み':`ジャンプ　${saveData.jumpProgress||0}/3`);
+      + '<br>' + (saveData.jumpUnlocked?'ジャンプ　習得済み':`ジャンプ　${saveData.jumpProgress||0}/3`)
+      + '<br>' + (saveData.cloneUnlocked?'分身　習得済み':`分身　${saveData.cloneProgress||0}/3`)
+      + '<br>' + (saveData.reflectBladeUnlocked?'反射の魔力剣　習得済み':`反射の魔力剣　${saveData.reflectBladeProgress||0}/3`)
+      + '<br>' + (saveData.windUnlocked?'風起こし　習得済み':`風起こし　${saveData.windProgress||0}/3`);
     sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
   }
 
@@ -239,7 +280,10 @@ function unlockedSkillChoices(){
     ['rightangle','直角弾','rightAngleUnlocked'],
     ['lob','放物線爆弾','lobUnlocked'],
     ['mine','地雷','mineUnlocked'],
-    ['jump','ジャンプ','jumpUnlocked']
+    ['jump','ジャンプ','jumpUnlocked'],
+    ['clone','分身','cloneUnlocked'],
+    ['reflectblade','反射の魔力剣','reflectBladeUnlocked'],
+    ['wind','風起こし','windUnlocked']
   ];
   for(const [v,n,k] of defs)if(!k||saveData[k])a.push([v,n]);
   return a;
@@ -280,6 +324,9 @@ function specialName(kind){
   if(kind==='lob')return '放物線爆弾';
   if(kind==='mine')return '地雷';
   if(kind==='jump')return 'ジャンプ';
+  if(kind==='clone')return '分身';
+  if(kind==='reflectblade')return '反射の魔力剣';
+  if(kind==='wind')return '風起こし';
   if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
@@ -308,6 +355,9 @@ function updateSpecialButtons(){
     }else if(kind==='lob'&&saveData.lobUnlocked){el.innerHTML='弧<small>放物線</small>';
     }else if(kind==='mine'&&saveData.mineUnlocked){el.innerHTML='雷<small>地雷</small>';
     }else if(kind==='jump'&&saveData.jumpUnlocked){el.innerHTML='跳<small>ジャンプ</small>';
+    }else if(kind==='clone'&&saveData.cloneUnlocked){el.innerHTML='分<small>分身</small>';
+    }else if(kind==='reflectblade'&&saveData.reflectBladeUnlocked){el.innerHTML='返<small>反射剣</small>';
+    }else if(kind==='wind'&&saveData.windUnlocked){el.innerHTML='風<small>風起こし</small>';
     }else if(kind==='triple'&&saveData.tripleUnlocked){
       el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
@@ -339,6 +389,9 @@ function updateSkillSetUI(){
   const lobOptionA=[...a.options].find(o=>o.value==='lob'),lobOptionB=[...b.options].find(o=>o.value==='lob');
   const mineOptionA=[...a.options].find(o=>o.value==='mine'),mineOptionB=[...b.options].find(o=>o.value==='mine');
   const jumpOptionA=[...a.options].find(o=>o.value==='jump'),jumpOptionB=[...b.options].find(o=>o.value==='jump');
+  const cloneOptionA=[...a.options].find(o=>o.value==='clone'),cloneOptionB=[...b.options].find(o=>o.value==='clone');
+  const reflectBladeOptionA=[...a.options].find(o=>o.value==='reflectblade'),reflectBladeOptionB=[...b.options].find(o=>o.value==='reflectblade');
+  const windOptionA=[...a.options].find(o=>o.value==='wind'),windOptionB=[...b.options].find(o=>o.value==='wind');
   if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
   if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
   if(tripleOptionA)tripleOptionA.disabled=!saveData.tripleUnlocked;
@@ -357,6 +410,9 @@ function updateSkillSetUI(){
   if(lobOptionA)lobOptionA.disabled=!saveData.lobUnlocked;if(lobOptionB)lobOptionB.disabled=!saveData.lobUnlocked;
   if(mineOptionA)mineOptionA.disabled=!saveData.mineUnlocked;if(mineOptionB)mineOptionB.disabled=!saveData.mineUnlocked;
   if(jumpOptionA)jumpOptionA.disabled=!saveData.jumpUnlocked;if(jumpOptionB)jumpOptionB.disabled=!saveData.jumpUnlocked;
+  if(cloneOptionA)cloneOptionA.disabled=!saveData.cloneUnlocked;if(cloneOptionB)cloneOptionB.disabled=!saveData.cloneUnlocked;
+  if(reflectBladeOptionA)reflectBladeOptionA.disabled=!saveData.reflectBladeUnlocked;if(reflectBladeOptionB)reflectBladeOptionB.disabled=!saveData.reflectBladeUnlocked;
+  if(windOptionA)windOptionA.disabled=!saveData.windUnlocked;if(windOptionB)windOptionB.disabled=!saveData.windUnlocked;
 
   a.value=saveData.specialSlot1||'none';
   b.value=saveData.specialSlot2||'none';
@@ -390,6 +446,9 @@ function saveSkillSet(){
   if(s1==='lob'&&!saveData.lobUnlocked)s1='none';if(s2==='lob'&&!saveData.lobUnlocked)s2='none';
   if(s1==='mine'&&!saveData.mineUnlocked)s1='none';if(s2==='mine'&&!saveData.mineUnlocked)s2='none';
   if(s1==='jump'&&!saveData.jumpUnlocked)s1='none';if(s2==='jump'&&!saveData.jumpUnlocked)s2='none';
+  if(s1==='clone'&&!saveData.cloneUnlocked)s1='none';if(s2==='clone'&&!saveData.cloneUnlocked)s2='none';
+  if(s1==='reflectblade'&&!saveData.reflectBladeUnlocked)s1='none';if(s2==='reflectblade'&&!saveData.reflectBladeUnlocked)s2='none';
+  if(s1==='wind'&&!saveData.windUnlocked)s1='none';if(s2==='wind'&&!saveData.windUnlocked)s2='none';
 
   // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
   if(s1!=='none'&&s1===s2)s1='none';
@@ -415,17 +474,17 @@ function practiceEntries(){
   const list=[];
   for(const key of keys){
     const [kind,id]=key.split(':');
-    const data=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));
+    const data=kind==='grandmaster'?GRANDMASTER_TEAMS[id]:(kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]))));
     if(data)list.push({kind,id,name:data.name,desc:data.desc});
   }
   return list;
 }
-function teamSkillList(kind,id){let d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));if(!d)return ['特殊技なし'];const x=[];for(const [p,n] of [['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['spreadUsers','拡散弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ']])if(d[p]&&d[p].length)x.push(n);return x.length?x:['特殊技なし'];}
+function teamSkillList(kind,id){let d=kind==='grandmaster'?GRANDMASTER_TEAMS[id]:(kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]))));if(!d)return ['特殊技なし'];const x=[];for(const [p,n] of [['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['spreadUsers','拡散弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ'],['cloneUsers','分身'],['reflectBladeUsers','反射の魔力剣'],['windUsers','風起こし']])if(d[p]&&d[p].length)x.push(n);return x.length?x:['特殊技なし'];}
 function teamMemberSkillList(kind,id){
-  const d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));
+  const d=kind==='grandmaster'?GRANDMASTER_TEAMS[id]:(kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id]))));
   if(!d)return ['特殊技なし','特殊技なし','特殊技なし'];
   const out=['特殊技なし','特殊技なし','特殊技なし'];
-  const defs=[['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['spreadUsers','拡散弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ']];
+  const defs=[['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['spreadUsers','拡散弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ'],['cloneUsers','分身'],['reflectBladeUsers','反射の魔力剣'],['windUsers','風起こし']];
   for(const [prop,name] of defs)for(const i of (d[prop]||[]))if(i>=0&&i<3)out[i]=out[i]==='特殊技なし'?name:out[i]+'＋'+name;
   return out;
 }
@@ -494,7 +553,7 @@ function recordMatch(a,b,as,bs){const A=cupTable[a],B=cupTable[b];A.rf+=as;A.ra+
 function simulateCpu(a,b){const aw=Math.random()<.5,ls=Math.random()<.55?1:0;recordMatch(a,b,aw?2:ls,aw?ls:2)}
 function sortedTable(){return Object.values(cupTable).sort((a,b)=>b.w-a.w||((b.rf-b.ra)-(a.rf-a.ra))||b.rf-a.rf)}
 function tableHTML(){return '<div class="standingRow standingHead"><span></span><span>チーム</span><span>勝敗</span><span>得失</span></div>'+sortedTable().map((r,i)=>`<div class="standingRow ${r.id==='player'?'me':''}"><span class="rank">${i+1}</span><span class="teamName">${r.name}</span><span class="stat">${r.w}-${r.l}</span><span class="stat">${r.rf-r.ra>=0?'+':''}${r.rf-r.ra}</span></div>`).join('')}
-function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='master'?'マスター':(cupKind==='expert'?'エキスパート':(cupKind==='advanced'?'アドバンス':(cupKind==='rookie'?'ルーキー':'ビギナー')))} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
+function refreshCup(){currentOpponent=currentCupOrder()[cupIndex];const d=opponentData(currentOpponent);$('cupTitle').textContent=`${cupKind==='grandmaster'?'グランドマスター':(cupKind==='master'?'マスター':(cupKind==='expert'?'エキスパート':(cupKind==='advanced'?'アドバンス':(cupKind==='rookie'?'ルーキー':'ビギナー'))))} 第${cupIndex+1}試合`;$('cupOpponent').innerHTML=`次の相手：<b>${d.name}</b><br><small>${d.desc}</small>`;$('standings').innerHTML=tableHTML()}
 
 function gainShieldResearch(){
   if(saveData.shieldUnlocked)return '';
@@ -603,7 +662,14 @@ function finishCup(){
     if(place===1)saveData.expertUnlocked=true;
     $('cupEndTitle').textContent=place===1?'アドバンスカップ優勝！':`アドバンスカップ ${place}位`;
     $('cupEndText').textContent=place===1?'エキスパートカップへの挑戦権を獲得しました！':'特殊弾の軌道を読んで再挑戦しましょう。';
-  }else if(cupKind==='expert'){if(place===1)saveData.masterUnlocked=true;$('cupEndTitle').textContent=place===1?'エキスパートカップ優勝！':`エキスパートカップ ${place}位`;$('cupEndText').textContent=place===1?'マスターカップへの挑戦権を獲得しました！':'獣化の高速移動を読んで再挑戦しましょう。';}else{$('cupEndTitle').textContent=place===1?'マスターカップ優勝！':`マスターカップ ${place}位`;$('cupEndText').textContent=place===1?'変則技を使う強豪にも勝利！':'技の軌道と設置位置を読んで再挑戦しましょう。';}
+  }else if(cupKind==='expert'){if(place===1)saveData.masterUnlocked=true;$('cupEndTitle').textContent=place===1?'エキスパートカップ優勝！':`エキスパートカップ ${place}位`;$('cupEndText').textContent=place===1?'マスターカップへの挑戦権を獲得しました！':'獣化の高速移動を読んで再挑戦しましょう。';}else if(cupKind==='master'){
+    if(place===1)saveData.grandmasterUnlocked=true;
+    $('cupEndTitle').textContent=place===1?'マスターカップ優勝！':`マスターカップ ${place}位`;
+    $('cupEndText').textContent=place===1?'グランドマスターカップへの挑戦権を獲得しました！':'技の軌道と設置位置を読んで再挑戦しましょう。';
+  }else{
+    $('cupEndTitle').textContent=place===1?'グランドマスターカップ優勝！':`グランドマスターカップ ${place}位`;
+    $('cupEndText').textContent=place===1?'最上位の魔法戦術にも勝利！':'分身・反射・風の使い方を読んで再挑戦しましょう。';
+  }
   saveData.cupResume=null;writeSave();$('cupEndPanel').classList.remove('hidden');
 }
 
@@ -639,7 +705,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -658,6 +724,13 @@ class Unit{
     if(this.beastActive&&this.beastT>0){this.beastT=Math.max(0,this.beastT-dt);if(this.beastT<=0)this.beastActive=false;}
     if(this.invisT>0)this.invisT=Math.max(0,this.invisT-dt);
     if(this.jumpT>0)this.jumpT=Math.max(0,this.jumpT-dt);
+    this.reflectBladeT=Math.max(0,this.reflectBladeT-dt);
+    if(this.cloneT>0){
+      this.cloneT=Math.max(0,this.cloneT-dt);
+      if(this.cloneT<=0&&this.cloneBody){
+        this.x=this.cloneBody.x;this.y=this.cloneBody.y;this.cloneBody=null;
+      }
+    }
     const _moved=Math.hypot(this.x-_oldX,this.y-_oldY);this.isMoving=_moved>.12;if(this.isMoving)this.runPhase=(this.runPhase||0)+dt*15;
     this.strafeTimer=Math.max(0,this.strafeTimer-dt);
     if(this.strafeTimer<=0){
@@ -677,7 +750,17 @@ function explodeAt(x,y,team,radius=58){
   const targets=team==='blue'?enemies:[player,...allies];
   for(const u of targets){
     if(!u||!u.alive||u.inv>0||u.jumpT>0)continue;
+
+    if(u.cloneT>0&&u.cloneBody&&Math.hypot(u.cloneBody.x-x,u.cloneBody.y-y)<=radius+u.r){
+      const wasControlled=u.controlled;
+      u.cloneT=0;u.cloneBody=null;u.alive=false;
+      if(wasControlled){flash('本体が爆風でOUT!',520);transferControl();}
+      else flash(u.team==='red'?'ENEMY本体 OUT':'ALLY本体 OUT',550);
+      continue;
+    }
+
     if(Math.hypot(u.x-x,u.y-y)<=radius+u.r){
+      if(u.cloneT>0&&u.cloneBody){endClone(u,true);continue;}
       const wasControlled=u.controlled;
       u.alive=false;
       if(wasControlled){flash('爆風 OUT!',500);transferControl();}
@@ -781,7 +864,16 @@ class Bullet{
       }
     }
     for(const u of targets){
+      if(u&&u.alive&&u.cloneT>0&&u.cloneBody&&u.inv<=0&&Math.hypot(this.x-u.cloneBody.x,this.y-u.cloneBody.y)<this.r+u.r){
+        const wasControlled=u.controlled;
+        u.cloneT=0;u.cloneBody=null;u.alive=false;
+        this.life=0;spark(this.x,this.y);
+        if(wasControlled){flash('本体 OUT!',450);transferControl();}
+        else flash(u.team==='red'?'ENEMY本体 OUT':'ALLY本体 OUT',620);
+        checkEnd();return;
+      }
       if(u&&u.alive&&u.inv<=0&&u.jumpT<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
+        if(u.cloneT>0&&u.cloneBody){this.life=0;spark(u.x,u.y);endClone(u,true);return}
         if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
         const wasControlled=u.controlled;
         u.alive=false;
@@ -845,7 +937,7 @@ function shoot(u,target,curve=false){
 
 function reset(){
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
-  bullets=[];fx=[];mines=[];lobShots=[];left=60;secAcc=0;over=false;running=true;
+  bullets=[];fx=[];mines=[];lobShots=[];windZones=[];left=60;secAcc=0;over=false;running=true;
   player=new Unit(300,360,'blue',true);
   allies=[
     new Unit(280,235,'blue',false,$('roleA').value),
@@ -878,6 +970,9 @@ function reset(){
   if(cupKind==='master'&&od.lobUsers)for(const i of od.lobUsers)if(enemies[i])enemies[i].specialKind='lob';
   if(cupKind==='master'&&od.mineUsers)for(const i of od.mineUsers)if(enemies[i])enemies[i].specialKind='mine';
   if(cupKind==='master'&&od.jumpUsers)for(const i of od.jumpUsers)if(enemies[i])enemies[i].specialKind='jump';
+  if(cupKind==='grandmaster'&&od.cloneUsers)for(const i of od.cloneUsers)if(enemies[i])enemies[i].specialKind='clone';
+  if(cupKind==='grandmaster'&&od.reflectBladeUsers)for(const i of od.reflectBladeUsers)if(enemies[i])enemies[i].specialKind='reflectblade';
+  if(cupKind==='grandmaster'&&od.windUsers)for(const i of od.windUsers)if(enemies[i])enemies[i].specialKind='wind';
   clock.textContent='1:00';
   roundLabel.textContent='ROUND '+round;
   flash(opponentData(currentOpponent).name,900);
@@ -942,6 +1037,9 @@ function allySpecialReady(u,kind){
   if(kind==='lob')return u.mana>=32&&now-u.lastLob>=.8;
   if(kind==='mine')return u.mana>=20&&now-u.lastMine>=.55;
   if(kind==='jump')return u.mana>=20&&u.jumpT<=0&&now-u.lastJump>=.85;
+  if(kind==='clone')return u.mana>=50&&u.cloneT<=0&&now-u.lastClone>=.9;
+  if(kind==='reflectblade')return u.mana>=24&&now-u.lastReflectBlade>=.8;
+  if(kind==='wind')return u.mana>=32&&now-u.lastWind>=1.0;
   if(kind==='shield')return u.mana>=30&&u.shield<=0&&now-u.lastShield>=5.2;
   return false;
 }
@@ -960,6 +1058,9 @@ function allyUseSpecial(u,kind){
   if(kind==='lob')return useLob(u);
   if(kind==='mine')return useMine(u);
   if(kind==='jump')return useJump(u);
+  if(kind==='clone')return useClone(u);
+  if(kind==='reflectblade')return useReflectBlade(u);
+  if(kind==='wind')return useWind(u);
   if(kind==='shield')return useShield(u,true);
   return false;
 }
@@ -1038,6 +1139,18 @@ function ai(u,dt,isEnemy){
     }
   }
     const nowSpecial=performance.now()/1000;
+
+  if(u.specialKind==='clone'&&u.cloneT<=0&&nowSpecial-u.lastClone>5.8&&u.mana>=50&&Math.random()<.005){
+    useClone(u);
+  }
+  if(u.specialKind==='reflectblade'&&nowSpecial-u.lastReflectBlade>.9&&u.mana>=24){
+    const incoming=bullets.some(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<105);
+    if(incoming&&Math.random()<.20)useReflectBlade(u);
+  }
+  if(u.specialKind==='wind'&&nowSpecial-u.lastWind>5.0&&u.mana>=32&&Math.random()<.0045){
+    useWind(u);
+  }
+
 
   if(!isEnemy){
     const allyChoices=[u.specialA,u.specialB].filter(k=>k&&k!=='none');
@@ -1198,6 +1311,7 @@ function update(dt){
   for(const e of enemies){e.update(dt);ai(e,dt,true)}
   for(const b of bullets)b.update(dt);
   updateLobs(dt);updateMines(dt);
+  updateWindZones(dt);
 
   for(let i=0;i<bullets.length;i++){
     const a=bullets[i];if(a.life<=0)continue;
@@ -1310,12 +1424,12 @@ function drawUnit(u){
     g.globalAlpha=Math.max(.15,1-p);
     g.lineWidth=8;
     g.lineCap='round';
-    g.strokeStyle='#dff8ff';
+    g.strokeStyle=u.reflectBladeT>0?'#ffe784':'#dff8ff';
     g.beginPath();
     g.arc(0,0,72,-Math.PI*.55,Math.PI*.55);
     g.stroke();
     g.lineWidth=3;
-    g.strokeStyle='#ffffff';
+    g.strokeStyle=u.reflectBladeT>0?'#fff2a8':'#ffffff';
     g.beginPath();
     g.arc(0,0,82,-Math.PI*.55,Math.PI*.55);
     g.stroke();
@@ -1438,6 +1552,7 @@ function arenaTheme(){
   if(cupKind==='advanced')return {court:'#d9b77b',wall:'#f5e2b8',bg:'#7c6848'};
   if(cupKind==='expert')return {court:'#9fbc8f',wall:'#d8e4cf',bg:'#4f6652'};
   if(cupKind==='master')return {court:'#b7a0c9',wall:'#efe3f5',bg:'#594a68'};
+  if(cupKind==='grandmaster')return {court:'#8fb7bc',wall:'#e7fbf7',bg:'#405c67'};
   return {court:'#9ad9b8',wall:'#f1e6cc',bg:'#5f7d8a'};
 }
 
@@ -1476,7 +1591,38 @@ function draw(){
     g.save();g.shadowBlur=12;g.shadowColor='#ffb45f';g.fillStyle='#ffd9a0';g.beginPath();g.arc(l.x,l.y,8,0,Math.PI*2);g.fill();g.restore();
   }
   for(const m of mines){g.save();g.translate(m.x,m.y);g.strokeStyle=m.team==='blue'?'#6ebcff':'#ff8c98';g.lineWidth=2;g.beginPath();g.arc(0,0,13,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(-8,0);g.lineTo(8,0);g.moveTo(0,-8);g.lineTo(0,8);g.stroke();g.restore();}
-  for(const a of allies)drawUnit(a);
+  
+
+  for(const z of windZones){
+    const p=Math.max(0,z.t/2.35);
+    g.save();g.translate(z.x,z.y);
+    g.globalAlpha=.22+.25*p;
+    g.strokeStyle=z.team==='blue'?'#b8f4ff':'#ffd1db';
+    g.lineWidth=4;
+    for(let i=0;i<4;i++){
+      g.beginPath();
+      g.arc(0,0,42+i*27,performance.now()/500+i,performance.now()/500+i+Math.PI*1.35);
+      g.stroke();
+    }
+    g.restore();
+  }
+
+  for(const u of [player,...allies,...enemies]){
+    if(!u||!u.alive||u.cloneT<=0||!u.cloneBody)continue;
+    g.save();g.translate(u.cloneBody.x,u.cloneBody.y);
+    const o=outfitFor(u);
+    g.globalAlpha=.82;
+    g.fillStyle='#0003';g.beginPath();g.ellipse(0,15,18,7,0,0,Math.PI*2);g.fill();
+    g.strokeStyle=o.sub;g.lineWidth=5;
+    g.beginPath();g.moveTo(-6,10);g.lineTo(-8,24);g.moveTo(6,10);g.lineTo(8,24);g.stroke();
+    g.fillStyle=o.base;g.beginPath();g.arc(0,3,15,0,Math.PI*2);g.fill();
+    g.fillStyle='#f2d4bc';g.beginPath();g.arc(0,-15,10,0,Math.PI*2);g.fill();
+    g.fillStyle='#111';g.beginPath();g.arc(-3,-16,1.3,0,Math.PI*2);g.arc(3,-16,1.3,0,Math.PI*2);g.fill();
+    g.fillStyle='#fff';g.font='bold 9px sans-serif';g.textAlign='center';g.fillText('本体',0,-31);
+    g.restore();
+  }
+
+for(const a of allies)drawUnit(a);
   for(const e of enemies)drawUnit(e);
   drawUnit(player);
 
@@ -1698,6 +1844,96 @@ function useLob(u){if(!u||!u.alive)return false;const now=performance.now()/1000
 function useMine(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMine<.55)return false;if(u.mana<20){flash('魔力不足',360);return false}if(!placeMine(u))return false;u.mana-=20;u.lastMine=now;return true;}
 function useJump(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastJump<.85){flash('ジャンプクールタイム',260);return false}if(u.mana<20){flash('魔力不足',360);return false}if(u.dodgeT>0||u.beastActive)return false;u.mana-=20;u.lastJump=now;u.jumpT=1.05;u.inv=Math.max(u.inv,1.05);return true;}
 
+
+function endClone(u,hitClone=false){
+  if(!u||!u.cloneBody)return;
+  const body=u.cloneBody;
+  u.cloneBody=null;u.cloneT=0;
+  u.x=body.x;u.y=body.y;
+  if(hitClone)flash(u.controlled?'分身が消えた！':'分身消失',380);
+}
+function useClone(u){
+  if(!u||!u.alive||u.cloneT>0)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastClone<.9)return false;
+  if(u.mana<50){if(u.controlled)flash('魔力不足',360);return false}
+  u.mana-=50;u.lastClone=now;
+  u.cloneBody={x:u.x,y:u.y};
+  u.cloneT=4.2;
+  u.inv=Math.max(u.inv,.14);
+  return true;
+}
+
+function useReflectBlade(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastReflectBlade<.8)return false;
+  if(u.mana<24){if(u.controlled)flash('魔力不足',360);return false}
+
+  const targets=u.team==='blue'?enemies:[player,...allies];
+  const target=nearest(u,targets);
+  let ax=u.team==='blue'?1:-1,ay=0;
+  if(target){const d=norm(target.x-u.x,target.y-u.y);ax=d.x;ay=d.y}
+
+  u.mana-=24;u.lastReflectBlade=now;
+  u.bladeT=.36;u.reflectBladeT=.36;u.bladeAngle=Math.atan2(ay,ax);
+
+  const range=100,halfArc=Math.PI*.55;
+  let reflected=0;
+  for(const b of bullets){
+    if(b.life<=0||b.team===u.team)continue;
+    const dx=b.x-u.x,dy=b.y-u.y;
+    if(Math.hypot(dx,dy)>range)continue;
+    let da=Math.atan2(dy,dx)-u.bladeAngle;
+    while(da>Math.PI)da-=Math.PI*2;
+    while(da<-Math.PI)da+=Math.PI*2;
+    if(Math.abs(da)>halfArc)continue;
+
+    b.team=u.team;
+    b.curve=false;b.curveTime=0;
+    const t=nearest(u,targets);
+    if(t){
+      const d=norm(t.x-b.x,t.y-b.y);
+      b.dx=d.x;b.dy=d.y;b.target=t;
+    }else{
+      b.dx*=-1;b.dy*=-1;
+    }
+    b.life=Math.max(b.life,1.4);
+    spark(b.x,b.y);reflected++;
+  }
+  if(reflected&&u.controlled)flash(`${reflected}発反射！`,420);
+  return true;
+}
+
+function useWind(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastWind<1.0)return false;
+  if(u.mana<32){if(u.controlled)flash('魔力不足',360);return false}
+  u.mana-=32;u.lastWind=now;
+  const x=u.team==='blue'?COURT.x+COURT.w*.72:COURT.x+COURT.w*.28;
+  windZones.push({x,y:CY,team:u.team,t:2.35,r:230});
+  return true;
+}
+
+function updateWindZones(dt){
+  for(const z of windZones){
+    z.t-=dt;
+    const targets=z.team==='blue'?enemies:[player,...allies];
+    for(const u of targets){
+      if(!u||!u.alive||u.jumpT>0)continue;
+      const dx=u.x-z.x,dy=u.y-z.y,d=Math.hypot(dx,dy);
+      if(d<8||d>z.r)continue;
+      const nx=dx/d,ny=dy/d;
+      const power=(1-d/z.r)*92;
+      const tx=u.x+nx*power*dt,ty=u.y+ny*power*dt;
+      if(canStand(tx,u.y,u.r))u.x=tx;
+      if(canStand(u.x,ty,u.r))u.y=ty;
+    }
+  }
+  windZones=windZones.filter(z=>z.t>0);
+}
+
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
 
@@ -1729,6 +1965,9 @@ function usePlayerSpecial(kind){
   if(kind==='lob'&&saveData.lobUnlocked){if(useLob(player))flash('放物線爆弾！',320);return;}
   if(kind==='mine'&&saveData.mineUnlocked){if(useMine(player))flash('地雷設置！',320);return;}
   if(kind==='jump'&&saveData.jumpUnlocked){if(useJump(player))flash('ジャンプ！',260);return;}
+  if(kind==='clone'&&saveData.cloneUnlocked){if(useClone(player))flash('分身！',320);return;}
+  if(kind==='reflectblade'&&saveData.reflectBladeUnlocked){if(useReflectBlade(player))flash('反射剣！',320);return;}
+  if(kind==='wind'&&saveData.windUnlocked){if(useWind(player))flash('風起こし！',320);return;}
   if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
 
   if(kind==='shield'&&saveData.shieldUnlocked){
@@ -1851,7 +2090,7 @@ bindTap('practiceStartBtn',()=>{
   mode='practice';
   // cupKind is used only to identify the opponent's league/skills during the practice match.
   // It must not turn the match into a tournament.
-  cupKind=kind==='master'?'master':(kind==='expert'?'expert':(kind==='advanced'?'advanced':(kind==='rookie'?'rookie':'beginner')));
+  cupKind=kind==='grandmaster'?'grandmaster':(kind==='master'?'master':(kind==='expert'?'expert':(kind==='advanced'?'advanced':(kind==='rookie'?'rookie':'beginner'))));
   currentOpponent=id;
   bScore=0;rScore=0;round=1;
   score.textContent='0 - 0';
@@ -1891,6 +2130,15 @@ bindTap('expertBtn',()=>{
   refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();
 });
 bindTap('masterBtn',()=>{if(!saveData.masterUnlocked)return;mode='cup';cupKind='master';cupIndex=0;cupTable=newCupTable();currentOpponent=MASTER_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();});
+
+bindTap('grandmasterBtn',()=>{
+  if(!saveData.grandmasterUnlocked)return;
+  mode='cup';cupKind='grandmaster';cupIndex=0;cupTable=newCupTable();
+  currentOpponent=GRANDMASTER_ORDER[0];
+  saveData.cupResume=null;writeSave();
+  $('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume();
+});
+
 
 
 
@@ -1936,6 +2184,9 @@ bindTap('nextBtn',()=>{
         if(opponentHasKey('lobUsers')){const m=gainSimpleResearch('lob','放物線爆弾');if(m)msgs.push(m);}
         if(opponentHasKey('mineUsers')){const m=gainSimpleResearch('mine','地雷');if(m)msgs.push(m);}
         if(opponentHasKey('jumpUsers')){const m=gainSimpleResearch('jump','ジャンプ');if(m)msgs.push(m);}
+        if(opponentHasKey('cloneUsers')){const m=gainSimpleResearch('clone','分身');if(m)msgs.push(m);}
+        if(opponentHasKey('reflectBladeUsers')){const m=gainSimpleResearch('reflectBlade','反射の魔力剣');if(m)msgs.push(m);}
+        if(opponentHasKey('windUsers')){const m=gainSimpleResearch('wind','風起こし');if(m)msgs.push(m);}
         pendingLearnMessage=msgs.join(' / ');
       }
     }else{
@@ -1976,6 +2227,9 @@ bindTap('nextBtn',()=>{
         if(opponentHasKey('lobUsers')){const m=gainSimpleResearch('lob','放物線爆弾');if(m)msgs.push(m);}
         if(opponentHasKey('mineUsers')){const m=gainSimpleResearch('mine','地雷');if(m)msgs.push(m);}
         if(opponentHasKey('jumpUsers')){const m=gainSimpleResearch('jump','ジャンプ');if(m)msgs.push(m);}
+        if(opponentHasKey('cloneUsers')){const m=gainSimpleResearch('clone','分身');if(m)msgs.push(m);}
+        if(opponentHasKey('reflectBladeUsers')){const m=gainSimpleResearch('reflectBlade','反射の魔力剣');if(m)msgs.push(m);}
+        if(opponentHasKey('windUsers')){const m=gainSimpleResearch('wind','風起こし');if(m)msgs.push(m);}
         pendingLearnMessage=msgs.join(' / ');
       }
     }else{

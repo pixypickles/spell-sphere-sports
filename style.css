@@ -276,3 +276,6 @@ body.isLandscape #gameWrap{display:block}
   font-size:17px;
   color:#dff3ff;
 }
+
+/* v2.58 grandmaster unlock */
+#grandmasterBtn{margin-top:6px}
