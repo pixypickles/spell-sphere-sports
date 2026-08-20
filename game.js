@@ -205,6 +205,8 @@ function loadSave(){
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
     if(!Number.isFinite(data.fairyBossWins))data.fairyBossWins=0;
     if(typeof data.wetlandsUnlocked!=='boolean')data.wetlandsUnlocked=false;
+    // v2.76 migration: 妖精女王を旧バージョンですでに倒しているセーブも大湿原を解放
+    if(data.fairyUnlocked||(Array.isArray(data.fieldBossClears)&&data.fieldBossClears.includes('fairy'))||(data.fairyBossWins||0)>0)data.wetlandsUnlocked=true;
     if(typeof data.frogUnlocked!=='boolean')data.frogUnlocked=false;
     if(!Number.isFinite(data.frogBossWins))data.frogBossWins=0;
     if(!data.allyRole1)data.allyRole1='support';
@@ -2455,7 +2457,7 @@ function returnToMainMenu(){
 
 // world map v2.61
 let mapX=20,mapY=70,mapMoveTimer=null;
-const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:48,y:8},wetlands:{x:86,y:73}};
+const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:58,y:21},wetlands:{x:79,y:61}};
 const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'},frogking:{name:'湿原王ガマグラン',desc:'大湿原の主。攻撃は単純だが、とにかく巨大でしぶとい。妖精化の火力を思い切り試せる。',hp:80,reward:'カエル化'}};
 const FIELD_QUEST_ORDER=['forest','cave','pond','fairy'];let pendingBossKind=null,bossBattle=null;
 function activeFieldQuest(){
