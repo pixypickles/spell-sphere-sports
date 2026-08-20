@@ -792,6 +792,10 @@ function explodeAt(x,y,team,radius=58){
     }
 
     if(Math.hypot(u.x-x,u.y-y)<=radius+u.r){
+      if(mode==='boss'&&u.team==='red'){
+        bossTakeHit('explosion');
+        continue;
+      }
       if(u.cloneT>0&&u.cloneBody){endClone(u,true);continue;}
       const wasControlled=u.controlled;
       u.alive=false;
@@ -905,7 +909,7 @@ class Bullet{
         checkEnd();return;
       }
       if(u&&u.alive&&!u.moleActive&&u.inv<=0&&u.jumpT<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
-        if(mode==='boss'&&u.team==='red'){this.life=0;spark(u.x,u.y);bossTakeHit();return}
+        if(mode==='boss'&&u.team==='red'){this.life=0;spark(u.x,u.y);bossTakeHit('bullet');return}
         if(u.cloneT>0&&u.cloneBody){this.life=0;spark(u.x,u.y);endClone(u,true);return}
         if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
         const wasControlled=u.controlled;
@@ -1279,6 +1283,7 @@ const danger=bullets.find(b=>b.team!==u.team&&Math.hypot(b.x-u.x,b.y-u.y)<125);
 }
 
 function checkFlags(){
+  if(mode==='boss')return;
   for(const u of [player,...allies])if(u&&u.alive&&!u.beastActive&&u.jumpT<=0&&dist(u,flagRed)<u.r+22)return finish('blue','敵クリスタルを取りました！');
   for(const u of enemies)if(u.alive&&!u.beastActive&&u.jumpT<=0&&dist(u,flagBlue)<u.r+22)return finish('red','敵にクリスタルを取られました');
   if(player&&player.alive&&dist(player,flagBlue)<45)player.mana=Math.min(100,player.mana+36/60);
@@ -1334,6 +1339,11 @@ function update(dt){
   secAcc+=dt;
   if(secAcc>=1){secAcc-=1;left--;clock.textContent='0:'+String(Math.max(0,left)).padStart(2,'0')}
   if(left<=0){
+    if(mode==='boss'){
+      running=false;over=true;
+      setTimeout(()=>{showWorldMap();flash('時間切れ。ボスへ再挑戦できます',1100)},300);
+      return;
+    }
     const ba=[player,...allies].filter(u=>u&&u.alive).length,ra=enemies.filter(u=>u.alive).length;
     finish(ba>=ra?'blue':'red',`時間切れ 生存 ${ba} - ${ra}`);return;
   }
@@ -1389,7 +1399,7 @@ function drawUnit(u){
 
 
   if(u.bossKind){
-    const k=u.bossKind,t=performance.now()/220;g.save();
+    const k=u.bossKind,t=performance.now()/220;g.save();g.scale(k==='cave'?1.18:1.15,k==='cave'?1.18:1.15);
     if(k==='forest'){
       g.fillStyle='#294f3c';g.beginPath();g.ellipse(0,3,30,17,0,0,Math.PI*2);g.fill();
       g.beginPath();g.moveTo(15,-7);g.lineTo(23,-28);g.lineTo(29,-8);g.closePath();g.fill();
@@ -1397,10 +1407,16 @@ function drawUnit(u){
       g.fillStyle='#b7ef82';g.beginPath();g.arc(18,-7,3,0,Math.PI*2);g.fill();
       g.strokeStyle='#72b55d';g.lineWidth=4;for(let i=-1;i<=1;i++){g.beginPath();g.moveTo(-18+i*8,13);g.lineTo(-21+i*8+Math.sin(t+i)*4,27);g.stroke()}
     }else if(k==='cave'){
-      g.fillStyle='#665c79';g.fillRect(-23,-17,46,38);g.fillStyle='#85779a';g.fillRect(-34,-8,12,31);g.fillRect(22,-8,12,31);
-      g.fillStyle='#a7eaff';g.beginPath();g.moveTo(-13,-18);g.lineTo(-5,-38);g.lineTo(2,-17);g.closePath();g.fill();
-      g.beginPath();g.moveTo(5,-18);g.lineTo(15,-33);g.lineTo(20,-15);g.closePath();g.fill();
-      g.fillStyle='#d9fbff';g.beginPath();g.arc(0,0,7+Math.sin(t)*2,0,Math.PI*2);g.fill();
+      if(u.moleActive){
+        g.fillStyle='#5a4534';g.beginPath();g.ellipse(0,13,42,14,0,0,Math.PI*2);g.fill();
+        g.strokeStyle='#c59b6c';g.lineWidth=4;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();
+        g.fillStyle='#a7eaff';g.beginPath();g.moveTo(-8,4);g.lineTo(0,-15);g.lineTo(8,4);g.closePath();g.fill();
+      }else{
+        g.fillStyle='#665c79';g.fillRect(-29,-20,58,44);g.fillStyle='#85779a';g.fillRect(-41,-9,13,35);g.fillRect(28,-9,13,35);
+        g.fillStyle='#a7eaff';g.beginPath();g.moveTo(-15,-20);g.lineTo(-5,-43);g.lineTo(3,-19);g.closePath();g.fill();
+        g.beginPath();g.moveTo(7,-20);g.lineTo(18,-38);g.lineTo(24,-17);g.closePath();g.fill();
+        g.fillStyle='#d9fbff';g.beginPath();g.arc(0,1,9+Math.sin(t)*2,0,Math.PI*2);g.fill();
+      }
     }else{
       g.fillStyle='#327e9b';g.beginPath();g.ellipse(0,2,28,16,0,0,Math.PI*2);g.fill();
       g.beginPath();g.moveTo(16,-6);g.quadraticCurveTo(33,-28,29,-2);g.quadraticCurveTo(42,2,26,9);g.closePath();g.fill();
@@ -1753,14 +1769,36 @@ function updateContextButtons(){
 
 
 function updateFieldBossAI(){
-  if(mode!=='boss'||!bossBattle||!enemies[0]||!enemies[0].alive)return;
-  const b=enemies[0],now=performance.now()/1000;if(now<(b.bossShotAt||0))return;
+  if(mode!=='boss'||!bossBattle||bossBattle.defeated||!enemies[0]||!enemies[0].alive)return;
+  const b=enemies[0],now=performance.now()/1000;
   const ts=[player,...allies].filter(x=>x&&x.alive);if(!ts.length)return;
+
+  if(b.bossKind==='cave'){
+    if(!b.moleActive&&now>(b.bossBurrowAt||0)){
+      b.moleActive=true;b.moleT=1.65;b.mana=100;
+      b.bossBurrowAt=now+4.6;
+      flash('モルグが地中へ潜った！',420);
+    }
+    if(b.moleActive){
+      b.mana=100;
+      const t=ts.reduce((a,x)=>dist(b,x)<dist(b,a)?x:a,ts[0]);
+      const d=norm(t.x-b.x,t.y-b.y);
+      move(b,d.x,d.y,.032);
+      return;
+    }
+  }
+
+  if(now<(b.bossShotAt||0))return;
   const t=ts[Math.floor(Math.random()*ts.length)];
   const fire=()=>{if(running&&b.alive&&t.alive)shoot(b,t)};
-  if(b.bossKind==='forest'){fire();setTimeout(fire,180);b.bossShotAt=now+1.45}
-  else if(b.bossKind==='cave'){fire();b.bossShotAt=now+1.05}
-  else{fire();setTimeout(fire,150);setTimeout(fire,300);b.bossShotAt=now+1.8}
+
+  if(b.bossKind==='forest'){
+    fire();setTimeout(fire,180);b.bossShotAt=now+1.45;
+  }else if(b.bossKind==='cave'){
+    fire();b.bossShotAt=now+1.30;
+  }else{
+    fire();setTimeout(fire,150);setTimeout(fire,300);b.bossShotAt=now+1.8;
+  }
 }
 
 function frame(t){
@@ -2194,13 +2232,53 @@ function returnToMainMenu(){
 // world map v2.61
 let mapX=20,mapY=70,mapMoveTimer=null;
 const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78}};
-const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'晶殻ゴーレム',desc:'晶石洞窟で目覚めた石の守護者。',hp:11,reward:'晶壁の加護'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'}};
+const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'}};
 const FIELD_QUEST_ORDER=['forest','cave','pond'];let pendingBossKind=null,bossBattle=null;
 function activeFieldQuest(){const c=saveData.fieldBossClears||[],a=Math.min(3,saveData.fieldQuestStage||0);for(let i=0;i<a;i++)if(!c.includes(FIELD_QUEST_ORDER[i]))return FIELD_QUEST_ORDER[i];return null}
 function updateFieldQuestMarks(){const a=activeFieldQuest();for(const k of FIELD_QUEST_ORDER){const e=$('quest'+k[0].toUpperCase()+k.slice(1));if(e)e.classList.toggle('on',k===a)}}
 function openBossEvent(k){const b=FIELD_BOSSES[k];if(!b)return;if(activeFieldQuest()!==k){$('mapPrompt').textContent=(saveData.fieldBossClears||[]).includes(k)?'この異変は解決済みです':'今は特に異変はないようです';return}pendingBossKind=k;$('worldMap').classList.add('hidden');$('bossTitle').textContent=b.name;$('bossDesc').textContent=b.desc;$('bossPanel').classList.remove('hidden')}
-function bossTakeHit(){if(mode!=='boss'||!bossBattle)return false;bossBattle.hp--;flash(`BOSS HP ${Math.max(0,bossBattle.hp)}/${bossBattle.maxHp}　復活 ${bossBattle.revives}`,420);if(bossBattle.hp<=0){const k=bossBattle.kind,b=FIELD_BOSSES[k];if(!saveData.fieldBossClears.includes(k))saveData.fieldBossClears.push(k);writeSave();running=false;over=true;setTimeout(()=>{showWorldMap();flash(`${b.name}撃破！　${b.reward}を獲得`,1400)},300)}return true}
-function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').classList.add('hidden');bossBattle={kind:k,hp:b.hp,maxHp:b.hp,revives:2};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){enemies[0].r=31;enemies[0].speed*=.82;enemies[0].inv=.2;enemies[0].bossKind=k;enemies[0].bossShotAt=performance.now()/1000+1.2}left=90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
+function bossTakeHit(source='bullet'){
+  if(mode!=='boss'||!bossBattle||bossBattle.defeated)return false;
+
+  const now=performance.now()/1000;
+  const gap=source==='explosion'?.72:.30;
+  if(now<(bossBattle.nextDamageAt||0))return false;
+  bossBattle.nextDamageAt=now+gap;
+
+  bossBattle.hp=Math.max(0,bossBattle.hp-1);
+  flash(`BOSS HP ${bossBattle.hp}/${bossBattle.maxHp}　復活 ${bossBattle.revives}`,420);
+
+  if(bossBattle.hp<=0){
+    bossBattle.defeated=true;
+    const k=bossBattle.kind,b=FIELD_BOSSES[k];
+    if(!saveData.fieldBossClears.includes(k))saveData.fieldBossClears.push(k);
+
+    let learned='';
+    if(k==='cave'&&!saveData.moleUnlocked){
+      saveData.moleUnlocked=true;
+      saveData.moleProgress=3;
+      learned='　モグラ化を習得！';
+    }
+
+    writeSave();
+    running=false;over=true;
+    bullets=[];lobShots=[];mines=[];windZones=[];
+
+    setTimeout(()=>{
+      showWorldMap();
+      flash(`${b.name}撃破！${learned||('　'+b.reward+'を獲得')}`,1600);
+    },260);
+  }
+  return true;
+}
+function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').classList.add('hidden');bossBattle={kind:k,hp:b.hp,maxHp:b.hp,revives:2,nextDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){
+    enemies[0].r=k==='cave'?46:42;
+    enemies[0].speed*=k==='cave'?.90:.82;
+    enemies[0].inv=.2;
+    enemies[0].bossKind=k;
+    enemies[0].bossShotAt=performance.now()/1000+1.2;
+    enemies[0].bossBurrowAt=performance.now()/1000+2.4;
+  }left=90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
 
 function showWorldMap(){
   running=false;mode='menu';
