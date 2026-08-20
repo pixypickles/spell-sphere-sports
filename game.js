@@ -188,7 +188,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'rabbit',allyRole1:'support',allyRole2:'guard',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fieldBossClears:[],fieldQuestStage:0
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,fieldBossClears:[],fieldQuestStage:0
   };
 }
 function loadSave(){
@@ -203,6 +203,8 @@ function loadSave(){
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
+    if(!Number.isFinite(data.fairyBossWins))data.fairyBossWins=0;
+    if(typeof data.wetlandsUnlocked!=='boolean')data.wetlandsUnlocked=false;
     if(!data.allyRole1)data.allyRole1='support';
     if(!data.allyRole2)data.allyRole2='guard';if(!Array.isArray(data.fieldBossClears))data.fieldBossClears=[];if(!Number.isFinite(data.fieldQuestStage))data.fieldQuestStage=0;
     // v2.66: derive field-boss availability from tournaments already cleared.
@@ -2422,8 +2424,35 @@ function activeFieldQuest(){
   if(['forest','cave','pond'].every(k=>c.includes(k))&&!c.includes('fairy'))return 'fairy';
   return null;
 }
-function updateFieldQuestMarks(){const a=activeFieldQuest();for(const k of FIELD_QUEST_ORDER){const e=$('quest'+k[0].toUpperCase()+k.slice(1));if(e)e.classList.toggle('on',k===a)}}
-function openBossEvent(k){const b=FIELD_BOSSES[k];if(!b)return;if(activeFieldQuest()!==k){$('mapPrompt').textContent=(saveData.fieldBossClears||[]).includes(k)?'この異変は解決済みです':'今は特に異変はないようです';return}pendingBossKind=k;$('worldMap').classList.add('hidden');$('bossTitle').textContent=b.name;$('bossDesc').textContent=b.desc;$('bossPanel').classList.remove('hidden')}
+function updateFieldQuestMarks(){
+  const a=activeFieldQuest();
+  for(const k of FIELD_QUEST_ORDER){
+    const e=$('quest'+k[0].toUpperCase()+k.slice(1));
+    if(e)e.classList.toggle('on',k===a);
+  }
+  const fairyPlace=document.querySelector('[data-place="fairy"]');
+  if(fairyPlace)fairyPlace.classList.toggle('rematchReady',(saveData.fieldBossClears||[]).includes('fairy'));
+}
+function openBossEvent(k){
+  const b=FIELD_BOSSES[k];if(!b)return;
+  if(k==='fairy'&&(saveData.fieldBossClears||[]).includes('fairy')){
+    pendingBossKind='fairy';
+    $('worldMap').classList.add('hidden');
+    $('bossTitle').textContent='妖精女王ティタニア・再戦';
+    $('bossDesc').textContent=`何度でも挑戦できる高難度戦。撃破回数 ${saveData.fairyBossWins||0}回。妖精化の力を試せます。`;
+    $('bossPanel').classList.remove('hidden');
+    return;
+  }
+  if(activeFieldQuest()!==k){
+    $('mapPrompt').textContent=(saveData.fieldBossClears||[]).includes(k)?'この異変は解決済みです':'今は特に異変はないようです';
+    return;
+  }
+  pendingBossKind=k;
+  $('worldMap').classList.add('hidden');
+  $('bossTitle').textContent=b.name;
+  $('bossDesc').textContent=b.desc;
+  $('bossPanel').classList.remove('hidden');
+}
 function bossTakeHit(source='bullet'){
   if(mode!=='boss'||!bossBattle||bossBattle.defeated)return false;
 
@@ -2444,8 +2473,15 @@ function bossTakeHit(source='bullet'){
     if(k==='cave'&&!saveData.moleUnlocked){
       saveData.moleUnlocked=true;saveData.moleProgress=3;learned='　モグラ化を習得！';
     }
-    if(k==='fairy'&&!saveData.fairyUnlocked){
-      saveData.fairyUnlocked=true;learned='　妖精化を習得！';
+    if(k==='fairy'){
+      saveData.fairyBossWins=(saveData.fairyBossWins||0)+1;
+      if(saveData.fairyBossWins>=1)saveData.wetlandsUnlocked=true;
+      if(!saveData.fairyUnlocked){
+        saveData.fairyUnlocked=true;
+        learned='　妖精化を習得！';
+      }else{
+        learned=`　妖精女王撃破 ${saveData.fairyBossWins}回目！`;
+      }
     }
 
     writeSave();
@@ -2459,7 +2495,11 @@ function bossTakeHit(source='bullet'){
   }
   return true;
 }
-function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').classList.add('hidden');bossBattle={kind:k,hp:b.hp,maxHp:b.hp,revives:2,nextDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){
+function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
+  const rematchBonus=(k==='fairy'&&saveData.fairyBossWins>0)?Math.min(15,(saveData.fairyBossWins||0)*3):0;
+  const bossMaxHp=b.hp+rematchBonus;
+  $('bossPanel').classList.add('hidden');
+  bossBattle={kind:k,hp:bossMaxHp,maxHp:bossMaxHp,revives:2,nextDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){
     enemies[0].r=k==='fairy'?52:(k==='cave'?46:42);
     enemies[0].speed*=k==='fairy'?1.08:(k==='cave'?.90:.82);
     enemies[0].inv=.2;
@@ -2467,7 +2507,7 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').c
     enemies[0].bossShotAt=performance.now()/1000+1.2;
     enemies[0].bossBurrowAt=performance.now()/1000+2.4;
     if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}
-  }left=k==='fairy'?120:90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
+  }left=k==='fairy'?120:90;clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
 
 function showWorldMap(){
   running=false;mode='menu';
