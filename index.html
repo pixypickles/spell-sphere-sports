@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v2.73</title>
-<link href="style.css?v=273" rel="stylesheet"/>
+<title>魔導球技 v2.75</title>
+<link href="style.css?v=275" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion">v2.73</div>
+<div class="introVersion">v2.75</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -82,7 +82,7 @@
 <button class="mapPlace adventurePlace pondPlace" data-place="pond"><span class="questMark" id="questPond">！</span><span class="mapArt artPond"><i class="shapeA"></i><i class="shapeB"></i><i class="shapeC"></i></span><b>星雫の池</b><small>水辺の異変</small></button>
 <div id="mapAvatar"><span class="mapHat">▲</span><span class="mapBody"></span></div>
 <div class="mapPrompt" id="mapPrompt">施設の近くまで歩いてください</div>
-<div class="mapNearbyLabel" id="mapNearbyLabel"></div><canvas height="152" id="mapFieldAvatarCanvas" width="152"></canvas><button class="mapPlace adventurePlace fairyPlace" data-place="fairy"><span class="questMark" id="questFairy">！</span><span class="mapArt artFairy"><i class="shapeA"></i><i class="shapeB"></i><i class="shapeC"></i></span><b>妖精樹の聖域</b><small>三異変解決後</small></button></div>
+<div class="mapNearbyLabel" id="mapNearbyLabel"></div><canvas height="152" id="mapFieldAvatarCanvas" width="152"></canvas><button class="mapPlace adventurePlace fairyPlace" data-place="fairy"><span class="questMark" id="questFairy">！</span><span class="mapArt artFairy"><i class="shapeA"></i><i class="shapeB"></i><i class="shapeC"></i></span><b>妖精樹の聖域</b><small>三異変解決後</small></button><button class="mapPlace wetlandsGate hidden" data-place="wetlands"><span class="mapArt artBoat"><i class="shapeA"></i><i class="shapeB"></i><i class="shapeC"></i></span><b>湿原への渡し舟</b><small>星雫の池から出航</small></button></div>
 <div class="mapControls">
 <div class="mapStickZone" id="mapStickZone">
 <div class="mapStickBase" id="mapStickBase"><div class="mapStickKnob" id="mapStickKnob"></div></div>
@@ -94,7 +94,7 @@
 <button class="mapGameBtn mapEnter" id="mapEnterBtn">入<small>入る</small></button>
 </div>
 </div><div class="mapHint">左スティックで移動　・　近づくと施設名表示　・　右の「入る」で決定</div>
-</section></div><div class="hidden overlay" id="bossPanel"><section class="panel bossPanelCard"><div class="kicker">FIELD EVENT</div><h1 id="bossTitle">中ボス戦</h1><p class="lead" id="bossDesc"></p><div class="bossRuleCard">敵は1体・HP制 / こちらは一撃OUT<br/>復活クリスタルからチーム合計2回まで復活<br>自陣クリスタル付近ではMPも回復</div><button id="bossStartBtn">戦闘開始</button><button id="bossBackBtn">フィールドへ戻る</button></section></div><div class="hidden overlay" id="menu">
+</section></div><section class="screen hidden" id="wetlandsMap"><div class="wetlandsScene"><div class="wetlandsWater"></div><div class="wetlandsIsland islandA"></div><div class="wetlandsIsland islandB"></div><div class="wetlandsIsland islandC"></div><div class="wetlandsMoon">✦</div><button class="wetlandsPlace frogKingPlace" id="frogKingPlace"><span class="frogSilhouette"><i></i><i></i><i></i></span><b>巨大な影</b><small>湿原の奥</small></button><button class="wetlandsPlace returnBoat" id="wetlandsReturn"><b>⛵ 星雫の池へ戻る</b></button><div class="wetlandsTitle">大湿原</div><div class="wetlandsHelp">妖精女王の魔力で霧が晴れた。<br/>湿原の奥に、とてつもなく大きな何かがいる……。</div></div></section><div class="hidden overlay" id="bossPanel"><section class="panel bossPanelCard"><div class="kicker">FIELD EVENT</div><h1 id="bossTitle">中ボス戦</h1><p class="lead" id="bossDesc"></p><div class="bossRuleCard">敵は1体・HP制 / こちらは一撃OUT<br/>復活クリスタルからチーム合計2回まで復活<br/>自陣クリスタル付近ではMPも回復</div><button id="bossStartBtn">戦闘開始</button><button id="bossBackBtn">フィールドへ戻る</button></section></div><div class="hidden overlay" id="menu">
 <section class="panel">
 <div class="kicker">TOURNAMENT MENU</div>
 <h1>魔導球技</h1>
@@ -141,7 +141,7 @@
 <option value="mine">地雷</option><option value="jump">ジャンプ</option>
 <option value="triple">3連射</option>
 <option value="shield">シールド</option>
-<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option><option value="fairy">妖精化</option></select>
+<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option><option value="fairy">妖精化</option><option value="frog">カエル化</option></select>
 </label>
 <label class="skillSlotLabel">特殊②
         <select id="specialSlot2">
@@ -159,7 +159,7 @@
 <option value="mine">地雷</option><option value="jump">ジャンプ</option>
 <option value="triple">3連射</option>
 <option value="shield">シールド</option>
-<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option><option value="fairy">妖精化</option></select>
+<option value="clone">分身</option><option value="reflectblade">反射の魔力剣</option><option value="wind">風起こし</option><option value="mole">モグラ化</option><option value="fairy">妖精化</option><option value="frog">カエル化</option></select>
 </label>
 <div class="skillSetInfo" id="skillSetInfo"></div>
 <button class="menuBtn" id="skillSetSaveBtn" type="button">セットを保存</button>
@@ -229,7 +229,7 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v2.73</div>
-<script src="game.js?v=273"></script>
+<div id="versionBadge">v2.75</div>
+<script src="game.js?v=275"></script>
 </body>
 </html>

@@ -188,7 +188,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'rabbit',allyRole1:'support',allyRole2:'guard',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,fieldBossClears:[],fieldQuestStage:0
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogBossWins:0,fieldBossClears:[],fieldQuestStage:0
   };
 }
 function loadSave(){
@@ -205,6 +205,8 @@ function loadSave(){
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
     if(!Number.isFinite(data.fairyBossWins))data.fairyBossWins=0;
     if(typeof data.wetlandsUnlocked!=='boolean')data.wetlandsUnlocked=false;
+    if(typeof data.frogUnlocked!=='boolean')data.frogUnlocked=false;
+    if(!Number.isFinite(data.frogBossWins))data.frogBossWins=0;
     if(!data.allyRole1)data.allyRole1='support';
     if(!data.allyRole2)data.allyRole2='guard';if(!Array.isArray(data.fieldBossClears))data.fieldBossClears=[];if(!Number.isFinite(data.fieldQuestStage))data.fieldQuestStage=0;
     // v2.66: derive field-boss availability from tournaments already cleared.
@@ -309,7 +311,8 @@ function unlockedSkillChoices(){
     ['reflectblade','反射の魔力剣','reflectBladeUnlocked'],
     ['wind','風起こし','windUnlocked'],
     ['mole','モグラ化','moleUnlocked'],
-    ['fairy','妖精化','fairyUnlocked']
+    ['fairy','妖精化','fairyUnlocked'],
+    ['frog','カエル化','frogUnlocked']
   ];
   for(const [v,n,k] of defs)if(!k||saveData[k])a.push([v,n]);
   return a;
@@ -356,6 +359,7 @@ function specialName(kind){
   if(kind==='wind')return '風起こし';
   if(kind==='mole')return 'モグラ化';
   if(kind==='fairy')return '妖精化';
+  if(kind==='frog')return 'カエル化';
   if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
@@ -390,6 +394,7 @@ function updateSpecialButtons(){
     }else if(kind==='wind'&&saveData.windUnlocked){el.innerHTML='風<small>風起こし</small>';
     }else if(kind==='mole'&&saveData.moleUnlocked){el.innerHTML='潜<small>モグラ化</small>';
     }else if(kind==='fairy'&&saveData.fairyUnlocked){el.innerHTML='妖<small>妖精化</small>';
+    }else if(kind==='frog'&&saveData.frogUnlocked){el.innerHTML='蛙<small>カエル化</small>';
     }else if(kind==='triple'&&saveData.tripleUnlocked){
       el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
@@ -427,6 +432,7 @@ function updateSkillSetUI(){
   const windOptionA=[...a.options].find(o=>o.value==='wind'),windOptionB=[...b.options].find(o=>o.value==='wind');
   const moleOptionA=[...a.options].find(o=>o.value==='mole'),moleOptionB=[...b.options].find(o=>o.value==='mole');
   const fairyOptionA=[...a.options].find(o=>o.value==='fairy'),fairyOptionB=[...b.options].find(o=>o.value==='fairy');
+  const frogOptionA=[...a.options].find(o=>o.value==='frog'),frogOptionB=[...b.options].find(o=>o.value==='frog');
   if(bladeOptionA)bladeOptionA.disabled=!saveData.bladeUnlocked;if(bladeOptionB)bladeOptionB.disabled=!saveData.bladeUnlocked;
   if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
   if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
@@ -451,6 +457,7 @@ function updateSkillSetUI(){
   if(windOptionA)windOptionA.disabled=!saveData.windUnlocked;if(windOptionB)windOptionB.disabled=!saveData.windUnlocked;
   if(moleOptionA)moleOptionA.disabled=!saveData.moleUnlocked;if(moleOptionB)moleOptionB.disabled=!saveData.moleUnlocked;
   if(fairyOptionA)fairyOptionA.disabled=!saveData.fairyUnlocked;if(fairyOptionB)fairyOptionB.disabled=!saveData.fairyUnlocked;
+  if(frogOptionA)frogOptionA.disabled=!saveData.frogUnlocked;if(frogOptionB)frogOptionB.disabled=!saveData.frogUnlocked;
 
   a.value=saveData.specialSlot1||'none';
   b.value=saveData.specialSlot2||'none';
@@ -490,6 +497,7 @@ function saveSkillSet(){
   if(s1==='wind'&&!saveData.windUnlocked)s1='none';if(s2==='wind'&&!saveData.windUnlocked)s2='none';
   if(s1==='mole'&&!saveData.moleUnlocked)s1='none';if(s2==='mole'&&!saveData.moleUnlocked)s2='none';
   if(s1==='fairy'&&!saveData.fairyUnlocked)s1='none';if(s2==='fairy'&&!saveData.fairyUnlocked)s2='none';
+  if(s1==='frog'&&!saveData.frogUnlocked)s1='none';if(s2==='frog'&&!saveData.frogUnlocked)s2='none';
 
   // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
   if(s1!=='none'&&s1===s2)s1='none';
@@ -767,7 +775,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -1440,7 +1448,15 @@ function drawUnit(u){
   }
   g.save();g.translate(u.x,u.y);
   if(u.jumpT>0){
-    if(u.fairyActive){
+    if(u.frogActive){
+    g.save();g.fillStyle='#5f9e45';g.beginPath();g.ellipse(0,5,25,18,0,0,Math.PI*2);g.fill();
+    g.beginPath();g.arc(-12,-8,9,0,Math.PI*2);g.arc(12,-8,9,0,Math.PI*2);g.fill();
+    g.fillStyle='#fff';g.beginPath();g.arc(-12,-9,5,0,Math.PI*2);g.arc(12,-9,5,0,Math.PI*2);g.fill();
+    g.fillStyle='#182418';g.beginPath();g.arc(-12,-9,2,0,Math.PI*2);g.arc(12,-9,2,0,Math.PI*2);g.fill();
+    g.strokeStyle='#355f31';g.lineWidth=7;g.beginPath();g.moveTo(-18,13);g.lineTo(-30,25);g.moveTo(18,13);g.lineTo(30,25);g.stroke();g.restore();g.restore();return;
+  }
+
+  if(u.fairyActive){
       const total=1.55,p=Math.max(0,Math.min(1,1-u.jumpT/total));
       const lift=Math.sin(Math.PI*Math.min(1,p*1.35))*78;
       g.translate(0,-Math.max(22,lift));
@@ -1454,7 +1470,14 @@ function drawUnit(u){
 
   if(u.bossKind){
     const k=u.bossKind,t=performance.now()/220;g.save();g.scale(k==='fairy'?1.18:(k==='cave'?1.18:1.15),k==='fairy'?1.18:(k==='cave'?1.18:1.15));
-    if(k==='forest'){
+    if(k==='frogking'){
+      g.save();g.scale(1.55,1.55);g.fillStyle='#527f35';g.beginPath();g.ellipse(0,7,38,27,0,0,Math.PI*2);g.fill();
+      g.fillStyle='#6ea94b';g.beginPath();g.arc(-20,-15,14,0,Math.PI*2);g.arc(20,-15,14,0,Math.PI*2);g.fill();
+      g.fillStyle='#f5f3c7';g.beginPath();g.arc(-20,-16,7,0,Math.PI*2);g.arc(20,-16,7,0,Math.PI*2);g.fill();
+      g.fillStyle='#172416';g.beginPath();g.arc(-20,-16,3,0,Math.PI*2);g.arc(20,-16,3,0,Math.PI*2);g.fill();
+      g.fillStyle='#d4b957';g.beginPath();g.moveTo(-27,-29);g.lineTo(-14,-48);g.lineTo(0,-31);g.lineTo(15,-49);g.lineTo(28,-29);g.closePath();g.fill();
+      g.strokeStyle='#355c2c';g.lineWidth=10;g.beginPath();g.moveTo(-28,20);g.lineTo(-49,38);g.moveTo(28,20);g.lineTo(49,38);g.stroke();g.restore();
+    }else if(k==='forest'){
       g.fillStyle='#294f3c';g.beginPath();g.ellipse(0,3,30,17,0,0,Math.PI*2);g.fill();
       g.beginPath();g.moveTo(15,-7);g.lineTo(23,-28);g.lineTo(29,-8);g.closePath();g.fill();
       g.beginPath();g.moveTo(-8,-8);g.lineTo(-18,-28);g.lineTo(1,-12);g.closePath();g.fill();
@@ -1883,6 +1906,14 @@ function updateFieldBossAI(){
     }
   }
 
+  if(b.bossKind==='frogking'){
+    if(now<(b.bossShotAt||0))return;
+    const t=ts[Math.floor(Math.random()*ts.length)];
+    b.mana=100;b.lastShot=-99;shoot(b,t,false);
+    if(Math.random()<.25)setTimeout(()=>{if(running&&b.alive&&t.alive)createLob(b,t,b.team)},350);
+    b.bossShotAt=now+1.35;return;
+  }
+
   if(b.bossKind==='fairy'){
     if(now<(b.bossShotAt||0))return;
     const t=ts[Math.floor(Math.random()*ts.length)];
@@ -2294,6 +2325,14 @@ function maintainFairyCooldowns(u){
   ])u[p]=-99;
 }
 
+function toggleFrog(u){
+  if(!u||!u.alive)return false;const now=performance.now()/1000;
+  if(u.frogActive){u.frogActive=false;return true}
+  if(now-u.lastFrog<.8)return false;
+  if(!u.fairyActive&&u.mana<12){if(u.controlled)flash('魔力不足',300);return false}
+  if(!u.fairyActive)u.mana-=12;u.lastFrog=now;u.frogActive=true;
+  u.rabbitActive=false;u.beastActive=false;u.moleActive=false;u.fairyActive=false;return true;
+}
 function toggleMole(u){
   if(!u||!u.alive)return false;const now=performance.now()/1000;
   if(u.moleActive){u.moleActive=false;u.moleT=0;return true}
@@ -2340,6 +2379,7 @@ function usePlayerSpecial(kind){
   if(kind==='wind'&&saveData.windUnlocked){if(useWind(player))flash('風起こし！',320);return;}
   if(kind==='mole'&&saveData.moleUnlocked){if(toggleMole(player))flash(player.moleActive?'モグラ化！':'地上へ！',320);return;}
   if(kind==='fairy'&&saveData.fairyUnlocked){if(toggleFairy(player))flash(player.fairyActive?'妖精化！':'妖精化解除',360);return;}
+  if(kind==='frog'&&saveData.frogUnlocked){if(toggleFrog(player))flash(player.frogActive?'カエル化！':'カエル化解除',320);return;}
   if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
 
   if(kind==='shield'&&saveData.shieldUnlocked){
@@ -2415,8 +2455,8 @@ function returnToMainMenu(){
 
 // world map v2.61
 let mapX=20,mapY=70,mapMoveTimer=null;
-const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:48,y:8}};
-const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'}};
+const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:48,y:8},wetlands:{x:86,y:73}};
+const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'},frogking:{name:'湿原王ガマグラン',desc:'大湿原の主。攻撃は単純だが、とにかく巨大でしぶとい。妖精化の火力を思い切り試せる。',hp:80,reward:'カエル化'}};
 const FIELD_QUEST_ORDER=['forest','cave','pond','fairy'];let pendingBossKind=null,bossBattle=null;
 function activeFieldQuest(){
   const c=saveData.fieldBossClears||[],a=Math.min(3,saveData.fieldQuestStage||0);
@@ -2473,6 +2513,11 @@ function bossTakeHit(source='bullet'){
     if(k==='cave'&&!saveData.moleUnlocked){
       saveData.moleUnlocked=true;saveData.moleProgress=3;learned='　モグラ化を習得！';
     }
+    if(k==='frogking'){
+      saveData.frogBossWins=(saveData.frogBossWins||0)+1;
+      if(!saveData.frogUnlocked){saveData.frogUnlocked=true;learned='　カエル化を習得！ ……強くはない。';}
+      else learned=`　ガマグラン撃破 ${saveData.frogBossWins}回目！`;
+    }
     if(k==='fairy'){
       saveData.fairyBossWins=(saveData.fairyBossWins||0)+1;
       if(saveData.fairyBossWins>=1)saveData.wetlandsUnlocked=true;
@@ -2489,7 +2534,7 @@ function bossTakeHit(source='bullet'){
     bullets=[];lobShots=[];mines=[];windZones=[];
 
     setTimeout(()=>{
-      showWorldMap();
+      if(k==='frogking')showWetlands();else showWorldMap();
       flash(`${b.name}撃破！${learned||('　'+b.reward+'を獲得')}`,1600);
     },260);
   }
@@ -2500,19 +2545,28 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
   const bossMaxHp=b.hp+rematchBonus;
   $('bossPanel').classList.add('hidden');
   bossBattle={kind:k,hp:bossMaxHp,maxHp:bossMaxHp,revives:2,nextDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){
-    enemies[0].r=k==='fairy'?52:(k==='cave'?46:42);
-    enemies[0].speed*=k==='fairy'?1.08:(k==='cave'?.90:.82);
+    enemies[0].r=k==='frogking'?68:(k==='fairy'?52:(k==='cave'?46:42));
+    enemies[0].speed*=k==='frogking'?.62:(k==='fairy'?1.08:(k==='cave'?.90:.82));
     enemies[0].inv=.2;
     enemies[0].bossKind=k;
     enemies[0].bossShotAt=performance.now()/1000+1.2;
     enemies[0].bossBurrowAt=performance.now()/1000+2.4;
-    if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}
-  }left=k==='fairy'?120:90;clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
+    if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}if(k==='frogking'){enemies[0].shotCd=.5;enemies[0].mana=100;}
+  }left=k==='frogking'?180:(k==='fairy'?120:90);clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
 
+function showWetlands(){running=false;$('worldMap').classList.add('hidden');$('wetlandsMap').classList.remove('hidden')}
+function leaveWetlands(){$('wetlandsMap').classList.add('hidden');showWorldMap();mapX=80;mapY=73;updateMapAvatar()}
+function inspectFrogKing(){
+  pendingBossKind='frogking';$('wetlandsMap').classList.add('hidden');
+  $('bossTitle').textContent=saveData.frogBossWins>0?'湿原王ガマグラン・再戦':'湿原王ガマグラン';
+  $('bossDesc').textContent=`HP80の超耐久ボス。攻撃は妖精女王ほど苛烈ではない。撃破回数 ${saveData.frogBossWins||0}回。`;
+  $('bossPanel').classList.remove('hidden');
+}
 function showWorldMap(){
   running=false;mode='menu';
   for(const id of ['menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){const e=$(id);if(e)e.classList.add('hidden')}
   $('worldMap').classList.remove('hidden');
+  const wg=document.querySelector('[data-place="wetlands"]');if(wg)wg.classList.toggle('hidden',!saveData.wetlandsUnlocked);
   updateFieldQuestMarks();updateMapSkillButtons();updateMapAvatar();
 }
 
@@ -2611,6 +2665,7 @@ function moveMap(dx,dy){
 function enterMapPlace(kind,force=false){
   const p=MAP_PLACES[kind];if(!p)return;
   if(!force&&Math.hypot(mapX-p.x,mapY-p.y)>=11){$('mapPrompt').textContent='もう少し近づいてください';return}
+  if(kind==='wetlands'){if(!saveData.wetlandsUnlocked){flash('まだ霧が濃くて進めない',450);return}showWetlands();return}
   if(FIELD_QUEST_ORDER.includes(kind)){openBossEvent(kind);return}
   $('worldMap').classList.add('hidden');
   if(kind==='home'){$('menu').classList.remove('hidden');refreshRecordUI();return}
@@ -2703,7 +2758,8 @@ window.addEventListener('keydown',e=>{
 // menu / cup v2.15
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
 
-bindTap('bossBackBtn',()=>{$('bossPanel').classList.add('hidden');showWorldMap()});bindTap('bossStartBtn',()=>{if(pendingBossKind)startFieldBoss(pendingBossKind)});
+bindTap('wetlandsReturn',()=>leaveWetlands());bindTap('frogKingPlace',()=>inspectFrogKing());
+bindTap('bossBackBtn',()=>{$('bossPanel').classList.add('hidden');if(pendingBossKind==='frogking')showWetlands();else showWorldMap()});bindTap('bossStartBtn',()=>{if(pendingBossKind)startFieldBoss(pendingBossKind)});
 bindTap('homeMapBtn',()=>{restoreAllCupButtons();showWorldMap()});
 bindTap('practiceMapBtn',()=>{showWorldMap()});
 bindTap('allySkillBtn',()=>{
