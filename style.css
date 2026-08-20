@@ -398,3 +398,8 @@ body.isLandscape #gameWrap{display:block}
 .fairyPlace{left:58%;top:21%}
 .wetlandsGate{left:79%;top:61%;min-width:128px}
 .highCup{left:47%;top:5%}
+
+.teamStyleCard{margin:12px 0;padding:12px;border-radius:14px;background:#182746cc;border:1px solid #7ea4d055;color:#fff}
+.teamStyleCard h3{margin:0 0 8px;font-size:18px}
+#playerTeamStyle{width:100%;padding:9px;border-radius:9px;font-size:16px}
+#teamStyleInfo{display:block;margin-top:7px;color:#cfe4ff;line-height:1.5}

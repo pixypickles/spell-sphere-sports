@@ -189,7 +189,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'rabbit',allyRole1:'support',allyRole2:'guard',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogBossWins:0,fieldBossClears:[],fieldQuestStage:0
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogTeamUnlocked:false,playerTeamStyle:'human',frogBossWins:0,fieldBossClears:[],fieldQuestStage:0
   };
 }
 function loadSave(){
@@ -204,6 +204,8 @@ function loadSave(){
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
+    if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
+    if(!data.playerTeamStyle)data.playerTeamStyle='human';
     if(!Number.isFinite(data.fairyBossWins))data.fairyBossWins=0;
     if(typeof data.wetlandsUnlocked!=='boolean')data.wetlandsUnlocked=false;
     // v2.76 migration: 妖精女王を旧バージョンですでに倒しているセーブも大湿原を解放
@@ -246,6 +248,18 @@ function writeSave(){
   refreshRecordUI();
 }
 function refreshRecordUI(){
+  const teamSel=$('playerTeamStyle'),frogOpt=$('frogTeamOption'),teamInfo=$('teamStyleInfo');
+  if(teamSel){
+    if(frogOpt){
+      frogOpt.disabled=!saveData.frogTeamUnlocked;
+      frogOpt.textContent=saveData.frogTeamUnlocked?'リビット・ローブズ':'リビット・ローブズ（未解放）';
+    }
+    if(saveData.playerTeamStyle==='frog'&&!saveData.frogTeamUnlocked)saveData.playerTeamStyle='human';
+    teamSel.value=saveData.playerTeamStyle||'human';
+    if(teamInfo)teamInfo.textContent=teamSel.value==='frog'
+      ?'3人とも本物のカエル魔導師。舌・バブル・大大大ジャンプ・ミニ蛙を使います。'
+      :'通常のアルカナ選手チーム。装備した特殊技を使います。';
+  }
   const roleA=$('roleA'),roleB=$('roleB');
   if(roleA&&saveData.allyRole1)roleA.value=saveData.allyRole1;
   if(roleB&&saveData.allyRole2)roleB.value=saveData.allyRole2;
@@ -373,6 +387,10 @@ function updateSpecialButtons(){
     const el=$(id);
     if(!el)return;
     const kind=slots[i];
+    if(player&&player.alive&&player.frogMage){
+      el.innerHTML=i===0?'舌<small>長舌丸呑み</small>':'蛙<small>ミニ蛙</small>';
+      return;
+    }
     if(player&&player.alive&&player.frogActive){if(kind==='frog'){el.innerHTML='人<small>元に戻る</small>';return;}el.innerHTML='舌<small>長舌丸呑み</small>';return;}
     if(kind==='double'){
       el.innerHTML='×2<small>2連射</small>';
@@ -1036,6 +1054,11 @@ function reset(){
     new Unit(280,235,'blue',false,allyRole1),
     new Unit(280,485,'blue',false,allyRole2)
   ];
+  if(saveData.playerTeamStyle==='frog'&&saveData.frogTeamUnlocked){
+    for(const f of [player,...allies]){
+      f.frogMage=true;f.frogActive=true;f.mana=100;f.shotCd=.55;f.specialKind='frogmage';
+    }
+  }
   if(allies[0]){
     allies[0].specialA=saveData.ally1SkillA||'none';
     allies[0].specialB=saveData.ally1SkillB||'none';
@@ -2434,6 +2457,9 @@ function toggleMole(u){
   if(!u.fairyActive)u.mana-=22;u.lastMole=now;u.moleActive=true;u.moleT=3.2;return true;
 }
 function usePlayerSpecial(kind){
+  if(player&&player.frogMage){
+    if(kind==='frog'){flash('本物のカエルなので元には戻れない！',380);return;}
+  }
   if(!player||!player.alive)return;
   if(player.fairyActive&&kind!=='fairy')fairyResetOtherCooldown(player,kind);
   // カエル専用の「もう1枠=舌」は、実際に変身中だけ有効。
@@ -2486,8 +2512,14 @@ function usePlayerSpecial(kind){
   flash('✌',420);
 }
 
-bindTap('special1',()=>usePlayerSpecial(saveData.specialSlot1||'none'));
-bindTap('special2',()=>usePlayerSpecial(saveData.specialSlot2||'none'));
+bindTap('special1',()=>{
+  if(player&&player.frogMage){useFrogTongue(player);return}
+  usePlayerSpecial(saveData.specialSlot1||'none');
+});
+bindTap('special2',()=>{
+  if(player&&player.frogMage){launchMiniFrog(player);return}
+  usePlayerSpecial(saveData.specialSlot2||'none');
+});
 
 
 function returnFromPractice(){
@@ -2884,6 +2916,16 @@ bindTap('allySkillCloseBtn',()=>{
 
 
 const roleASelect=$('roleA'),roleBSelect=$('roleB');
+const teamStyleSelect=$('playerTeamStyle');
+if(teamStyleSelect)teamStyleSelect.addEventListener('change',()=>{
+  if(teamStyleSelect.value==='frog'&&!saveData.frogTeamUnlocked){
+    teamStyleSelect.value='human';
+    flash('池のカエル魔導師チームに勝つと解放されます',520);
+    return;
+  }
+  saveData.playerTeamStyle=teamStyleSelect.value;
+  writeSave();refreshRecordUI();
+});
 if(roleASelect)roleASelect.addEventListener('change',()=>{saveData.allyRole1=roleASelect.value;writeSave();});
 if(roleBSelect)roleBSelect.addEventListener('change',()=>{saveData.allyRole2=roleBSelect.value;writeSave();});
 
@@ -3010,7 +3052,7 @@ bindTap('nextBtn',()=>{
         if(opponentHasKey('reflectBladeUsers')){const m=gainSimpleResearch('reflectBlade','反射の魔力剣');if(m)msgs.push(m);}
         if(opponentHasKey('windUsers')){const m=gainSimpleResearch('wind','風起こし');if(m)msgs.push(m);}
         if(opponentHasKey('moleUsers')){const m=gainSimpleResearch('mole','モグラ化');if(m)msgs.push(m);}
-        pendingLearnMessage=msgs.join(' / ');
+        pendingLearnMessage=[pendingLearnMessage,msgs.join(' / ')].filter(Boolean).join(' / ');
       }
     }else{
       saveData.totalLosses++;
@@ -3036,6 +3078,10 @@ bindTap('nextBtn',()=>{
     pendingLearnMessage='';
     if(bScore>rScore){
       saveData.totalWins++;
+      if(fieldFrogMatch&&!saveData.frogTeamUnlocked){
+        saveData.frogTeamUnlocked=true;
+        pendingLearnMessage='カエル魔導師チーム「リビット・ローブズ」が使用可能になった！';
+      }
       {
         const msgs=[];
         if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
@@ -3055,7 +3101,7 @@ bindTap('nextBtn',()=>{
         if(opponentHasKey('reflectBladeUsers')){const m=gainSimpleResearch('reflectBlade','反射の魔力剣');if(m)msgs.push(m);}
         if(opponentHasKey('windUsers')){const m=gainSimpleResearch('wind','風起こし');if(m)msgs.push(m);}
         if(opponentHasKey('moleUsers')){const m=gainSimpleResearch('mole','モグラ化');if(m)msgs.push(m);}
-        pendingLearnMessage=msgs.join(' / ');
+        pendingLearnMessage=[pendingLearnMessage,msgs.join(' / ')].filter(Boolean).join(' / ');
       }
     }else{
       saveData.totalLosses++;
