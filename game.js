@@ -244,9 +244,9 @@ function updateSkillSetUI(){
   b.value=saveData.specialSlot2||'none';
 
   if(!saveData.shieldUnlocked){
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：アドバンスで習得 / 魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：アドバンスで習得 / 魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約0.65秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約0.75秒<br><br>壁すり抜け弾：アドバンスで習得 / 魔力24消費 / 壁を無視して直進 / 再使用 約0.55秒<br><br>バウンド弾：アドバンスで習得 / 魔力22消費 / 壁で最大4回反射 / 再使用 約0.55秒<br><br>シールド：未習得<br>ルーキーカップのシールド持ちチームに3勝すると使用できます。';
   }else{
-    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約3.2秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約2.4秒<br><br>壁すり抜け弾：アドバンスで習得 / 魔力24消費 / 壁を無視して直進 / 再使用 約4.0秒<br><br>バウンド弾：アドバンスで習得 / 魔力22消費 / 壁で最大4回反射 / 再使用 約3.6秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
+    info.innerHTML='2連射：初期習得 / 魔力26消費 / 短い間隔で通常弾を2発 / 再使用 約0.65秒<br><br>魔力剣：初期習得 / 魔力18消費 / 前方半円の敵弾を消去 / 再使用 約0.75秒<br><br>壁すり抜け弾：アドバンスで習得 / 魔力24消費 / 壁を無視して直進 / 再使用 約0.55秒<br><br>バウンド弾：アドバンスで習得 / 魔力22消費 / 壁で最大4回反射 / 再使用 約0.55秒<br><br>シールド：魔力30消費 / 約3秒 / 魔力弾を1発防ぐと消失 / 再使用 約5.2秒';
   }
 }
 function saveSkillSet(){
@@ -605,53 +605,7 @@ class Bullet{
     }
     for(const u of targets){
       if(u&&u.alive&&u.inv<=0&&Math.hypot(this.x-u.x,this.y-u.y)<this.r+u.r){
-        if(u.beastActive){
-    // v2.41: actual quadruped beast form. Facing follows movement direction.
-    g.save();
-    const facing=(u.team==='blue'?1:-1);
-    g.scale(facing,1);
-    const gallop=u.isMoving?Math.sin((u.runPhase||0)*1.35):0;
-    const fur=u.team==='blue'?'#496fa8':'#9b5058';
-    const dark=u.team==='blue'?'#263f69':'#63343b';
-
-    // tail
-    g.strokeStyle=fur;g.lineWidth=7;g.lineCap='round';
-    g.beginPath();g.moveTo(-18,2);g.quadraticCurveTo(-30,-8-gallop*2,-34,-2);g.stroke();
-
-    // four running legs
-    g.strokeStyle=dark;g.lineWidth=5;
-    const a=gallop*6,b=-gallop*6;
-    g.beginPath();
-    g.moveTo(-12,8);g.lineTo(-16+a,20);
-    g.moveTo(-4,9);g.lineTo(-1+b,21);
-    g.moveTo(8,9);g.lineTo(5+b,21);
-    g.moveTo(15,7);g.lineTo(18+a,19);
-    g.stroke();
-
-    // long horizontal body
-    g.fillStyle=fur;
-    g.beginPath();g.ellipse(0,1,23,13,0,0,Math.PI*2);g.fill();
-
-    // wolf head / muzzle
-    g.beginPath();
-    g.moveTo(15,-7);g.lineTo(22,-17);g.lineTo(25,-7);
-    g.lineTo(34,-3);g.lineTo(26,5);g.lineTo(17,6);g.closePath();g.fill();
-
-    // pointed second ear
-    g.beginPath();g.moveTo(20,-8);g.lineTo(16,-18);g.lineTo(28,-9);g.closePath();g.fill();
-
-    // eye + nose
-    g.fillStyle='#fff';g.beginPath();g.arc(24,-5,2.3,0,Math.PI*2);g.fill();
-    g.fillStyle='#202735';g.beginPath();g.arc(34,-2,2.2,0,Math.PI*2);g.fill();
-
-    // speed streaks make the transformation immediately readable
-    if(u.isMoving){
-      g.globalAlpha=.45;g.strokeStyle='#fff';g.lineWidth=2;
-      for(let i=0;i<3;i++){g.beginPath();g.moveTo(-27-i*5,-8+i*7);g.lineTo(-39-i*6,-8+i*7);g.stroke();}
-    }
-    g.restore();
-  }
-  if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
+        if(u.shield>0){u.shield=0;this.life=0;spark(u.x,u.y);flash('SHIELD!',350);return}
         const wasControlled=u.controlled;
         u.alive=false;
         this.life=0;
@@ -1006,6 +960,71 @@ function drawFlag(f,team){g.save();g.translate(f.x,f.y);g.strokeStyle='#5d5663';
 function drawUnit(u){
   if(!u||!u.alive)return;
   g.save();g.translate(u.x,u.y);
+
+  if(u.beastActive){
+    // Full transformation: only the quadruped beast is drawn.
+    const facing=(u.team==='blue'?1:-1);
+    const gallop=u.isMoving?Math.sin((u.runPhase||0)*1.35):0;
+
+    if(u.controlled){
+      g.strokeStyle='#ffe66d';g.lineWidth=3;
+      g.beginPath();g.arc(0,3,32,0,Math.PI*2);g.stroke();
+      g.fillStyle='#ffe66d';g.beginPath();
+      g.moveTo(0,-44);g.lineTo(-7,-35);g.lineTo(7,-35);g.closePath();g.fill();
+    }
+
+    g.save();
+    g.scale(facing,1);
+    const fur=u.team==='blue'?'#496fa8':'#9b5058';
+    const dark=u.team==='blue'?'#263f69':'#63343b';
+
+    g.fillStyle='#0002';
+    g.beginPath();g.ellipse(0,18,29,7,0,0,Math.PI*2);g.fill();
+
+    g.strokeStyle=fur;g.lineWidth=7;g.lineCap='round';
+    g.beginPath();g.moveTo(-20,2);g.quadraticCurveTo(-33,-9-gallop*2,-38,-2);g.stroke();
+
+    g.strokeStyle=dark;g.lineWidth=5;
+    const a=gallop*7,b=-gallop*7;
+    g.beginPath();
+    g.moveTo(-15,8);g.lineTo(-19+a,23);
+    g.moveTo(-5,9);g.lineTo(-2+b,24);
+    g.moveTo(9,9);g.lineTo(6+b,24);
+    g.moveTo(17,7);g.lineTo(21+a,22);
+    g.stroke();
+
+    g.fillStyle=fur;
+    g.beginPath();g.ellipse(0,1,26,14,0,0,Math.PI*2);g.fill();
+
+    g.beginPath();
+    g.moveTo(16,-8);g.lineTo(23,-20);g.lineTo(27,-8);
+    g.lineTo(38,-3);g.lineTo(29,7);g.lineTo(18,7);g.closePath();g.fill();
+
+    g.beginPath();
+    g.moveTo(20,-9);g.lineTo(17,-20);g.lineTo(30,-10);g.closePath();g.fill();
+
+    g.fillStyle='#fff';g.beginPath();g.arc(26,-5,2.4,0,Math.PI*2);g.fill();
+    g.fillStyle='#202735';g.beginPath();g.arc(38,-2,2.4,0,Math.PI*2);g.fill();
+
+    if(u.isMoving){
+      g.globalAlpha=.45;g.strokeStyle='#fff';g.lineWidth=2;
+      for(let i=0;i<3;i++){
+        g.beginPath();
+        g.moveTo(-30-i*5,-8+i*7);
+        g.lineTo(-45-i*6,-8+i*7);
+        g.stroke();
+      }
+    }
+    g.restore();
+
+    if(u.shield>0){
+      g.strokeStyle='#8fe5ff';g.lineWidth=4;g.globalAlpha=.8;
+      g.beginPath();g.arc(0,0,35,0,Math.PI*2);g.stroke();
+    }
+
+    g.restore();
+    return;
+  }
   // v2.37: legs and quick alternating running motion
   const legSwing=u.isMoving?Math.sin(u.runPhase||0)*5:0;
   g.strokeStyle=u.team==='blue'?'#243f88':'#8b3140';
@@ -1164,11 +1183,11 @@ $('dodgeBtn').addEventListener('pointerdown',e=>{
 function useDoubleShot(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
-  const cooldown=3.2;
+  const cooldown=.65;
   const cost=26;
 
   if(now-u.lastDouble<cooldown){
-    flash('2連射クールタイム',420);
+    flash('2連射クールタイム',300);
     return false;
   }
   if(u.dodgeT>0||u.dodgeRecover>0){
@@ -1205,7 +1224,7 @@ function useDoubleShot(u){
 function useManaBlade(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
-  if(now-u.lastBlade<2.4){flash('魔力剣クールタイム',360);return false}
+  if(now-u.lastBlade<.75){flash('魔力剣クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
   if(u.mana<18){flash('魔力不足',360);return false}
 
@@ -1243,7 +1262,7 @@ function useManaBlade(u){
 function useTripleShot(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
-  if(now-u.lastTriple<5.0){flash('3連射クールタイム',380);return false}
+  if(now-u.lastTriple<.90){flash('3連射クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
   if(u.mana<38){flash('魔力不足',360);return false}
   if(!nearest(u,enemies))return false;
@@ -1256,7 +1275,7 @@ function useTripleShot(u){
 function usePhaseShot(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
-  if(now-u.lastPhase<4.0){flash('壁すり抜け弾クールタイム',380);return false}
+  if(now-u.lastPhase<.55){flash('壁すり抜け弾クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
   if(u.mana<24){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
@@ -1269,7 +1288,7 @@ function usePhaseShot(u){
 function useBounceShot(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
-  if(now-u.lastBounce<3.6){flash('バウンド弾クールタイム',380);return false}
+  if(now-u.lastBounce<.55){flash('バウンド弾クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
   if(u.mana<22){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
@@ -1287,7 +1306,7 @@ function useBounceShot(u){
 function useBlastShot(u){
   if(!u||!u.alive)return false;
   const now=performance.now()/1000;
-  if(now-u.lastBlast<4.8){flash('爆裂弾クールタイム',380);return false}
+  if(now-u.lastBlast<.70){flash('爆裂弾クールタイム',300);return false}
   if(u.dodgeT>0||u.dodgeRecover>0||u.beastActive){flash('今は使えない',360);return false}
   if(u.mana<30){flash('魔力不足',360);return false}
   const t=nearest(u,enemies);if(!t)return false;
