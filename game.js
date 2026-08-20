@@ -1529,13 +1529,13 @@ function drawUnit(u){
 
   if(u.frogActive){
     g.save();
-    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(0,7,24,18,0,0,Math.PI*2);g.fill();
-    g.fillStyle='#78bd55';g.beginPath();g.arc(0,-7,17,0,Math.PI*2);g.fill();
-    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(-20,17,14,7,-.25,0,Math.PI*2);g.ellipse(20,17,14,7,.25,0,Math.PI*2);g.fill();
-    g.strokeStyle='#4d8c3a';g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(-11,3);g.lineTo(-21,8);g.moveTo(11,3);g.lineTo(21,8);g.stroke();
-    g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-17,6,0,Math.PI*2);g.arc(8,-17,6,0,Math.PI*2);g.fill();
-    g.fillStyle='#172318';g.beginPath();g.arc(-8,-17,2.4,0,Math.PI*2);g.arc(8,-17,2.4,0,Math.PI*2);g.fill();
-    g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-5,8,.2,Math.PI-.2);g.stroke();
+    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(0,6,20,22,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#78bd55';g.beginPath();g.ellipse(0,-11,16,15,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#5f9e45';g.beginPath();g.ellipse(-17,20,12,7,-.45,0,Math.PI*2);g.ellipse(17,20,12,7,.45,0,Math.PI*2);g.fill();
+    g.strokeStyle='#4d8c3a';g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(-10,0);g.lineTo(-17,11);g.moveTo(10,0);g.lineTo(17,11);g.stroke();
+    g.fillStyle='#f7f4d4';g.beginPath();g.arc(-8,-22,6,0,Math.PI*2);g.arc(8,-22,6,0,Math.PI*2);g.fill();
+    g.fillStyle='#172318';g.beginPath();g.arc(-8,-22,2.4,0,Math.PI*2);g.arc(8,-22,2.4,0,Math.PI*2);g.fill();
+    g.strokeStyle='#315d2c';g.lineWidth=2;g.beginPath();g.arc(0,-9,7,.2,Math.PI-.2);g.stroke();
     if(u.frogTongueT>0){g.strokeStyle='#ed7f96';g.lineWidth=3;g.beginPath();g.moveTo(7,-4);g.lineTo(34,-4);g.stroke();}
     g.restore();g.restore();return;
   }
@@ -2609,7 +2609,7 @@ function updateMapSkillButtons(){
   if(b1)b1.innerHTML=`Ⅰ<small>${labels(kinds[0])}</small>`;
   if(b2)b2.innerHTML=`Ⅱ<small>${labels(kinds[1])}</small>`;
   const d=$('mapDodgeBtn');
-  if(d)d.innerHTML=mapFieldForm==='fairy'?'浮<small>浮遊</small>':(mapFieldForm==='rabbit'?'跳<small>ジャンプ</small>':'↻<small>移動技</small>');
+  if(d)d.innerHTML=mapFieldForm==='fairy'?'浮<small>浮遊</small>':(mapFieldForm==='frog'?'蛙<small>大ジャンプ</small>':(mapFieldForm==='rabbit'?'跳<small>ジャンプ</small>':'↻<small>移動技</small>'));
 }
 
 
@@ -2627,7 +2627,7 @@ function drawMapFieldAvatar(){
   cv.style.transform=now<mapFieldJumpUntil?'translate(-50%,-82%)':'translate(-50%,-58%)';
   ctx.clearRect(0,0,cv.width,cv.height);
   u.x=76;u.y=82;u.alive=true;u.controlled=true;u.inv=0;u.team='blue';u.outfitKey=null;
-  u.rabbitActive=mapFieldForm==='rabbit';u.beastActive=mapFieldForm==='wolf';u.moleActive=mapFieldForm==='mole';u.fairyActive=mapFieldForm==='fairy';
+  u.rabbitActive=mapFieldForm==='rabbit';u.beastActive=mapFieldForm==='wolf';u.moleActive=mapFieldForm==='mole';u.fairyActive=mapFieldForm==='fairy';u.frogActive=mapFieldForm==='frog';
   u.jumpT=now<mapFieldJumpUntil?.5:0;u.isMoving=Math.abs(mapJoyX)>.08||Math.abs(mapJoyY)>.08;
   if(u.isMoving)u.runPhase=(u.runPhase||0)+.18;
   const old=g;try{g=ctx;drawUnit(u)}finally{g=old}
@@ -2678,6 +2678,7 @@ function mapSpeed(){
   if(mapFieldForm==='rabbit')return 1.22;
   if(mapFieldForm==='mole')return 1.3;
   if(mapFieldForm==='fairy')return 1.35;
+  if(mapFieldForm==='frog')return .92;
   return 1;
 }
 function moveMap(dx,dy){
@@ -2724,6 +2725,10 @@ function useFieldSkill(kind){
     if(!saveData.fairyUnlocked){flash('まだ習得していません',350);return}
     mapFieldForm=mapFieldForm==='fairy'?'none':'fairy';mapFieldFormUntil=0;updateMapAvatar();return;
   }
+  if(kind==='frog'){
+    if(!saveData.frogUnlocked){flash('まだ習得していません',350);return}
+    mapFieldForm=mapFieldForm==='frog'?'none':'frog';mapFieldFormUntil=0;updateMapAvatar();return;
+  }
   if(kind==='jump'){
     mapFieldJumpUntil=now+900;updateMapAvatar();return;
   }
@@ -2767,6 +2772,7 @@ bindTap('mapSpecial2',()=>useFieldSlot(2));
 bindTap('mapDodgeBtn',()=>{
   const now=performance.now();
   if(mapFieldForm==='fairy'){mapFieldJumpUntil=now+1350;updateMapAvatar();return}
+  if(mapFieldForm==='frog'){mapFieldJumpUntil=now+1050;updateMapAvatar();flash('ぴょーん！',180);return}
   if(mapFieldForm==='rabbit'){mapFieldJumpUntil=now+650;updateMapAvatar();return}
   if((saveData.specialSlot1==='jump'||saveData.specialSlot2==='jump')){mapFieldJumpUntil=now+900;updateMapAvatar();return}
   flash('変身・ジャンプ装備に応じた移動技を使えます',420);
