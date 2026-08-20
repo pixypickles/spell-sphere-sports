@@ -174,3 +174,20 @@ body.isLandscape #gameWrap{display:block}
   width:100%;min-height:42px;border-radius:10px;padding:5px 10px;font-size:16px
 }
 .skillNote{font-size:12px;opacity:.78;text-align:center}
+
+/* v2.51 version label on first screen */
+.introVersion{
+  position:absolute;
+  left:12px;
+  bottom:10px;
+  z-index:2;
+  padding:4px 8px;
+  border-radius:7px;
+  background:#07101da8;
+  border:1px solid #ffffff24;
+  color:#d9e4ef;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.04em;
+  pointer-events:none;
+}
