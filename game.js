@@ -13,7 +13,7 @@ updateOrientation();
 
 
 
-const c=document.getElementById('game'),g=c.getContext('2d');
+const c=document.getElementById('game');let g=c.getContext('2d');
 const W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576},CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
@@ -1377,6 +1377,30 @@ function drawUnit(u){
   if(u.jumpT>0){const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));g.translate(0,-Math.max(0,jp)*105);}
   if(u.invisT>0)g.globalAlpha=u.controlled?.38:.14;
 
+
+  if(u.bossKind){
+    const k=u.bossKind,t=performance.now()/220;g.save();
+    if(k==='forest'){
+      g.fillStyle='#294f3c';g.beginPath();g.ellipse(0,3,30,17,0,0,Math.PI*2);g.fill();
+      g.beginPath();g.moveTo(15,-7);g.lineTo(23,-28);g.lineTo(29,-8);g.closePath();g.fill();
+      g.beginPath();g.moveTo(-8,-8);g.lineTo(-18,-28);g.lineTo(1,-12);g.closePath();g.fill();
+      g.fillStyle='#b7ef82';g.beginPath();g.arc(18,-7,3,0,Math.PI*2);g.fill();
+      g.strokeStyle='#72b55d';g.lineWidth=4;for(let i=-1;i<=1;i++){g.beginPath();g.moveTo(-18+i*8,13);g.lineTo(-21+i*8+Math.sin(t+i)*4,27);g.stroke()}
+    }else if(k==='cave'){
+      g.fillStyle='#665c79';g.fillRect(-23,-17,46,38);g.fillStyle='#85779a';g.fillRect(-34,-8,12,31);g.fillRect(22,-8,12,31);
+      g.fillStyle='#a7eaff';g.beginPath();g.moveTo(-13,-18);g.lineTo(-5,-38);g.lineTo(2,-17);g.closePath();g.fill();
+      g.beginPath();g.moveTo(5,-18);g.lineTo(15,-33);g.lineTo(20,-15);g.closePath();g.fill();
+      g.fillStyle='#d9fbff';g.beginPath();g.arc(0,0,7+Math.sin(t)*2,0,Math.PI*2);g.fill();
+    }else{
+      g.fillStyle='#327e9b';g.beginPath();g.ellipse(0,2,28,16,0,0,Math.PI*2);g.fill();
+      g.beginPath();g.moveTo(16,-6);g.quadraticCurveTo(33,-28,29,-2);g.quadraticCurveTo(42,2,26,9);g.closePath();g.fill();
+      g.strokeStyle='#77e8e0';g.lineWidth=6;g.beginPath();g.moveTo(-22,4);g.quadraticCurveTo(-45,-15,-48,12);g.stroke();
+      g.fillStyle='#d9ffff';g.beginPath();g.arc(29,-7,3,0,Math.PI*2);g.fill();
+    }
+    if(bossBattle){const n=bossBattle.maxHp,have=bossBattle.hp;for(let i=0;i<n;i++){g.fillStyle=i<have?'#ffdd72':'#3b3340';g.fillRect(-n*3+i*6,-48,4,5)}}
+    g.restore();g.restore();return;
+  }
+
   if(u.rabbitActive){
     // Full quadruped rabbit form.
     const hop=u.isMoving?Math.sin((u.runPhase||0)*1.6):0;
@@ -1717,11 +1741,23 @@ function updateContextButtons(){
   }
 }
 
+
+function updateFieldBossAI(){
+  if(mode!=='boss'||!bossBattle||!enemies[0]||!enemies[0].alive)return;
+  const b=enemies[0],now=performance.now()/1000;if(now<(b.bossShotAt||0))return;
+  const ts=[player,...allies].filter(x=>x&&x.alive);if(!ts.length)return;
+  const t=ts[Math.floor(Math.random()*ts.length)];
+  const fire=()=>{if(running&&b.alive&&t.alive)shoot(b,t)};
+  if(b.bossKind==='forest'){fire();setTimeout(fire,180);b.bossShotAt=now+1.45}
+  else if(b.bossKind==='cave'){fire();b.bossShotAt=now+1.05}
+  else{fire();setTimeout(fire,150);setTimeout(fire,300);b.bossShotAt=now+1.8}
+}
+
 function frame(t){
   requestAnimationFrame(frame);
   const dt=Math.min(.033,(t-last)/1000||0);
   last=t;
-  try{update(dt);draw();updateContextButtons();}
+  try{update(dt);updateFieldBossAI();draw();updateContextButtons();if($('worldMap')&&!$('worldMap').classList.contains('hidden'))drawMapFieldAvatar();}
   catch(err){
     console.error('frame error',err);
   }
@@ -2154,7 +2190,7 @@ function activeFieldQuest(){const c=saveData.fieldBossClears||[],a=Math.min(3,sa
 function updateFieldQuestMarks(){const a=activeFieldQuest();for(const k of FIELD_QUEST_ORDER){const e=$('quest'+k[0].toUpperCase()+k.slice(1));if(e)e.classList.toggle('on',k===a)}}
 function openBossEvent(k){const b=FIELD_BOSSES[k];if(!b)return;if(activeFieldQuest()!==k){$('mapPrompt').textContent=(saveData.fieldBossClears||[]).includes(k)?'この異変は解決済みです':'今は特に異変はないようです';return}pendingBossKind=k;$('worldMap').classList.add('hidden');$('bossTitle').textContent=b.name;$('bossDesc').textContent=b.desc;$('bossPanel').classList.remove('hidden')}
 function bossTakeHit(){if(mode!=='boss'||!bossBattle)return false;bossBattle.hp--;flash(`BOSS HP ${Math.max(0,bossBattle.hp)}/${bossBattle.maxHp}　復活 ${bossBattle.revives}`,420);if(bossBattle.hp<=0){const k=bossBattle.kind,b=FIELD_BOSSES[k];if(!saveData.fieldBossClears.includes(k))saveData.fieldBossClears.push(k);writeSave();running=false;over=true;setTimeout(()=>{showWorldMap();flash(`${b.name}撃破！　${b.reward}を獲得`,1400)},300)}return true}
-function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').classList.add('hidden');bossBattle={kind:k,hp:b.hp,maxHp:b.hp,revives:2};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){enemies[0].r=31;enemies[0].speed*=.82;enemies[0].inv=.2}left=90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
+function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').classList.add('hidden');bossBattle={kind:k,hp:b.hp,maxHp:b.hp,revives:2};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){enemies[0].r=31;enemies[0].speed*=.82;enemies[0].inv=.2;enemies[0].bossKind=k;enemies[0].bossShotAt=performance.now()/1000+1.2}left=90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
 
 function showWorldMap(){
   running=false;mode='menu';
@@ -2178,6 +2214,27 @@ function updateMapSkillButtons(){
   if(b2)b2.innerHTML=`Ⅱ<small>${labels(kinds[1])}</small>`;
   const d=$('mapDodgeBtn');
   if(d)d.innerHTML=mapFieldForm==='rabbit'?'跳<small>ジャンプ</small>':'↻<small>移動技</small>';
+}
+
+
+let mapAvatarUnit=null;
+function ensureMapAvatarUnit(){
+  if(mapAvatarUnit)return mapAvatarUnit;
+  mapAvatarUnit=new Unit('blue',76,82,'balance',0);
+  mapAvatarUnit.controlled=true;mapAvatarUnit.alive=true;mapAvatarUnit.inv=0;
+  return mapAvatarUnit;
+}
+function drawMapFieldAvatar(){
+  const cv=$('mapFieldAvatarCanvas');if(!cv)return;
+  const u=ensureMapAvatarUnit(),ctx=cv.getContext('2d'),now=performance.now();
+  cv.style.left=mapX+'%';cv.style.top=mapY+'%';
+  cv.style.transform=now<mapFieldJumpUntil?'translate(-50%,-82%)':'translate(-50%,-58%)';
+  ctx.clearRect(0,0,cv.width,cv.height);
+  u.x=76;u.y=82;u.alive=true;u.controlled=true;u.inv=0;
+  u.rabbitActive=mapFieldForm==='rabbit';u.beastActive=mapFieldForm==='wolf';u.moleActive=mapFieldForm==='mole';
+  u.jumpT=now<mapFieldJumpUntil?.5:0;u.isMoving=Math.abs(mapJoyX)>.08||Math.abs(mapJoyY)>.08;
+  if(u.isMoving)u.runPhase=(u.runPhase||0)+.18;
+  const old=g;try{g=ctx;drawUnit(u)}finally{g=old}
 }
 
 function updateMapAvatar(){
@@ -2216,6 +2273,7 @@ function updateMapAvatar(){
     if(enter)enter.classList.remove('ready');
     if(label)label.classList.remove('on');
   }
+  drawMapFieldAvatar();
   updateMapSkillButtons();
 }
 

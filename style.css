@@ -369,3 +369,6 @@ body.isLandscape #gameWrap{display:block}
 #mapAvatar.mapForm-wolf .mapHat{display:none}
 #mapAvatar.mapForm-mole .mapBody{width:30px;height:10px;border-radius:50%;background:#6d513b}
 #mapAvatar.mapForm-mole .mapHat{display:none}
+
+#mapAvatar{opacity:0!important}
+#mapFieldAvatarCanvas{position:absolute;z-index:16;width:76px;height:76px;pointer-events:none;transform:translate(-50%,-58%);filter:drop-shadow(0 5px 4px #0007)}
