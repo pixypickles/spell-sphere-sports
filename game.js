@@ -187,7 +187,7 @@ function defaultSave(){
     totalWins:0,totalLosses:0,beginnerWins:0,bestPlace:4,
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
-    specialSlot1:'double',specialSlot2:'rabbit',
+    specialSlot1:'double',specialSlot2:'rabbit',allyRole1:'support',allyRole2:'guard',
     encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fieldBossClears:[],fieldQuestStage:0
   };
 }
@@ -202,7 +202,9 @@ function loadSave(){
     // v2.56: old one-slot ally settings become each ally's A slot.
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
-    if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];if(!Array.isArray(data.fieldBossClears))data.fieldBossClears=[];if(!Number.isFinite(data.fieldQuestStage))data.fieldQuestStage=0;
+    if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
+    if(!data.allyRole1)data.allyRole1='support';
+    if(!data.allyRole2)data.allyRole2='guard';if(!Array.isArray(data.fieldBossClears))data.fieldBossClears=[];if(!Number.isFinite(data.fieldQuestStage))data.fieldQuestStage=0;
     // v2.66: derive field-boss availability from tournaments already cleared.
     // Forest: Beginner champion
     // Cave: Rookie champion (advanced unlocked)
@@ -237,6 +239,9 @@ function writeSave(){
   refreshRecordUI();
 }
 function refreshRecordUI(){
+  const roleA=$('roleA'),roleB=$('roleB');
+  if(roleA&&saveData.allyRole1)roleA.value=saveData.allyRole1;
+  if(roleB&&saveData.allyRole2)roleB.value=saveData.allyRole2;
   const rt=$('recordText'),ru=$('rankUnlock'),cb=$('cupContinueBtn');
   if(rt)rt.textContent=`通算 ${saveData.totalWins}勝 ${saveData.totalLosses}敗 / 優勝 ${saveData.beginnerWins}回`;
   if(ru){
@@ -1006,9 +1011,13 @@ function reset(){
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
   bullets=[];fx=[];mines=[];lobShots=[];windZones=[];left=60;secAcc=0;over=false;running=true;
   player=new Unit(300,360,'blue',true);
+  const allyRole1=saveData.allyRole1||$('roleA').value||'support';
+  const allyRole2=saveData.allyRole2||$('roleB').value||'guard';
+  if($('roleA'))$('roleA').value=allyRole1;
+  if($('roleB'))$('roleB').value=allyRole2;
   allies=[
-    new Unit(280,235,'blue',false,$('roleA').value),
-    new Unit(280,485,'blue',false,$('roleB').value)
+    new Unit(280,235,'blue',false,allyRole1),
+    new Unit(280,485,'blue',false,allyRole2)
   ];
   if(allies[0]){
     allies[0].specialA=saveData.ally1SkillA||'none';
@@ -1827,6 +1836,20 @@ function updateContextButtons(){
 }
 
 
+
+function updateBossCrystalMana(dt){
+  if(mode!=='boss'||!running)return;
+  const units=[player,...allies];
+  for(const u of units){
+    if(!u||!u.alive)continue;
+    const d=Math.hypot(u.x-flagBlue.x,u.y-flagBlue.y);
+    if(d<92){
+      u.mana=Math.min(100,u.mana+24*dt);
+      if(u.controlled&&Math.random()<.015)flash('復活クリスタル：MP回復',260);
+    }
+  }
+}
+
 function updateFieldBossAI(){
   if(mode!=='boss'||!bossBattle||bossBattle.defeated||!enemies[0]||!enemies[0].alive)return;
   const b=enemies[0],now=performance.now()/1000;
@@ -1852,7 +1875,7 @@ function updateFieldBossAI(){
     const t=ts[Math.floor(Math.random()*ts.length)];
     const fire=()=>{if(running&&b.alive&&t.alive){b.mana=100;b.lastShot=-99;shoot(b,t,true)}};
     fire();setTimeout(fire,110);setTimeout(fire,220);setTimeout(fire,330);
-    if(Math.random()<.35)setTimeout(()=>{if(running&&b.alive&&t.alive)createLob(b,t,b.team)},420);
+    if(Math.random()<.22)setTimeout(()=>{if(running&&b.alive&&t.alive)createLob(b,t,b.team)},420);
     b.bossShotAt=now+1.05;return;
   }
 
@@ -1873,7 +1896,7 @@ function frame(t){
   requestAnimationFrame(frame);
   const dt=Math.min(.033,(t-last)/1000||0);
   last=t;
-  try{update(dt);updateFieldBossAI();draw();updateContextButtons();if($('worldMap')&&!$('worldMap').classList.contains('hidden'))drawMapFieldAvatar();}
+  try{update(dt);updateBossCrystalMana(dt);updateFieldBossAI();draw();updateContextButtons();if($('worldMap')&&!$('worldMap').classList.contains('hidden'))drawMapFieldAvatar();}
   catch(err){
     console.error('frame error',err);
   }
@@ -2159,6 +2182,27 @@ function useReflectBlade(u){
     b.life=Math.max(b.life,1.4);
     spark(b.x,b.y);reflected++;
   }
+
+  // Lobbed projectiles can also be cut back before landing.
+  // Re-aim the landing point toward the opposing side.
+  for(const l of lobShots){
+    if(l.team===u.team)continue;
+    const dx=l.x-u.x,dy=l.y-u.y;
+    if(Math.hypot(dx,dy)>range+18)continue;
+    let da=Math.atan2(dy,dx)-u.bladeAngle;
+    while(da>Math.PI)da-=Math.PI*2;
+    while(da<-Math.PI)da+=Math.PI*2;
+    if(Math.abs(da)>halfArc)continue;
+
+    l.team=u.team;
+    const targets2=u.team==='blue'?enemies:[player,...allies];
+    const t2=nearest(u,targets2);
+    if(t2){l.tx=t2.x;l.ty=t2.y;}
+    l.sx=l.x;l.sy=l.y;l.t=0;l.dur=.72;
+    reflected++;
+    spark(l.x,l.y);
+  }
+
   if(reflected&&u.controlled)flash(`${reflected}発反射！`,420);
   return true;
 }
@@ -2384,7 +2428,7 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;$('bossPanel').c
     enemies[0].bossShotAt=performance.now()/1000+1.2;
     enemies[0].bossBurrowAt=performance.now()/1000+2.4;
     if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}
-  }left=90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
+  }left=k==='fairy'?120:90;clock.textContent='BOSS';flash(`${b.name}　HP ${b.hp} / 復活 2`,1000)}
 
 function showWorldMap(){
   running=false;mode='menu';
@@ -2598,6 +2642,11 @@ bindTap('allySkillCloseBtn',()=>{
   $('allySkillPanel').classList.add('hidden');
   $('menu').classList.remove('hidden');
 });
+
+
+const roleASelect=$('roleA'),roleBSelect=$('roleB');
+if(roleASelect)roleASelect.addEventListener('change',()=>{saveData.allyRole1=roleASelect.value;writeSave();});
+if(roleBSelect)roleBSelect.addEventListener('change',()=>{saveData.allyRole2=roleBSelect.value;writeSave();});
 
 bindTap('skillSetBtn',()=>{
   updateSkillSetUI();
