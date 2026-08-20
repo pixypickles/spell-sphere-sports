@@ -95,10 +95,10 @@ const EXPERT_TEAMS={
 };
 const MASTER_TEAMS={
   invis:{name:'ヴェイルシーカーズ',desc:'透明化型：一時的に姿を消して位置をずらします。',roles:['attacker','balance','support'],invisUsers:[0]},
-  trick:{name:'トリックスターズ',desc:'変則弾型：ブーメラン弾と直角弾で回避先を狙います。',roles:['shooter','shooter','balance'],boomerangUsers:[0],rightAngleUsers:[1]},
+  trick:{name:'トリックスターズ',desc:'変則弾型：拡散弾と直角弾で回避先を狙います。',roles:['shooter','shooter','balance'],spreadUsers:[0],rightAngleUsers:[1]},
   lob:{name:'スカイアーク',desc:'投射型：壁を越える放物線爆弾を投げ、着地点で爆発させます。',roles:['shooter','balance','guard'],lobUsers:[0,1]},
   mine:{name:'グリフマイナーズ',desc:'地雷型：魔法地雷を最大2個設置します。クリスタル付近には置けません。',roles:['guard','support','balance'],mineUsers:[0,1]},
-  grand:{name:'グランドアルカナ',desc:'複合型：3人がそれぞれ透明化・ブーメラン弾・ジャンプを担当します。',roles:['balance','shooter','attacker'],invisUsers:[0],boomerangUsers:[1],jumpUsers:[2]}
+  grand:{name:'グランドアルカナ',desc:'複合型：3人がそれぞれ透明化・拡散弾・ジャンプを担当します。',roles:['balance','shooter','attacker'],invisUsers:[0],spreadUsers:[1],jumpUsers:[2]}
 };// v2.48: opponent-specific 2-3 color uniforms. Each team gets its own motif.
 const OUTFITS={
   'beginner:rush': {base:'#e85d5d',sub:'#ffd166',accent:'#fff1c7',pattern:'chevron'},
@@ -149,7 +149,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
   };
 }
 function loadSave(){
@@ -158,6 +158,8 @@ function loadSave(){
     if(!raw)return defaultSave();
     const parsed=JSON.parse(raw);
     const data=Object.assign(defaultSave(),parsed);
+    if(data.spreadProgress!=null && !data.spreadProgress)data.spreadProgress=data.spreadProgress;
+    if(data.spreadUnlocked && !data.spreadUnlocked)data.spreadUnlocked=true;
     // v2.56: old one-slot ally settings become each ally's A slot.
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
@@ -208,7 +210,7 @@ function refreshRecordUI(){
       + '<br>' + (saveData.blastUnlocked?'爆裂弾　習得済み':`爆裂弾　${saveData.blastProgress||0}/3`)
       + '<br>' + (saveData.beastUnlocked?'獣化　習得済み':`獣化　${saveData.beastProgress||0}/3`)
       + '<br>' + (saveData.invisUnlocked?'透明化　習得済み':`透明化　${saveData.invisProgress||0}/3`)
-      + '<br>' + (saveData.boomerangUnlocked?'ブーメラン弾　習得済み':`ブーメラン弾　${saveData.boomerangProgress||0}/3`)
+      + '<br>' + (saveData.spreadUnlocked?'拡散弾　習得済み':`拡散弾　${saveData.spreadProgress||0}/3`)
       + '<br>' + (saveData.rightAngleUnlocked?'直角弾　習得済み':`直角弾　${saveData.rightAngleProgress||0}/3`)
       + '<br>' + (saveData.lobUnlocked?'放物線爆弾　習得済み':`放物線爆弾　${saveData.lobProgress||0}/3`)
       + '<br>' + (saveData.mineUnlocked?'地雷　習得済み':`地雷　${saveData.mineProgress||0}/3`)
@@ -233,7 +235,7 @@ function unlockedSkillChoices(){
     ['blast','爆裂弾','blastUnlocked'],
     ['beast','獣化','beastUnlocked'],
     ['invis','透明化','invisUnlocked'],
-    ['boomerang','ブーメラン弾','boomerangUnlocked'],
+    ['spread','拡散弾','spreadUnlocked'],
     ['rightangle','直角弾','rightAngleUnlocked'],
     ['lob','放物線爆弾','lobUnlocked'],
     ['mine','地雷','mineUnlocked'],
@@ -273,7 +275,7 @@ function specialName(kind){
   if(kind==='blast')return '爆裂弾';
   if(kind==='beast')return '獣化';
   if(kind==='invis')return '透明化';
-  if(kind==='boomerang')return 'ブーメラン弾';
+  if(kind==='spread')return '拡散弾';
   if(kind==='rightangle')return '直角弾';
   if(kind==='lob')return '放物線爆弾';
   if(kind==='mine')return '地雷';
@@ -301,7 +303,7 @@ function updateSpecialButtons(){
     }else if(kind==='beast'&&saveData.beastUnlocked){
       el.innerHTML='獣<small>獣化</small>';
     }else if(kind==='invis'&&saveData.invisUnlocked){el.innerHTML='透<small>透明化</small>';
-    }else if(kind==='boomerang'&&saveData.boomerangUnlocked){el.innerHTML='戻<small>ブーメラン</small>';
+    }else if(kind==='spread'&&saveData.spreadUnlocked){el.innerHTML='戻<small>拡散</small>';
     }else if(kind==='rightangle'&&saveData.rightAngleUnlocked){el.innerHTML='┐<small>直角弾</small>';
     }else if(kind==='lob'&&saveData.lobUnlocked){el.innerHTML='弧<small>放物線</small>';
     }else if(kind==='mine'&&saveData.mineUnlocked){el.innerHTML='雷<small>地雷</small>';
@@ -332,7 +334,7 @@ function updateSkillSetUI(){
   const beastOptionA=[...a.options].find(o=>o.value==='beast');
   const beastOptionB=[...b.options].find(o=>o.value==='beast');
   const invisOptionA=[...a.options].find(o=>o.value==='invis'),invisOptionB=[...b.options].find(o=>o.value==='invis');
-  const boomerangOptionA=[...a.options].find(o=>o.value==='boomerang'),boomerangOptionB=[...b.options].find(o=>o.value==='boomerang');
+  const boomerangOptionA=[...a.options].find(o=>o.value==='spread'),boomerangOptionB=[...b.options].find(o=>o.value==='spread');
   const rightAngleOptionA=[...a.options].find(o=>o.value==='rightangle'),rightAngleOptionB=[...b.options].find(o=>o.value==='rightangle');
   const lobOptionA=[...a.options].find(o=>o.value==='lob'),lobOptionB=[...b.options].find(o=>o.value==='lob');
   const mineOptionA=[...a.options].find(o=>o.value==='mine'),mineOptionB=[...b.options].find(o=>o.value==='mine');
@@ -350,7 +352,7 @@ function updateSkillSetUI(){
   if(beastOptionA)beastOptionA.disabled=!saveData.beastUnlocked;
   if(beastOptionB)beastOptionB.disabled=!saveData.beastUnlocked;
   if(invisOptionA)invisOptionA.disabled=!saveData.invisUnlocked;if(invisOptionB)invisOptionB.disabled=!saveData.invisUnlocked;
-  if(boomerangOptionA)boomerangOptionA.disabled=!saveData.boomerangUnlocked;if(boomerangOptionB)boomerangOptionB.disabled=!saveData.boomerangUnlocked;
+  if(boomerangOptionA)boomerangOptionA.disabled=!saveData.spreadUnlocked;if(boomerangOptionB)boomerangOptionB.disabled=!saveData.spreadUnlocked;
   if(rightAngleOptionA)rightAngleOptionA.disabled=!saveData.rightAngleUnlocked;if(rightAngleOptionB)rightAngleOptionB.disabled=!saveData.rightAngleUnlocked;
   if(lobOptionA)lobOptionA.disabled=!saveData.lobUnlocked;if(lobOptionB)lobOptionB.disabled=!saveData.lobUnlocked;
   if(mineOptionA)mineOptionA.disabled=!saveData.mineUnlocked;if(mineOptionB)mineOptionB.disabled=!saveData.mineUnlocked;
@@ -383,7 +385,7 @@ function saveSkillSet(){
   if(s1==='beast'&&!saveData.beastUnlocked)s1='none';
   if(s2==='beast'&&!saveData.beastUnlocked)s2='none';
   if(s1==='invis'&&!saveData.invisUnlocked)s1='none';if(s2==='invis'&&!saveData.invisUnlocked)s2='none';
-  if(s1==='boomerang'&&!saveData.boomerangUnlocked)s1='none';if(s2==='boomerang'&&!saveData.boomerangUnlocked)s2='none';
+  if(s1==='spread'&&!saveData.spreadUnlocked)s1='none';if(s2==='spread'&&!saveData.spreadUnlocked)s2='none';
   if(s1==='rightangle'&&!saveData.rightAngleUnlocked)s1='none';if(s2==='rightangle'&&!saveData.rightAngleUnlocked)s2='none';
   if(s1==='lob'&&!saveData.lobUnlocked)s1='none';if(s2==='lob'&&!saveData.lobUnlocked)s2='none';
   if(s1==='mine'&&!saveData.mineUnlocked)s1='none';if(s2==='mine'&&!saveData.mineUnlocked)s2='none';
@@ -418,12 +420,12 @@ function practiceEntries(){
   }
   return list;
 }
-function teamSkillList(kind,id){let d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));if(!d)return ['特殊技なし'];const x=[];for(const [p,n] of [['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['boomerangUsers','ブーメラン弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ']])if(d[p]&&d[p].length)x.push(n);return x.length?x:['特殊技なし'];}
+function teamSkillList(kind,id){let d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));if(!d)return ['特殊技なし'];const x=[];for(const [p,n] of [['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['spreadUsers','拡散弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ']])if(d[p]&&d[p].length)x.push(n);return x.length?x:['特殊技なし'];}
 function teamMemberSkillList(kind,id){
   const d=kind==='master'?MASTER_TEAMS[id]:(kind==='expert'?EXPERT_TEAMS[id]:(kind==='advanced'?ADVANCED_TEAMS[id]:(kind==='rookie'?ROOKIE_TEAMS[id]:TEAMS[id])));
   if(!d)return ['特殊技なし','特殊技なし','特殊技なし'];
   const out=['特殊技なし','特殊技なし','特殊技なし'];
-  const defs=[['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['boomerangUsers','ブーメラン弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ']];
+  const defs=[['shieldUsers','シールド'],['tripleUsers','3連射'],['phaseUsers','壁すり抜け弾'],['bounceUsers','バウンド弾'],['blastUsers','爆裂弾'],['beastUsers','獣化'],['invisUsers','透明化'],['spreadUsers','拡散弾'],['rightAngleUsers','直角弾'],['lobUsers','放物線爆弾'],['mineUsers','地雷'],['jumpUsers','ジャンプ']];
   for(const [prop,name] of defs)for(const i of (d[prop]||[]))if(i>=0&&i<3)out[i]=out[i]==='特殊技なし'?name:out[i]+'＋'+name;
   return out;
 }
@@ -637,7 +639,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastBoomerang:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -691,8 +693,9 @@ class Bullet{
       x,y,dx,dy,team,curve,target,kind,r:7,life:3.6,
       bouncesLeft:kind==='bounce'?4:0,
       blastRadius:kind==='blast'?58:0,
+      spreadLife:kind==='spread'?.46:0,
       originX:x,originY:y,phase2:0,
-      speed:kind==='rightangle'?325:(kind==='boomerang'?340:(curve?315:355)),age:0,
+      speed:kind==='rightangle'?325:(kind==='spread'?360:(curve?315:355)),age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
     });
@@ -700,6 +703,7 @@ class Bullet{
   update(dt){
     this.life-=dt;
     this.age+=dt;
+    if(this.kind==='spread'&&this.age>this.spreadLife){this.life=0;return;}
 
     // 回転弾は発射直後だけ緩く曲がる。
     // 一度外れた弾が大回りして戻ってくるような追尾はさせない。
@@ -721,7 +725,7 @@ class Bullet{
       this.dy=Math.sin(nextA);
     }
 
-    if(this.kind==='boomerang'&&this.age>.62){const back=norm(this.originX-this.x,this.originY-this.y),k=Math.min(1,dt*3.2);this.dx=this.dx*(1-k)+back.x*k;this.dy=this.dy*(1-k)+back.y*k;const q=norm(this.dx,this.dy);this.dx=q.x;this.dy=q.y;}else if(this.kind==='rightangle'&&this.phase2===0&&this.age>.72){const ox=this.dx,oy=this.dy,side=(this.target&&this.target.y>this.y)?1:-1;this.dx=-oy*side;this.dy=ox*side;this.phase2=1;}
+    if(this.kind==='spread'&&this.age>.62){const back=norm(this.originX-this.x,this.originY-this.y),k=Math.min(1,dt*3.2);this.dx=this.dx*(1-k)+back.x*k;this.dy=this.dy*(1-k)+back.y*k;const q=norm(this.dx,this.dy);this.dx=q.x;this.dy=q.y;}else if(this.kind==='rightangle'&&this.phase2===0&&this.age>.72){const ox=this.dx,oy=this.dy,side=(this.target&&this.target.y>this.y)?1:-1;this.dx=-oy*side;this.dy=ox*side;this.phase2=1;}
     this.x+=this.dx*this.speed*dt;
     this.y+=this.dy*this.speed*dt;
 
@@ -869,7 +873,7 @@ function reset(){
   if((cupKind==='advanced'||cupKind==='expert')&&od.blastUsers)for(const i of od.blastUsers)if(enemies[i])enemies[i].specialKind='blast';
   if(cupKind==='expert'&&od.beastUsers)for(const i of od.beastUsers)if(enemies[i])enemies[i].specialKind='beast';
   if(cupKind==='master'&&od.invisUsers)for(const i of od.invisUsers)if(enemies[i])enemies[i].specialKind='invis';
-  if(cupKind==='master'&&od.boomerangUsers)for(const i of od.boomerangUsers)if(enemies[i])enemies[i].specialKind='boomerang';
+  if(cupKind==='master'&&od.spreadUsers)for(const i of od.spreadUsers)if(enemies[i])enemies[i].specialKind='spread';
   if(cupKind==='master'&&od.rightAngleUsers)for(const i of od.rightAngleUsers)if(enemies[i])enemies[i].specialKind='rightangle';
   if(cupKind==='master'&&od.lobUsers)for(const i of od.lobUsers)if(enemies[i])enemies[i].specialKind='lob';
   if(cupKind==='master'&&od.mineUsers)for(const i of od.mineUsers)if(enemies[i])enemies[i].specialKind='mine';
@@ -912,7 +916,15 @@ function cpuBlastShot(u){
   bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'blast'));
 }
 
-function cpuBoomerang(u){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'boomerang'));}
+function cpuSpread(u){
+  const t=nearest(u,u.team==='red'?[player,...allies]:enemies);
+  if(!t)return;
+  const d0=norm(t.x-u.x,t.y-u.y),base=Math.atan2(d0.y,d0.x);
+  for(const off of [-.30,-.15,0,.15,.30]){
+    const a=base+off,dx=Math.cos(a),dy=Math.sin(a);
+    bullets.push(new Bullet(u.x+dx*23,u.y+dy*23,dx,dy,u.team,false,t,'spread'));
+  }
+}
 function cpuRightAngle(u){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));}
 
 function allySpecialReady(u,kind){
@@ -925,7 +937,7 @@ function allySpecialReady(u,kind){
   if(kind==='blast')return u.mana>=30&&now-u.lastBlast>=.70;
   if(kind==='beast')return u.mana>=34&&(!u.beastActive||true);
   if(kind==='invis')return u.mana>=28&&u.invisT<=0&&now-u.lastInvis>=1;
-  if(kind==='boomerang')return u.mana>=24&&now-u.lastBoomerang>=.65;
+  if(kind==='spread')return u.mana>=26&&now-u.lastSpread>=.65;
   if(kind==='rightangle')return u.mana>=23&&now-u.lastRightAngle>=.65;
   if(kind==='lob')return u.mana>=32&&now-u.lastLob>=.8;
   if(kind==='mine')return u.mana>=20&&now-u.lastMine>=.55;
@@ -943,7 +955,7 @@ function allyUseSpecial(u,kind){
   if(kind==='blast')return useBlastShot(u);
   if(kind==='beast')return toggleBeast(u);
   if(kind==='invis')return useInvis(u);
-  if(kind==='boomerang')return useBoomerang(u);
+  if(kind==='spread')return useSpread(u);
   if(kind==='rightangle')return useRightAngle(u);
   if(kind==='lob')return useLob(u);
   if(kind==='mine')return useMine(u);
@@ -1041,7 +1053,7 @@ function ai(u,dt,isEnemy){
 
 
   if(u.specialKind==='invis'&&u.invisT<=0&&nowSpecial-u.lastInvis>5.5&&Math.random()<.006){u.lastInvis=nowSpecial;u.invisT=2.6;}
-  if(u.specialKind==='boomerang'&&nowSpecial-u.lastBoomerang>3.0&&Math.random()<.0065){u.lastBoomerang=nowSpecial;cpuBoomerang(u);}
+  if(u.specialKind==='spread'&&nowSpecial-u.lastSpread>2.8&&Math.random()<.006){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(t&&dist(u,t)<240){u.lastSpread=nowSpecial;cpuSpread(u);}}
   if(u.specialKind==='rightangle'&&nowSpecial-u.lastRightAngle>3.3&&Math.random()<.0055){u.lastRightAngle=nowSpecial;cpuRightAngle(u);}
   if(u.specialKind==='lob'&&nowSpecial-u.lastLob>3.8&&Math.random()<.0065){const q=nearest(u,u.team==='red'?[player,...allies]:enemies);if(q){u.lastLob=nowSpecial;createLob(u,q,u.team);}}
   if(u.specialKind==='mine'&&nowSpecial-u.lastMine>3&&Math.random()<.007){if(placeMine(u))u.lastMine=nowSpecial;}
@@ -1209,7 +1221,7 @@ function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?
 function drawUnit(u){
   if(!u||!u.alive)return;
   g.save();g.translate(u.x,u.y);
-  if(u.jumpT>0){const jp=Math.sin(Math.PI*(1-u.jumpT/.82));g.translate(0,-Math.max(0,jp)*54);}
+  if(u.jumpT>0){const jp=Math.sin(Math.PI*(1-u.jumpT/1.05));g.translate(0,-Math.max(0,jp)*105);}
   if(u.invisT>0)g.globalAlpha=u.controlled?.38:.14;
 
   if(u.beastActive){
@@ -1444,7 +1456,7 @@ function draw(){
     g.beginPath();g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();
     if(b.kind==='phase'){
       g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
-    }else if(b.kind==='boomerang'){g.strokeStyle='#ffb0f1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+6,0,Math.PI*1.45);g.stroke();
+    }else if(b.kind==='spread'){g.strokeStyle='#ffb0f1';g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,b.r+3,0,Math.PI*2);g.stroke();
     }else if(b.kind==='rightangle'){g.strokeStyle='#b9ff75';g.lineWidth=3;g.strokeRect(b.x-10,b.y-10,20,20);
       if(b.phase2===0&&b.age>.48){g.globalAlpha=.45+.45*Math.sin(performance.now()/55);g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,16,0,Math.PI*2);g.stroke();}
      }else if(b.kind==='blast'){
@@ -1667,11 +1679,24 @@ function toggleBeast(u){
 }
 
 function useInvis(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastInvis<1)return false;if(u.mana<28){flash('魔力不足',360);return false}u.mana-=28;u.lastInvis=now;u.invisT=3;return true;}
-function useBoomerang(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastBoomerang<.65)return false;if(u.mana<24){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=24;u.lastBoomerang=now;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'boomerang'));return true;}
+function useSpread(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastSpread<.65)return false;
+  if(u.mana<26){flash('魔力不足',360);return false}
+  const t=nearest(u,enemies);if(!t)return false;
+  u.mana-=26;u.lastSpread=now;
+  const d0=norm(t.x-u.x,t.y-u.y),base=Math.atan2(d0.y,d0.x);
+  for(const off of [-.34,-.17,0,.17,.34]){
+    const a=base+off,dx=Math.cos(a),dy=Math.sin(a);
+    bullets.push(new Bullet(u.x+dx*23,u.y+dy*23,dx,dy,u.team,false,t,'spread'));
+  }
+  return true;
+}
 function useRightAngle(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastRightAngle<.65)return false;if(u.mana<23){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=23;u.lastRightAngle=now;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));return true;}
 function useLob(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastLob<.8)return false;if(u.mana<32){flash('魔力不足',360);return false}const t=nearest(u,enemies);if(!t)return false;u.mana-=32;u.lastLob=now;createLob(u,t,u.team);return true;}
 function useMine(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastMine<.55)return false;if(u.mana<20){flash('魔力不足',360);return false}if(!placeMine(u))return false;u.mana-=20;u.lastMine=now;return true;}
-function useJump(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastJump<.85){flash('ジャンプクールタイム',260);return false}if(u.mana<20){flash('魔力不足',360);return false}if(u.dodgeT>0||u.beastActive)return false;u.mana-=20;u.lastJump=now;u.jumpT=.82;u.inv=Math.max(u.inv,.82);return true;}
+function useJump(u){if(!u||!u.alive)return false;const now=performance.now()/1000;if(now-u.lastJump<.85){flash('ジャンプクールタイム',260);return false}if(u.mana<20){flash('魔力不足',360);return false}if(u.dodgeT>0||u.beastActive)return false;u.mana-=20;u.lastJump=now;u.jumpT=1.05;u.inv=Math.max(u.inv,1.05);return true;}
 
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
@@ -1699,7 +1724,7 @@ function usePlayerSpecial(kind){
   }
   if(kind==='beast'&&saveData.beastUnlocked){if(toggleBeast(player))flash(player.beastActive?'獣化！':'獣化解除',320);return;}
   if(kind==='invis'&&saveData.invisUnlocked){if(useInvis(player))flash('透明化！',320);return;}
-  if(kind==='boomerang'&&saveData.boomerangUnlocked){if(useBoomerang(player))flash('ブーメラン弾！',320);return;}
+  if(kind==='spread'&&saveData.spreadUnlocked){if(useSpread(player))flash('拡散弾！',320);return;}
   if(kind==='rightangle'&&saveData.rightAngleUnlocked){if(useRightAngle(player))flash('直角弾！',320);return;}
   if(kind==='lob'&&saveData.lobUnlocked){if(useLob(player))flash('放物線爆弾！',320);return;}
   if(kind==='mine'&&saveData.mineUnlocked){if(useMine(player))flash('地雷設置！',320);return;}
@@ -1906,7 +1931,7 @@ bindTap('nextBtn',()=>{
         if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
         if(opponentHasBeast()){const m=gainBeastResearch();if(m)msgs.push(m);}
         if(opponentHasKey('invisUsers')){const m=gainSimpleResearch('invis','透明化');if(m)msgs.push(m);}
-        if(opponentHasKey('boomerangUsers')){const m=gainSimpleResearch('boomerang','ブーメラン弾');if(m)msgs.push(m);}
+        if(opponentHasKey('spreadUsers')){const m=gainSimpleResearch('spread','拡散弾');if(m)msgs.push(m);}
         if(opponentHasKey('rightAngleUsers')){const m=gainSimpleResearch('rightAngle','直角弾');if(m)msgs.push(m);}
         if(opponentHasKey('lobUsers')){const m=gainSimpleResearch('lob','放物線爆弾');if(m)msgs.push(m);}
         if(opponentHasKey('mineUsers')){const m=gainSimpleResearch('mine','地雷');if(m)msgs.push(m);}
@@ -1946,7 +1971,7 @@ bindTap('nextBtn',()=>{
         if(opponentHasBlast()){const m=gainBlastResearch();if(m)msgs.push(m);}
         if(opponentHasBeast()){const m=gainBeastResearch();if(m)msgs.push(m);}
         if(opponentHasKey('invisUsers')){const m=gainSimpleResearch('invis','透明化');if(m)msgs.push(m);}
-        if(opponentHasKey('boomerangUsers')){const m=gainSimpleResearch('boomerang','ブーメラン弾');if(m)msgs.push(m);}
+        if(opponentHasKey('spreadUsers')){const m=gainSimpleResearch('spread','拡散弾');if(m)msgs.push(m);}
         if(opponentHasKey('rightAngleUsers')){const m=gainSimpleResearch('rightAngle','直角弾');if(m)msgs.push(m);}
         if(opponentHasKey('lobUsers')){const m=gainSimpleResearch('lob','放物線爆弾');if(m)msgs.push(m);}
         if(opponentHasKey('mineUsers')){const m=gainSimpleResearch('mine','地雷');if(m)msgs.push(m);}
