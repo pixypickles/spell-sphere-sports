@@ -203,6 +203,16 @@ function loadSave(){
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];if(!Array.isArray(data.fieldBossClears))data.fieldBossClears=[];if(!Number.isFinite(data.fieldQuestStage))data.fieldQuestStage=0;
+    // v2.66: derive field-boss availability from tournaments already cleared.
+    // Forest: Beginner champion
+    // Cave: Rookie champion (advanced unlocked)
+    // Pond: Advanced champion (expert unlocked)
+    let derivedFieldQuestStage=0;
+    if((data.beginnerWins||0)>0 || data.rookieUnlocked)derivedFieldQuestStage=1;
+    if(data.advancedUnlocked)derivedFieldQuestStage=2;
+    if(data.expertUnlocked || data.masterUnlocked || data.grandmasterUnlocked)derivedFieldQuestStage=3;
+    data.fieldQuestStage=Math.max(data.fieldQuestStage||0,derivedFieldQuestStage);
+
     if(!data.bladeUnlocked){if(data.specialSlot1==='blade')data.specialSlot1='double';if(data.specialSlot2==='blade')data.specialSlot2='rabbit';}
     if(data.encounteredTeams.length===0){
       if((data.beginnerWins||0)>0||data.rookieUnlocked){
@@ -2220,8 +2230,8 @@ function updateMapSkillButtons(){
 let mapAvatarUnit=null;
 function ensureMapAvatarUnit(){
   if(mapAvatarUnit)return mapAvatarUnit;
-  mapAvatarUnit=new Unit('blue',76,82,'balance',0);
-  mapAvatarUnit.controlled=true;mapAvatarUnit.alive=true;mapAvatarUnit.inv=0;
+  mapAvatarUnit=new Unit(76,82,'blue',true,'balance');
+  mapAvatarUnit.controlled=true;mapAvatarUnit.alive=true;mapAvatarUnit.inv=0;mapAvatarUnit.team='blue';mapAvatarUnit.outfitKey=null;
   return mapAvatarUnit;
 }
 function drawMapFieldAvatar(){
@@ -2230,7 +2240,7 @@ function drawMapFieldAvatar(){
   cv.style.left=mapX+'%';cv.style.top=mapY+'%';
   cv.style.transform=now<mapFieldJumpUntil?'translate(-50%,-82%)':'translate(-50%,-58%)';
   ctx.clearRect(0,0,cv.width,cv.height);
-  u.x=76;u.y=82;u.alive=true;u.controlled=true;u.inv=0;
+  u.x=76;u.y=82;u.alive=true;u.controlled=true;u.inv=0;u.team='blue';u.outfitKey=null;
   u.rabbitActive=mapFieldForm==='rabbit';u.beastActive=mapFieldForm==='wolf';u.moleActive=mapFieldForm==='mole';
   u.jumpT=now<mapFieldJumpUntil?.5:0;u.isMoving=Math.abs(mapJoyX)>.08||Math.abs(mapJoyY)>.08;
   if(u.isMoving)u.runPhase=(u.runPhase||0)+.18;
