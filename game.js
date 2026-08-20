@@ -60,7 +60,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[]
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false
   };
 }
 function loadSave(){
@@ -69,6 +69,14 @@ function loadSave(){
     if(!raw)return defaultSave();
     const parsed=JSON.parse(raw);
     const data=Object.assign(defaultSave(),parsed);
+    if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
+    if(data.encounteredTeams.length===0){
+      if((data.beginnerWins||0)>0||data.rookieUnlocked){
+        for(const id of BEGINNER_ORDER)data.encounteredTeams.push(`beginner:${id}`);
+      }
+      if(data.rookieUnlocked)data.encounteredTeams.push('rookie:shield');
+      data.encounteredTeams=[...new Set(data.encounteredTeams)];
+    }
 
     // v2.27以前の「自動装備」セーブを新しい2枠方式へ移行
     if(data.shieldUnlocked && data.shieldEquipped &&
@@ -97,7 +105,7 @@ function refreshRecordUI(){
 
   const sp=$('shieldProgressText');
   if(sp){
-    sp.textContent=saveData.shieldUnlocked?'シールド　習得済み':`シールド　${saveData.shieldProgress||0}/3`;
+    sp.innerHTML=(saveData.shieldUnlocked?'シールド　習得済み':`シールド　${saveData.shieldProgress||0}/3`)+'<br>'+(saveData.tripleUnlocked?'3連射　習得済み':`3連射　${saveData.tripleProgress||0}/3`);
     sp.classList.toggle('skillLearned',!!saveData.shieldUnlocked);
   }
 
@@ -107,6 +115,7 @@ function refreshRecordUI(){
 function specialName(kind){
   if(kind==='double')return '2連射';
   if(kind==='blade')return '魔力剣';
+  if(kind==='triple')return '3連射';
   if(kind==='shield')return 'シールド';
   return 'なし（✌）';
 }
@@ -120,6 +129,8 @@ function updateSpecialButtons(){
       el.innerHTML='×2<small>2連射</small>';
     }else if(kind==='blade'){
       el.innerHTML='剣<small>魔力剣</small>';
+    }else if(kind==='triple'&&saveData.tripleUnlocked){
+      el.innerHTML='×3<small>3連射</small>';
     }else if(kind==='shield'&&saveData.shieldUnlocked){
       el.innerHTML='盾<small>シールド</small>';
     }else{
@@ -133,8 +144,12 @@ function updateSkillSetUI(){
 
   const shieldOptionA=[...a.options].find(o=>o.value==='shield');
   const shieldOptionB=[...b.options].find(o=>o.value==='shield');
+  const tripleOptionA=[...a.options].find(o=>o.value==='triple');
+  const tripleOptionB=[...b.options].find(o=>o.value==='triple');
   if(shieldOptionA)shieldOptionA.disabled=!saveData.shieldUnlocked;
   if(shieldOptionB)shieldOptionB.disabled=!saveData.shieldUnlocked;
+  if(tripleOptionA)tripleOptionA.disabled=!saveData.tripleUnlocked;
+  if(tripleOptionB)tripleOptionB.disabled=!saveData.tripleUnlocked;
 
   a.value=saveData.specialSlot1||'none';
   b.value=saveData.specialSlot2||'none';
@@ -152,6 +167,8 @@ function saveSkillSet(){
   let s1=a.value,s2=b.value;
   if(s1==='shield'&&!saveData.shieldUnlocked)s1='none';
   if(s2==='shield'&&!saveData.shieldUnlocked)s2='none';
+  if(s1==='triple'&&!saveData.tripleUnlocked)s1='none';
+  if(s2==='triple'&&!saveData.tripleUnlocked)s2='none';
 
   // 同じ特殊技を2枠に重複装備する意味はないので、後から選んだ②を優先
   if(s1!=='none'&&s1===s2)s1='none';
@@ -252,6 +269,18 @@ function gainShieldResearch(){
 
   writeSave();
   return `シールド習得 ${saveData.shieldProgress}/3`;
+}
+
+function gainTripleResearch(){
+  if(saveData.tripleUnlocked)return '';
+  saveData.tripleProgress=Math.min(3,(saveData.tripleProgress||0)+1);
+  if(saveData.tripleProgress>=3){saveData.tripleUnlocked=true;writeSave();return '3連射習得！';}
+  writeSave();return `3連射習得 ${saveData.tripleProgress}/3`;
+}
+function opponentHasTriple(){
+  if(cupKind!=='rookie')return false;
+  const d=opponentData(currentOpponent);
+  return !!(d&&d.tripleUsers&&d.tripleUsers.length);
 }
 
 function opponentHasShield(){
@@ -426,6 +455,7 @@ function shoot(u,target,curve=false){
 }
 
 function reset(){
+  if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
   bullets=[];fx=[];left=60;secAcc=0;over=false;running=true;
   player=new Unit(300,360,'blue',true);
   allies=[
@@ -877,6 +907,18 @@ function useManaBlade(u){
   return true;
 }
 
+function useTripleShot(u){
+  if(!u||!u.alive)return false;
+  const now=performance.now()/1000;
+  if(now-u.lastTriple<5.0){flash('3連射クールタイム',380);return false}
+  if(u.dodgeT>0||u.dodgeRecover>0){flash('回避中は使えない',360);return false}
+  if(u.mana<38){flash('魔力不足',360);return false}
+  if(!nearest(u,enemies))return false;
+  u.mana-=38;u.lastTriple=now;
+  const fire=()=>{if(!u.alive)return;const t=nearest(u,enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t));};
+  fire();setTimeout(fire,145);setTimeout(fire,290);return true;
+}
+
 function usePlayerSpecial(kind){
   if(!player||!player.alive)return;
 
@@ -889,6 +931,7 @@ function usePlayerSpecial(kind){
     if(useManaBlade(player))flash('魔力剣！',300);
     return;
   }
+  if(kind==='triple'&&saveData.tripleUnlocked){if(useTripleShot(player))flash('3連射！',320);return;}
 
   if(kind==='shield'&&saveData.shieldUnlocked){
     if(useShield(player,true))flash('シールド！',420);
@@ -1005,7 +1048,12 @@ bindTap('nextBtn',()=>{
     pendingLearnMessage='';
     if(bScore>rScore){
       saveData.totalWins++;
-      if(opponentHasShield())pendingLearnMessage=gainShieldResearch();
+      {
+        const msgs=[];
+        if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
+        if(opponentHasTriple()){const m=gainTripleResearch();if(m)msgs.push(m);}
+        pendingLearnMessage=msgs.join(' / ');
+      }
     }else{
       saveData.totalLosses++;
     }
@@ -1030,7 +1078,12 @@ bindTap('nextBtn',()=>{
     pendingLearnMessage='';
     if(bScore>rScore){
       saveData.totalWins++;
-      if(opponentHasShield())pendingLearnMessage=gainShieldResearch();
+      {
+        const msgs=[];
+        if(opponentHasShield()){const m=gainShieldResearch();if(m)msgs.push(m);}
+        if(opponentHasTriple()){const m=gainTripleResearch();if(m)msgs.push(m);}
+        pendingLearnMessage=msgs.join(' / ');
+      }
     }else{
       saveData.totalLosses++;
     }
