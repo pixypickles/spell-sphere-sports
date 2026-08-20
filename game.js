@@ -19,15 +19,16 @@ const COURT={x:190,y:72,w:900,h:576},CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 
 const walls=[
-  // LEFT HALF — vertical cover only
-  {x:360,y:175,w:20,h:120},
-  {x:360,y:425,w:20,h:120},
-  {x:500,y:245,w:20,h:150},
+  // LEFT SIDE
+  {x:355,y:165,w:20,h:125},
+  {x:455,y:420,w:20,h:125},
 
-  // RIGHT HALF — mirrored
-  {x:900,y:175,w:20,h:120},
-  {x:900,y:425,w:20,h:120},
-  {x:760,y:245,w:20,h:150}
+  // CENTER — slightly larger
+  {x:630,y:275,w:24,h:185},
+
+  // RIGHT SIDE
+  {x:825,y:165,w:20,h:125},
+  {x:925,y:420,w:20,h:125}
 ];
 
 const flagBlue={x:230,y:360},flagRed={x:1050,y:360};
@@ -946,6 +947,32 @@ bindTap('special1',()=>usePlayerSpecial(saveData.specialSlot1||'none'));
 bindTap('special2',()=>usePlayerSpecial(saveData.specialSlot2||'none'));
 
 
+function returnFromPractice(){
+  running=false;
+  over=false;
+  mode='menu';
+  bullets=[];
+  fx=[];
+  pendingLearnMessage='';
+
+  for(const id of ['result','practicePanel','cupPanel','cupEndPanel','skillSetPanel']){
+    const el=$(id);
+    if(el)el.classList.add('hidden');
+  }
+
+  // Do NOT alter saved cup resume. Practice is independent of tournament state.
+  $('menu').classList.remove('hidden');
+
+  bScore=0;
+  rScore=0;
+  round=1;
+  score.textContent='0 - 0';
+  roundLabel.textContent='ROUND 1';
+  clock.textContent='1:00';
+
+  refreshRecordUI();
+}
+
 function returnToMainMenu(){
   running=false;
   over=false;
@@ -1003,6 +1030,8 @@ bindTap('practiceStartBtn',()=>{
   if(!val)return;
   const [kind,id]=val.split(':');
   mode='practice';
+  // cupKind is used only to identify the opponent's league/skills during the practice match.
+  // It must not turn the match into a tournament.
   cupKind=kind==='rookie'?'rookie':'beginner';
   currentOpponent=id;
   bScore=0;rScore=0;round=1;
@@ -1025,7 +1054,11 @@ bindTap('cupContinueBtn',()=>{
 });
 bindTap('rookieBtn',()=>{if(!saveData.rookieUnlocked)return;mode='cup';cupKind='rookie';cupIndex=0;cupTable=newCupTable();currentOpponent=ROOKIE_ORDER[0];saveData.cupResume=null;writeSave();$('menu').classList.add('hidden');refreshCup();$('cupPanel').classList.remove('hidden');saveCupResume()});
 bindTap('practiceBtn',()=>{
+  mode='menu';
   updatePracticeMenu();
+  $('cupPanel').classList.add('hidden');
+  $('cupEndPanel').classList.add('hidden');
+  $('result').classList.add('hidden');
   $('menu').classList.add('hidden');
   $('practicePanel').classList.remove('hidden');
 });
@@ -1074,7 +1107,7 @@ bindTap('nextBtn',()=>{
       }
       $('cupPanel').classList.remove('hidden');
     }
-  }else{
+  }else if(mode==='practice'){
     pendingLearnMessage='';
     if(bScore>rScore){
       saveData.totalWins++;
@@ -1090,12 +1123,14 @@ bindTap('nextBtn',()=>{
     writeSave();
 
     const learnMsg=pendingLearnMessage;
-    returnToMainMenu();
+    returnFromPractice();
 
     if(learnMsg){
       setTimeout(()=>flash(learnMsg,1300),120);
       pendingLearnMessage='';
     }
+  }else{
+    returnToMainMenu();
   }
 });
 for(const ev of ['contextmenu','selectstart','dragstart'])document.addEventListener(ev,e=>{if(e.target.closest('#gameWrap')||e.target.closest('button'))e.preventDefault()},{passive:false});
