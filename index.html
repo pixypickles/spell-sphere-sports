@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v2.55</title>
-<link href="style.css?v=255" rel="stylesheet"/>
+<title>魔導球技 v2.56</title>
+<link href="style.css?v=256" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,7 +14,7 @@
 </head>
 <body>
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion">v2.55</div>
+<div class="introVersion">v2.56</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -73,8 +73,7 @@
 <h1>魔導球技</h1>
 <p class="lead">自チーム＋3チームの総当たり大会</p>
 <div class="cupInfo"><b>大会を選択</b><small>下のボタンから参加する大会を選んでください。上位大会は優勝すると解禁されます。</small></div>
-<button class="skillSetBtn" id="skillSetBtn" type="button">特殊技セット</button><button class="allySkillBtn" id="allySkillBtn" type="button">味方A・Bの技を設定</button>
-
+<button class="skillSetBtn" id="skillSetBtn" type="button">特殊技セット</button><button class="allySkillBtn" id="allySkillBtn" type="button">味方1・2の技を設定</button>
 <div class="skillProgressCard">
 <div class="skillProgressTitle">特殊技研究</div>
 <div id="shieldProgressText">シールド　0/3</div>
@@ -140,25 +139,35 @@
 <button class="subBtn" id="skillSetCloseBtn" type="button">戻る</button>
 </section>
 </div>
-<div class="overlay hidden" id="allySkillPanel">
-<section class="panel allySkillPanelCard">
+<div class="overlay hidden" id="allySkillPanel"><section class="panel allySkillPanelCard">
 <div class="kicker">ALLY SPECIAL SET</div>
 <h1>味方スキル設定</h1>
-<p class="lead">味方Aと味方Bに、それぞれ別の特殊技を設定できます。</p>
-<label class="allySkillLabel">味方A
-      <select id="allyASkill"></select>
+<p class="lead">味方1・味方2にも、操作キャラと同じように2つの特殊技を設定できます。</p>
+<div class="allyTwoSlotBlock">
+<h2>味方1</h2>
+<label class="allySkillLabel">特殊A
+      <select id="ally1SkillA"></select>
 </label>
-<label class="allySkillLabel">味方B
-      <select id="allyBSkill"></select>
+<label class="allySkillLabel">特殊B
+      <select id="ally1SkillB"></select>
 </label>
+</div>
+<div class="allyTwoSlotBlock">
+<h2>味方2</h2>
+<label class="allySkillLabel">特殊A
+      <select id="ally2SkillA"></select>
+</label>
+<label class="allySkillLabel">特殊B
+      <select id="ally2SkillB"></select>
+</label>
+</div>
 <div class="skillSetInfo" id="allySkillInfo">
-      習得済みの特殊技だけ選択できます。<br/>
-      2連射と魔力剣は最初から使用できます。
-    </div>
+    習得済みの特殊技だけ選択できます。<br/>
+    味方AIは状況に応じてA/Bどちらかを使います。
+  </div>
 <button class="menuBtn" id="allySkillSaveBtn" type="button">味方スキルを保存</button>
 <button class="subBtn" id="allySkillCloseBtn" type="button">戻る</button>
-</section>
-</div><div class="overlay hidden" id="practicePanel">
+</section></div><div class="overlay hidden" id="practicePanel">
 <section class="panel practicePanelCard">
 <div class="kicker">PRACTICE MATCH</div>
 <h1>練習試合</h1>
@@ -193,7 +202,7 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v2.55</div>
-<script src="game.js?v=255"></script>
+<div id="versionBadge">v2.56</div>
+<script src="game.js?v=256"></script>
 </body>
 </html>

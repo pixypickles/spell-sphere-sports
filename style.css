@@ -262,3 +262,17 @@ body.isLandscape #gameWrap{display:block}
   flex:1;min-width:0;padding:10px;border-radius:9px;border:0;
   background:#fff;color:#17233a
 }
+
+/* v2.56: two special slots for each ally */
+.allyTwoSlotBlock{
+  margin:10px 0 14px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#111a31aa;
+  border:1px solid #ffffff1f;
+}
+.allyTwoSlotBlock h2{
+  margin:0 0 8px;
+  font-size:17px;
+  color:#dff3ff;
+}

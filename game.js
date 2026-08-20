@@ -149,7 +149,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'none',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,boomerangProgress:0,boomerangUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false
   };
 }
 function loadSave(){
@@ -158,6 +158,9 @@ function loadSave(){
     if(!raw)return defaultSave();
     const parsed=JSON.parse(raw);
     const data=Object.assign(defaultSave(),parsed);
+    // v2.56: old one-slot ally settings become each ally's A slot.
+    if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
+    if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
     if(data.encounteredTeams.length===0){
       if((data.beginnerWins||0)>0||data.rookieUnlocked){
@@ -240,18 +243,24 @@ function unlockedSkillChoices(){
   return a;
 }
 function refreshPlayerSkillSelectors(){
-  const a=$('allyASkill'),b=$('allyBSkill');
-  if(!a||!b)return;
-
+  const defs=[
+    ['ally1SkillA','ally1SkillA'],
+    ['ally1SkillB','ally1SkillB'],
+    ['ally2SkillA','ally2SkillA'],
+    ['ally2SkillB','ally2SkillB']
+  ];
   const choices=unlockedSkillChoices();
-  const defs=[[a,'allySkillA'],[b,'allySkillB']];
 
-  for(const [el,key] of defs){
+  for(const [id,key] of defs){
+    const el=$(id);
+    if(!el)continue;
     const current=saveData[key]||'none';
     el.innerHTML='';
     for(const [value,name] of choices){
       const o=document.createElement('option');
-      o.value=value;o.textContent=name;el.appendChild(o);
+      o.value=value;
+      o.textContent=name;
+      el.appendChild(o);
     }
     el.value=choices.some(c=>c[0]===current)?current:'none';
   }
@@ -449,10 +458,19 @@ function updatePracticeMenu(){
 }
 
 function saveAllySkills(){
-  const a=$('allyASkill'),b=$('allyBSkill');
-  if(!a||!b)return;
-  saveData.allySkillA=a.value||'none';
-  saveData.allySkillB=b.value||'none';
+  const pairs=[
+    ['ally1SkillA','ally1SkillA'],
+    ['ally1SkillB','ally1SkillB'],
+    ['ally2SkillA','ally2SkillA'],
+    ['ally2SkillB','ally2SkillB']
+  ];
+  for(const [id,key] of pairs){
+    const el=$(id);
+    if(el)saveData[key]=el.value||'none';
+  }
+  // Legacy fields kept for backward compatibility.
+  saveData.allySkillA=saveData.ally1SkillA||'none';
+  saveData.allySkillB=saveData.ally2SkillA||'none';
   writeSave();
 }
 
@@ -619,7 +637,7 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastBoomerang:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,lastInvis:-99,invisT:0,lastBoomerang:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
@@ -829,8 +847,14 @@ function reset(){
     new Unit(280,235,'blue',false,$('roleA').value),
     new Unit(280,485,'blue',false,$('roleB').value)
   ];
-  if(allies[0])allies[0].specialKind=saveData.allySkillA||'none';
-  if(allies[1])allies[1].specialKind=saveData.allySkillB||'none';
+  if(allies[0]){
+    allies[0].specialA=saveData.ally1SkillA||'none';
+    allies[0].specialB=saveData.ally1SkillB||'none';
+  }
+  if(allies[1]){
+    allies[1].specialA=saveData.ally2SkillA||'none';
+    allies[1].specialB=saveData.ally2SkillB||'none';
+  }
   const od=opponentData(currentOpponent),roles=od.roles;
   enemies=[
     new Unit(995,220,'red',false,roles[0]),
@@ -890,6 +914,44 @@ function cpuBlastShot(u){
 
 function cpuBoomerang(u){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'boomerang'));}
 function cpuRightAngle(u){const t=nearest(u,u.team==='red'?[player,...allies]:enemies);if(!t)return;const d=norm(t.x-u.x,t.y-u.y);bullets.push(new Bullet(u.x+d.x*23,u.y+d.y*23,d.x,d.y,u.team,false,t,'rightangle'));}
+
+function allySpecialReady(u,kind){
+  const now=performance.now()/1000;
+  if(kind==='double')return u.mana>=26&&now-u.lastDouble>=.65;
+  if(kind==='blade')return u.mana>=18&&now-u.lastBlade>=.75;
+  if(kind==='triple')return u.mana>=38&&now-u.lastTriple>=.90;
+  if(kind==='phase')return u.mana>=24&&now-u.lastPhase>=.55;
+  if(kind==='bounce')return u.mana>=22&&now-u.lastBounce>=.55;
+  if(kind==='blast')return u.mana>=30&&now-u.lastBlast>=.70;
+  if(kind==='beast')return u.mana>=34&&(!u.beastActive||true);
+  if(kind==='invis')return u.mana>=28&&u.invisT<=0&&now-u.lastInvis>=1;
+  if(kind==='boomerang')return u.mana>=24&&now-u.lastBoomerang>=.65;
+  if(kind==='rightangle')return u.mana>=23&&now-u.lastRightAngle>=.65;
+  if(kind==='lob')return u.mana>=32&&now-u.lastLob>=.8;
+  if(kind==='mine')return u.mana>=20&&now-u.lastMine>=.55;
+  if(kind==='jump')return u.mana>=20&&u.jumpT<=0&&now-u.lastJump>=.85;
+  if(kind==='shield')return u.mana>=30&&u.shield<=0&&now-u.lastShield>=5.2;
+  return false;
+}
+function allyUseSpecial(u,kind){
+  if(!allySpecialReady(u,kind))return false;
+  if(kind==='double')return useDoubleShot(u);
+  if(kind==='blade')return useManaBlade(u);
+  if(kind==='triple')return useTripleShot(u);
+  if(kind==='phase')return usePhaseShot(u);
+  if(kind==='bounce')return useBounceShot(u);
+  if(kind==='blast')return useBlastShot(u);
+  if(kind==='beast')return toggleBeast(u);
+  if(kind==='invis')return useInvis(u);
+  if(kind==='boomerang')return useBoomerang(u);
+  if(kind==='rightangle')return useRightAngle(u);
+  if(kind==='lob')return useLob(u);
+  if(kind==='mine')return useMine(u);
+  if(kind==='jump')return useJump(u);
+  if(kind==='shield')return useShield(u,true);
+  return false;
+}
+
 function ai(u,dt,isEnemy){
   if(!u.alive)return;
   u.think-=dt;
@@ -965,18 +1027,18 @@ function ai(u,dt,isEnemy){
   }
     const nowSpecial=performance.now()/1000;
 
-  if(!isEnemy && u.specialKind && u.specialKind!=='none'){
-    if(u.specialKind==='shield'&&u.mana>=20&&u.shield<=0&&Math.random()<.004){u.mana-=20;u.shield=1;}
-    if(u.specialKind==='double'&&u.mana>=18&&Math.random()<.007){const t=nearest(u,enemies);if(t){u.mana-=18;cpuDouble(u,t);}}
-    if(u.specialKind==='triple'&&u.mana>=28&&Math.random()<.005){const t=nearest(u,enemies);if(t){u.mana-=28;cpuTriple(u,t);}}
-    if(u.specialKind==='beast'&&!u.beastActive&&u.mana>=26&&Math.random()<.003){u.mana-=26;toggleBeast(u);}
-    if(u.specialKind==='invis'&&u.invisT<=0&&u.mana>=28&&Math.random()<.003){u.mana-=28;u.invisT=3;}
-    if(u.specialKind==='boomerang'&&u.mana>=24&&Math.random()<.006){u.mana-=24;cpuBoomerang(u);}
-    if(u.specialKind==='rightangle'&&u.mana>=23&&Math.random()<.006){u.mana-=23;cpuRightAngle(u);}
-    if(u.specialKind==='lob'&&u.mana>=32&&Math.random()<.004){const t=nearest(u,enemies);if(t){u.mana-=32;createLob(u,t,u.team);}}
-    if(u.specialKind==='mine'&&u.mana>=20&&Math.random()<.004){if(placeMine(u))u.mana-=20;}
-    if(u.specialKind==='jump'&&u.mana>=20&&u.jumpT<=0&&Math.random()<.004){u.mana-=20;startJump(u);}
+  if(!isEnemy){
+    const allyChoices=[u.specialA,u.specialB].filter(k=>k&&k!=='none');
+    if(allyChoices.length&&Math.random()<.006){
+      const first=allyChoices[Math.floor(Math.random()*allyChoices.length)];
+      if(!allyUseSpecial(u,first)&&allyChoices.length>1){
+        const second=allyChoices.find(k=>k!==first);
+        if(second)allyUseSpecial(u,second);
+      }
+    }
   }
+
+
 
   if(u.specialKind==='invis'&&u.invisT<=0&&nowSpecial-u.lastInvis>5.5&&Math.random()<.006){u.lastInvis=nowSpecial;u.invisT=2.6;}
   if(u.specialKind==='boomerang'&&nowSpecial-u.lastBoomerang>3.0&&Math.random()<.0065){u.lastBoomerang=nowSpecial;cpuBoomerang(u);}
@@ -1317,8 +1379,45 @@ function drawUnit(u){
 
 function createLob(u,target,team){lobShots.push({sx:u.x,sy:u.y,tx:target.x,ty:target.y,x:u.x,y:u.y,t:0,dur:1.30,team});}
 function updateLobs(dt){for(const l of lobShots){l.t+=dt;const p=Math.min(1,l.t/l.dur);l.x=l.sx+(l.tx-l.sx)*p;l.y=l.sy+(l.ty-l.sy)*p-Math.sin(Math.PI*p)*115;if(p>=1&&!l.done){l.done=true;explodeAt(l.tx,l.ty,l.team,64);}}lobShots=lobShots.filter(l=>!l.done);}
-function placeMine(u){if(dist(u,flagBlue)<95||dist(u,flagRed)<95){if(u.controlled)flash('クリスタル付近には設置できない',520);return false;}const own=mines.filter(m=>m.owner===u);if(own.length>=2){const oldest=own.reduce((x,y)=>x.age>y.age?x:y);mines=mines.filter(m=>m!==oldest);}mines.push({x:u.x,y:u.y,team:u.team,age:0,owner:u});return true;}
-function updateMines(dt){for(const m of mines)m.age+=dt;for(const m of [...mines]){const targets=m.team==='blue'?enemies:[player,...allies];if(targets.some(u=>u&&u.alive&&Math.hypot(u.x-m.x,u.y-m.y)<38)){explodeAt(m.x,m.y,m.team,58);mines=mines.filter(x=>x!==m);}}}
+function placeMine(u){
+  if(!u||!u.alive)return false;
+  if(dist(u,flagBlue)<95||dist(u,flagRed)<95){
+    if(u.controlled)flash('クリスタル付近には設置できない',520);
+    return false;
+  }
+
+  const owned=mines.filter(m=>m.owner===u);
+  if(owned.length>=2){
+    let oldest=owned[0];
+    for(const m of owned)if(m.age>oldest.age)oldest=m;
+    mines=mines.filter(m=>m!==oldest);
+  }
+
+  mines.push({x:u.x,y:u.y,team:u.team,age:0,owner:u});
+  return true;
+}
+function updateMines(dt){
+  for(const m of mines)m.age+=dt;
+
+  const triggered=[];
+  for(const m of mines){
+    if(m.age<.35)continue;
+    const targets=m.team==='blue'?enemies:[player,...allies];
+    if(targets.some(u=>u&&u.alive&&Math.hypot(u.x-m.x,u.y-m.y)<38)){
+      triggered.push(m);
+    }
+  }
+
+  if(!triggered.length)return;
+
+  const hitSet=new Set(triggered);
+  mines=mines.filter(m=>!hitSet.has(m));
+
+  for(const m of triggered){
+    if(!running)break;
+    explodeAt(m.x,m.y,m.team,58);
+  }
+}
 
 function arenaTheme(){
   if(mode==='practice')return {court:'#b9d6f2',wall:'#e7edf5',bg:'#5f7c92'};
