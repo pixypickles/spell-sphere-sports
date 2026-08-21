@@ -423,3 +423,8 @@ Version: v2.8
 - フィールド移動は画面表示用スティック自身が入力を所有する。
 - Pointer Events + Touch Eventsの二重経路でAndroid/WebView差異に対応。
 - 移動更新はrequestAnimationFrameで行う。
+
+## v2.93 表示方針
+- 競技コートは「全体を収める」より「横画面を大きく使う」ことを優先。
+- canvasは実viewportへフィットさせる。
+- 操作UIはcanvasとは独立してviewportへ固定し、ブラウザUIが出ても画面外へ逃がさない。

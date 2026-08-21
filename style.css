@@ -463,229 +463,6 @@ body.isLandscape #gameWrap{display:block}
   margin-top:14px;
 }
 
-/* v2.90: fit the whole game into the actual landscape viewport */
-html,body{
-  width:100%;
-  height:100%;
-  min-height:100%;
-  overflow:hidden!important;
-  margin:0!important;
-  padding:0!important;
-}
-
-body{
-  position:fixed!important;
-  inset:0!important;
-}
-
-#gameWrap{
-  position:fixed!important;
-  left:0!important;
-  top:0!important;
-  width:100vw!important;
-  width:100dvw!important;
-  height:100vh!important;
-  height:100dvh!important;
-  max-width:none!important;
-  max-height:none!important;
-  margin:0!important;
-  padding:0!important;
-  overflow:hidden!important;
-  transform:none!important;
-}
-
-/* Canvas is the logical 1280x720 stage. Scale it to fit, never push layout downward. */
-#game{
-  position:absolute!important;
-  left:50%!important;
-  top:50%!important;
-  width:min(100vw,calc(100vh * 16 / 9))!important;
-  width:min(100dvw,calc(100dvh * 16 / 9))!important;
-  height:min(100vh,calc(100vw * 9 / 16))!important;
-  height:min(100dvh,calc(100dvw * 9 / 16))!important;
-  transform:translate(-50%,-50%)!important;
-  display:block!important;
-}
-
-/* All gameplay UI should be anchored to the viewport, not document flow. */
-#hud{
-  position:fixed!important;
-  left:50%!important;
-  top:6px!important;
-  transform:translateX(-50%)!important;
-  z-index:40!important;
-}
-
-#manaHud{
-  position:fixed!important;
-  left:18px!important;
-  top:46px!important;
-  bottom:auto!important;
-  z-index:41!important;
-  transform:none!important;
-}
-
-#stickZone{
-  position:fixed!important;
-  left:16px!important;
-  bottom:14px!important;
-  top:auto!important;
-  z-index:42!important;
-  transform:none!important;
-}
-
-#buttons{
-  position:fixed!important;
-  right:16px!important;
-  bottom:12px!important;
-  top:auto!important;
-  z-index:42!important;
-  transform:none!important;
-}
-
-#message{
-  position:fixed!important;
-  left:50%!important;
-  bottom:12px!important;
-  transform:translateX(-50%)!important;
-  z-index:43!important;
-}
-
-/* Overlays/maps must fill viewport without inheriting game scaling. */
-.overlay,
-#worldMap,
-#wetlandsMap,
-#endingPanel{
-  position:fixed!important;
-  inset:0!important;
-  width:100vw!important;
-  width:100dvw!important;
-  height:100vh!important;
-  height:100dvh!important;
-  max-width:none!important;
-  max-height:none!important;
-  margin:0!important;
-  transform:none!important;
-}
-
-/* Field map joystick and buttons: always reachable. */
-.worldMapOverlay #stickZone,
-#worldMap #stickZone{
-  left:16px!important;
-  bottom:14px!important;
-  top:auto!important;
-}
-.worldMapOverlay #buttons,
-#worldMap #buttons{
-  right:16px!important;
-  bottom:12px!important;
-  top:auto!important;
-}
-
-/* Short phone landscape: shrink controls instead of letting them fall outside viewport. */
-body.shortLandscape #stickBase{
-  transform:scale(.86)!important;
-  transform-origin:left bottom!important;
-}
-body.shortLandscape #buttons{
-  transform:scale(.86)!important;
-  transform-origin:right bottom!important;
-}
-body.shortLandscape #manaHud{
-  top:38px!important;
-  transform:scale(.90)!important;
-  transform-origin:left top!important;
-}
-body.shortLandscape #hud{
-  transform:translateX(-50%) scale(.90)!important;
-  transform-origin:center top!important;
-}
-body.shortLandscape .worldMapPanel{
-  max-height:100dvh!important;
-  overflow:hidden!important;
-}
-
-/* Ending remains independently scrollable, but buttons are always reachable. */
-#endingPanel{
-  overflow:auto!important;
-  overscroll-behavior:contain;
-}
-.endingCard{
-  margin:8px auto!important;
-  min-height:0!important;
-  max-height:calc(100dvh - 16px)!important;
-  overflow:auto!important;
-  box-sizing:border-box!important;
-}
-.endingCloseBtn{
-  position:sticky!important;
-  top:0!important;
-  float:right!important;
-}
-#endingContinueBtn{
-  position:sticky!important;
-  bottom:0!important;
-  z-index:5!important;
-}
-
-/* boss mode no longer changes the flow layout; it only ensures HUD visibility */
-body.bossMode #manaHud{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  top:46px!important;
-}
-
-/* v2.91: separate competition HUD from field-map UI */
-
-/* Default: competition HUD hidden outside actual matches */
-body:not(.screenGame) #hud,
-body:not(.screenGame) #manaHud{
-  display:none!important;
-}
-
-/* The game canvas should not sit over the field-map presentation */
-body.screenWorld #game,
-body.screenWetlands #game,
-body.screenEnding #game{
-  visibility:hidden!important;
-}
-
-/* World/wetlands overlays own the screen completely */
-body.screenWorld #worldMap{
-  display:block;
-}
-body.screenWetlands #wetlandsMap{
-  display:block;
-}
-
-/* Competition controls are hidden when using field-map overlays.
-   Field-map has its own visible map controls inside the overlay. */
-body.screenWorld > #gameWrap > #buttons,
-body.screenWorld > #gameWrap > #stickZone,
-body.screenWetlands > #gameWrap > #buttons,
-body.screenWetlands > #gameWrap > #stickZone,
-body.screenEnding > #gameWrap > #buttons,
-body.screenEnding > #gameWrap > #stickZone{
-  display:none!important;
-}
-
-/* If map controls reuse the same visual classes inside overlays, keep them visible. */
-#worldMap #buttons,
-#worldMap #stickZone,
-#wetlandsMap #buttons,
-#wetlandsMap #stickZone{
-  display:block!important;
-}
-
-/* In a real match, HUD and gameplay controls are visible. */
-body.screenGame #hud,
-body.screenGame #manaHud,
-body.screenGame > #gameWrap > #buttons,
-body.screenGame > #gameWrap > #stickZone{
-  display:block!important;
-}
-
 /* v2.92 field joystick input reliability */
 #worldMap .mapControls{
   z-index:80!important;
@@ -718,4 +495,195 @@ body.screenGame > #gameWrap > #stickZone{
 #worldMap .worldTitle,
 #worldMap .mapNearbyLabel{
   pointer-events:none!important;
+}
+
+/* v2.93 — restore large full-width court while keeping controls inside browser viewport */
+html,body{
+  width:100%;
+  height:100%;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:#10192d;
+}
+
+body{
+  position:fixed!important;
+  inset:0!important;
+}
+
+#gameWrap{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  width:100dvw!important;
+  height:100vh!important;
+  height:100dvh!important;
+  overflow:hidden!important;
+  margin:0!important;
+  padding:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  transform:none!important;
+}
+
+/*
+  Do NOT contain the 16:9 canvas.
+  Fill the actual browser content area so the court is large again.
+  The logical 1280x720 game coordinates stay unchanged.
+*/
+#game{
+  position:absolute!important;
+  inset:0!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  transform:none!important;
+  display:block!important;
+}
+
+/* Competition HUD */
+body.screenGame #hud{
+  display:flex!important;
+  position:fixed!important;
+  top:4px!important;
+  left:50%!important;
+  bottom:auto!important;
+  transform:translateX(-50%)!important;
+  z-index:70!important;
+}
+
+body.screenGame #manaHud{
+  display:block!important;
+  position:fixed!important;
+  left:16px!important;
+  top:58px!important;
+  bottom:auto!important;
+  transform:none!important;
+  z-index:70!important;
+  width:min(300px,29vw)!important;
+}
+
+/* Competition controls — always entirely above the browser bottom edge */
+body.screenGame #stickZone{
+  display:block!important;
+  position:fixed!important;
+  left:14px!important;
+  bottom:10px!important;
+  top:auto!important;
+  z-index:80!important;
+  transform:scale(.88)!important;
+  transform-origin:left bottom!important;
+}
+
+body.screenGame #buttons{
+  display:block!important;
+  position:fixed!important;
+  right:12px!important;
+  bottom:8px!important;
+  top:auto!important;
+  z-index:80!important;
+  transform:scale(.82)!important;
+  transform-origin:right bottom!important;
+}
+
+/* Keep all four circular buttons inside the right-side box */
+body.screenGame #buttons{
+  width:190px!important;
+  height:164px!important;
+}
+
+/* Field/map state: hide competition HUD only; use map's own controls */
+body:not(.screenGame) #hud,
+body:not(.screenGame) #manaHud,
+body:not(.screenGame) > #gameWrap > #stickZone,
+body:not(.screenGame) > #gameWrap > #buttons{
+  display:none!important;
+}
+
+body.screenWorld #game,
+body.screenWetlands #game,
+body.screenEnding #game{
+  visibility:hidden!important;
+}
+
+/* Map itself fills screen, while its native controls remain reachable */
+#worldMap,
+#wetlandsMap,
+#endingPanel{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  width:100dvw!important;
+  height:100vh!important;
+  height:100dvh!important;
+  margin:0!important;
+  transform:none!important;
+}
+
+#worldMap .mapControls{
+  display:block!important;
+  z-index:80!important;
+}
+#worldMap #mapStickZone{
+  left:16px!important;
+  bottom:8px!important;
+  transform:scale(.82)!important;
+  transform-origin:left bottom!important;
+}
+#worldMap .mapButtons{
+  right:12px!important;
+  bottom:6px!important;
+  transform:scale(.82)!important;
+  transform-origin:right bottom!important;
+}
+
+/* Extra-short landscape (Chrome address bar visible) */
+@media (orientation:landscape) and (max-height:560px){
+  body.screenGame #stickZone{
+    left:8px!important;
+    bottom:4px!important;
+    transform:scale(.72)!important;
+  }
+  body.screenGame #buttons{
+    right:6px!important;
+    bottom:3px!important;
+    transform:scale(.68)!important;
+  }
+  body.screenGame #manaHud{
+    left:10px!important;
+    top:44px!important;
+    width:min(280px,27vw)!important;
+    transform:scale(.88)!important;
+    transform-origin:left top!important;
+  }
+  body.screenGame #hud{
+    top:2px!important;
+    transform:translateX(-50%) scale(.88)!important;
+    transform-origin:center top!important;
+  }
+
+  #worldMap #mapStickZone{
+    left:8px!important;
+    bottom:3px!important;
+    transform:scale(.72)!important;
+  }
+  #worldMap .mapButtons{
+    right:6px!important;
+    bottom:2px!important;
+    transform:scale(.70)!important;
+  }
+}
+
+/* Very short landscape: prioritize playability over control size */
+@media (orientation:landscape) and (max-height:470px){
+  body.screenGame #stickZone{transform:scale(.62)!important}
+  body.screenGame #buttons{transform:scale(.58)!important}
+  body.screenGame #manaHud{
+    top:36px!important;
+    transform:scale(.78)!important;
+  }
+  #worldMap #mapStickZone{transform:scale(.62)!important}
+  #worldMap .mapButtons{transform:scale(.60)!important}
 }
