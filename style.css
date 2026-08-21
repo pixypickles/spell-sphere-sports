@@ -927,3 +927,7 @@ body.screenGame #manaHud{
     top:54px!important;
   }
 }
+
+/* v2.97: the standalone pre-intro rotate notice is intentionally removed.
+   Landscape guidance remains only on the competition explanation screen. */
+#rotateNotice{display:none!important}
