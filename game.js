@@ -1,4 +1,4 @@
-const APP_VERSION='v2.88';
+const APP_VERSION='v2.89';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -18,6 +18,12 @@ function updateOrientation(){
 window.addEventListener('resize', updateOrientation, {passive:true});
 window.addEventListener('orientationchange', ()=>setTimeout(updateOrientation,120), {passive:true});
 updateOrientation();
+window.__ENDING_BOOT_CHECK__=true;
+setTimeout(()=>{
+  if(typeof saveData!=='undefined'&&isPostGame&&isPostGame()&&!saveData.endingSeen){
+    showEnding();
+  }
+},350);
 
 
 
@@ -260,7 +266,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v2.88 old-save compatibility:
+    // v2.89 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1550,7 +1556,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.88: genuine frog mages never use human headwear/outfit head pieces.
+  // v2.89: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -2865,6 +2871,7 @@ function bossTakeHit(source='bullet'){
   return true;
 }
 function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
+  document.body.classList.add('bossMode');
   const rematchBonus=(k==='fairy'&&saveData.fairyBossWins>0)?Math.min(15,(saveData.fairyBossWins||0)*3):0;
   const bossMaxHp=b.hp+rematchBonus;
   $('bossPanel').classList.add('hidden');
@@ -2878,7 +2885,8 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
     if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}if(k==='frogking'){enemies[0].shotCd=.5;enemies[0].mana=100;}
   }left=k==='frogking'?180:(k==='fairy'?120:90);clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
 
-function showWetlands(){setBossStage(null);running=false;$('worldMap').classList.add('hidden');$('wetlandsMap').classList.remove('hidden')}
+function showWetlands(){
+  document.body.classList.remove('bossMode');setBossStage(null);running=false;$('worldMap').classList.add('hidden');$('wetlandsMap').classList.remove('hidden')}
 function leaveWetlands(){$('wetlandsMap').classList.add('hidden');showWorldMap();mapX=80;mapY=73;updateMapAvatar()}
 function inspectFrogKing(){
   pendingBossKind='frogking';$('wetlandsMap').classList.add('hidden');
@@ -2888,7 +2896,12 @@ function inspectFrogKing(){
 }
 
 function showEnding(){
+  document.body.classList.remove('bossMode');
   running=false;
+  // 表示した時点で視聴済みにする。再戦後に何度も強制表示しない。
+  saveData.endingSeen=true;
+  writeSave();
+
   for(const id of ['worldMap','menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){
     const e=$(id);if(e)e.classList.add('hidden');
   }
@@ -2903,11 +2916,9 @@ function continueAfterEnding(){
 }
 
 function showWorldMap(){
+  document.body.classList.remove('bossMode');
   setBossStage(null);
-  if(isPostGame()&&!saveData.endingSeen&&!window.__endingPrompted){
-    window.__endingPrompted=true;
-    setTimeout(()=>showEnding(),80);
-  }
+
   running=false;mode='menu';
   for(const id of ['menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){const e=$(id);if(e)e.classList.add('hidden')}
   $('worldMap').classList.remove('hidden');
@@ -3121,6 +3132,7 @@ function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEvent
 
 bindTap('wetlandsReturn',()=>leaveWetlands());bindTap('frogKingPlace',()=>inspectFrogKing());
 bindTap('endingContinueBtn',()=>continueAfterEnding());
+bindTap('endingCloseBtn',()=>continueAfterEnding());
 bindTap('bossBackBtn',()=>{$('bossPanel').classList.add('hidden');if(pendingBossKind==='frogking')showWetlands();else showWorldMap()});bindTap('bossStartBtn',()=>{if(pendingBossKind)startFieldBoss(pendingBossKind)});
 bindTap('homeMapBtn',()=>{restoreAllCupButtons();showWorldMap()});
 bindTap('practiceMapBtn',()=>{showWorldMap()});
