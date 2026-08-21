@@ -1,23 +1,10 @@
-window.MAGIC_BALL_HTML_EXPECTED='v2.87';
-window.MAGIC_BALL_BUILD='v2.87-1787278807';
-window.MAGIC_BALL_JS_BUILD='v2.87-1787278807';
-document.title='魔導球技 v2.87';
-console.log('MAGIC BALL HTML EXPECTED', window.MAGIC_BALL_HTML_EXPECTED);
-console.log('MAGIC BALL JS BUILD', window.MAGIC_BALL_JS_BUILD);
-
-function updateBuildDiagnostics(){
-  const j=document.getElementById('buildDiagJs');
-  const c=document.getElementById('buildDiagCss');
-  if(j)j.textContent='v2.87';
-  if(c){
-    try{
-      const v=getComputedStyle(document.documentElement).getPropertyValue('--magic-ball-css-build').trim();
-      c.textContent=v? 'v2.87' : '未確認';
-    }catch(e){c.textContent='ERR'}
-  }
-}
-window.addEventListener('DOMContentLoaded',updateBuildDiagnostics);
-setTimeout(updateBuildDiagnostics,50);
+const APP_VERSION='v2.88';
+window.APP_VERSION=APP_VERSION;
+document.title=`魔導球技 ${APP_VERSION}`;
+window.addEventListener('DOMContentLoaded',()=>{
+  const v=document.getElementById('versionBadge');
+  if(v)v.textContent=APP_VERSION;
+});
 
 (()=>{'use strict';
 
@@ -268,10 +255,15 @@ function loadSave(){
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
-    if(typeof data.gameCleared!=='boolean')data.gameCleared=!!data.grandmasterChampion;
+    if(typeof data.gameCleared!=='boolean')data.gameCleared=false;
+    if(data.grandmasterChampion)data.gameCleared=true;
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
+    // v2.88 old-save compatibility:
+    // If the save had already reached/cleared the highest tier in an older build,
+    // preserve postgame access instead of requiring the ending again.
+    if(data.grandmasterChampion)data.gameCleared=true;
     if(data.playerTeamStyle==='frog')data.frogTeamUnlocked=true;
     if(!Number.isFinite(data.fairyBossWins))data.fairyBossWins=0;
     if(typeof data.wetlandsUnlocked!=='boolean')data.wetlandsUnlocked=false;
@@ -1558,7 +1550,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.84: genuine frog mages never use human headwear/outfit head pieces.
+  // v2.88: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -2774,6 +2766,9 @@ let mapX=20,mapY=70,mapMoveTimer=null;
 const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:58,y:21},wetlands:{x:79,y:61}};
 const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'},frogking:{name:'湿原王ガマグラン',desc:'大湿原の主。攻撃は単純だが、とにかく巨大でしぶとい。妖精化の火力を思い切り試せる。',hp:80,reward:'カエル化'}};
 const FIELD_QUEST_ORDER=['forest','cave','pond','fairy'];let pendingBossKind=null,bossBattle=null;
+function isPostGame(){
+  return !!(saveData.gameCleared||saveData.grandmasterChampion);
+}
 function activeFieldQuest(){
   const c=saveData.fieldBossClears||[],a=Math.min(3,saveData.fieldQuestStage||0);
   for(let i=0;i<a;i++)if(!c.includes(FIELD_QUEST_ORDER[i]))return FIELD_QUEST_ORDER[i];
@@ -2786,7 +2781,7 @@ function updateFieldQuestMarks(){
     const e=$('quest'+k[0].toUpperCase()+k.slice(1));
     if(e)e.classList.toggle('on',k===a);
     const place=document.querySelector(`[data-place="${k}"]`);
-    if(place)place.classList.toggle('clearedBossRematch',!!saveData.gameCleared&&(saveData.fieldBossClears||[]).includes(k));
+    if(place)place.classList.toggle('clearedBossRematch',isPostGame()&&(saveData.fieldBossClears||[]).includes(k));
   }
   const fairyPlace=document.querySelector('[data-place="fairy"]');
   if(fairyPlace)fairyPlace.classList.toggle('rematchReady',(saveData.fieldBossClears||[]).includes('fairy'));
@@ -2794,7 +2789,7 @@ function updateFieldQuestMarks(){
 function openBossEvent(k){
   const b=FIELD_BOSSES[k];if(!b)return;
   const cleared=(saveData.fieldBossClears||[]).includes(k);
-  const postgame=!!saveData.gameCleared;
+  const postgame=isPostGame();
 
   if((k==='fairy'&&cleared)||(postgame&&cleared)){
     pendingBossKind=k;
@@ -2904,19 +2899,19 @@ function continueAfterEnding(){
   writeSave();
   const p=$('endingPanel');if(p)p.classList.add('hidden');
   showWorldMap();
-  flash('クリア後モード：各地のボスと再戦できます',1400);
+  flash('各地のボスと何度でも再戦できます',1400);
 }
 
 function showWorldMap(){
   setBossStage(null);
-  if(saveData.gameCleared&&!saveData.endingSeen){
-    showEnding();
-    return;
+  if(isPostGame()&&!saveData.endingSeen&&!window.__endingPrompted){
+    window.__endingPrompted=true;
+    setTimeout(()=>showEnding(),80);
   }
   running=false;mode='menu';
   for(const id of ['menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){const e=$(id);if(e)e.classList.add('hidden')}
   $('worldMap').classList.remove('hidden');
-  if(saveData.gameCleared)saveData.wetlandsUnlocked=true;
+  if(isPostGame())saveData.wetlandsUnlocked=true;
   const wg=document.querySelector('[data-place="wetlands"]');if(wg)wg.classList.toggle('hidden',!saveData.wetlandsUnlocked);
   updateFieldQuestMarks();updateMapSkillButtons();updateMapAvatar();
 }

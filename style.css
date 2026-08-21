@@ -426,8 +426,3 @@ body.isLandscape #gameWrap{display:block}
   border:1px solid #ffe6a755
 }
 
-:root{--magic-ball-css-build:"v2.87-1787278807";}
-#buildDiag::after{
-  content:"";
-  display:none;
-}
