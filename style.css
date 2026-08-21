@@ -780,3 +780,80 @@ body.screenGame #manaHud > div:last-child{
     margin-top:69px!important;
   }
 }
+
+/* v2.95 — larger controls */
+
+/* Competition: make the right four buttons clearly larger and lift them */
+body.screenGame #buttons{
+  right:14px!important;
+  bottom:38px!important;
+  width:238px!important;
+  height:202px!important;
+  transform:scale(1.08)!important;
+  transform-origin:right bottom!important;
+}
+
+/* Field: much larger, translucent buttons, positioned higher */
+#worldMap .mapButtons{
+  right:18px!important;
+  bottom:42px!important;
+  transform:scale(1.16)!important;
+  transform-origin:right bottom!important;
+  z-index:95!important;
+}
+#worldMap .mapGameBtn{
+  opacity:.62!important;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+
+/* Keep text/icons readable even with translucent circles */
+#worldMap .mapGameBtn > *{
+  opacity:1!important;
+}
+
+/* Field joystick: also make it substantially larger and a little higher */
+#worldMap #mapStickZone{
+  left:20px!important;
+  bottom:34px!important;
+  transform:scale(1.08)!important;
+  transform-origin:left bottom!important;
+}
+
+/* Android Chrome with address bar visible */
+@media (orientation:landscape) and (max-height:560px){
+  body.screenGame #buttons{
+    right:10px!important;
+    bottom:28px!important;
+    transform:scale(.94)!important;
+  }
+  #worldMap .mapButtons{
+    right:12px!important;
+    bottom:28px!important;
+    transform:scale(1.00)!important;
+  }
+  #worldMap #mapStickZone{
+    left:12px!important;
+    bottom:24px!important;
+    transform:scale(.94)!important;
+  }
+}
+
+/* Very short landscape: still noticeably larger than v2.94 */
+@media (orientation:landscape) and (max-height:470px){
+  body.screenGame #buttons{
+    right:8px!important;
+    bottom:22px!important;
+    transform:scale(.84)!important;
+  }
+  #worldMap .mapButtons{
+    right:8px!important;
+    bottom:22px!important;
+    transform:scale(.90)!important;
+  }
+  #worldMap #mapStickZone{
+    left:8px!important;
+    bottom:18px!important;
+    transform:scale(.84)!important;
+  }
+}
