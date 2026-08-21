@@ -21,18 +21,61 @@ const W=1280,H=720;
 const COURT={x:190,y:72,w:900,h:576},CY=360;
 const BLUE='#4d86ff',RED='#ff6c72',SKIN='#f4dfc3',EYE='#182239';
 
-const walls=[
-  // LEFT SIDE
-  {x:355,y:165,w:20,h:125},
-  {x:455,y:420,w:20,h:125},
-
-  // CENTER — slightly larger
-  {x:630,y:275,w:24,h:185},
-
-  // RIGHT SIDE
-  {x:825,y:165,w:20,h:125},
-  {x:925,y:420,w:20,h:125}
+const NORMAL_WALLS=[
+  {x:355,y:165,w:20,h:125,kind:'wall'},
+  {x:455,y:420,w:20,h:125,kind:'wall'},
+  {x:630,y:275,w:24,h:185,kind:'wall'},
+  {x:825,y:165,w:20,h:125,kind:'wall'},
+  {x:925,y:420,w:20,h:125,kind:'wall'}
 ];
+let walls=NORMAL_WALLS.map(w=>({...w}));
+let bossStageKind=null;
+
+function setBossStage(kind){
+  bossStageKind=kind||null;
+  if(!kind){
+    walls=NORMAL_WALLS.map(w=>({...w}));
+    return;
+  }
+
+  const layouts={
+    forest:[
+      {x:355,y:150,w:52,h:165,kind:'tree'},
+      {x:470,y:430,w:78,h:54,kind:'boulder'},
+      {x:670,y:195,w:48,h:190,kind:'tree'},
+      {x:810,y:455,w:95,h:44,kind:'log'}
+    ],
+    cave:[
+      {x:365,y:145,w:54,h:180,kind:'crystal'},
+      {x:500,y:435,w:66,h:105,kind:'rockpillar'},
+      {x:675,y:255,w:62,h:185,kind:'rockpillar'},
+      {x:835,y:150,w:54,h:165,kind:'crystal'},
+      {x:920,y:445,w:70,h:80,kind:'boulder'}
+    ],
+    pond:[
+      {x:360,y:165,w:92,h:58,kind:'lilypad'},
+      {x:470,y:435,w:80,h:52,kind:'reedrock'},
+      {x:660,y:265,w:92,h:58,kind:'lilypad'},
+      {x:820,y:430,w:82,h:58,kind:'reedrock'},
+      {x:905,y:175,w:88,h:56,kind:'lilypad'}
+    ],
+    fairy:[
+      {x:325,y:145,w:58,h:190,kind:'sacredtree'},
+      {x:475,y:445,w:62,h:80,kind:'runestone'},
+      {x:650,y:190,w:42,h:150,kind:'lightpillar'},
+      {x:760,y:405,w:64,h:105,kind:'runestone'},
+      {x:905,y:145,w:58,h:190,kind:'sacredtree'}
+    ],
+    frogking:[
+      {x:335,y:170,w:112,h:64,kind:'giantlily'},
+      {x:465,y:430,w:108,h:52,kind:'fallenlog'},
+      {x:650,y:245,w:118,h:68,kind:'giantlily'},
+      {x:795,y:435,w:92,h:62,kind:'mudrock'},
+      {x:900,y:175,w:105,h:60,kind:'giantlily'}
+    ]
+  };
+  walls=(layouts[kind]||NORMAL_WALLS).map(w=>({...w}));
+}
 
 const flagBlue={x:230,y:360},flagRed={x:1050,y:360};
 const TEAMS={
@@ -192,7 +235,7 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'rabbit',allyRole1:'support',allyRole2:'guard',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogTeamUnlocked:false,playerTeamStyle:'human',frogBossWins:0,fieldBossClears:[],fieldQuestStage:0
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogTeamUnlocked:false,playerTeamStyle:'human',gameCleared:false,endingSeen:false,frogBossWins:0,fieldBossClears:[],fieldQuestStage:0
   };
 }
 function loadSave(){
@@ -207,6 +250,8 @@ function loadSave(){
     if((data.ally1SkillA||'none')==='none' && data.allySkillA)data.ally1SkillA=data.allySkillA;
     if((data.ally2SkillA||'none')==='none' && data.allySkillB)data.ally2SkillA=data.allySkillB;
     if(!Array.isArray(data.encounteredTeams))data.encounteredTeams=[];
+    if(typeof data.gameCleared!=='boolean')data.gameCleared=!!data.grandmasterChampion;
+    if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
     if(data.playerTeamStyle==='frog')data.frogTeamUnlocked=true;
@@ -761,12 +806,19 @@ function finishCup(){const clearedBefore={beginner:(saveData.beginnerWins||0)>0,
     $('cupEndTitle').textContent=place===1?'マスターカップ優勝！':`マスターカップ ${place}位`;
     $('cupEndText').textContent=place===1?'グランドマスターカップへの挑戦権を獲得しました！':'技の軌道と設置位置を読んで再挑戦しましょう。';
   }else{
-    if(place===1)saveData.grandmasterChampion=true;
+    if(place===1){
+      saveData.grandmasterChampion=true;
+      saveData.gameCleared=true;
+    }
     $('cupEndTitle').textContent=place===1?'グランドマスターカップ優勝！':`グランドマスターカップ ${place}位`;
     $('cupEndText').textContent=place===1?'最上位の魔法戦術にも勝利！':'分身・反射・風の使い方を読んで再挑戦しましょう。';
   }
   if(place===1&&!clearedBefore[cupKind])saveData.fieldQuestStage=Math.min(3,(saveData.fieldQuestStage||0)+1);
-  saveData.cupResume=null;writeSave();$('cupEndPanel').classList.remove('hidden');
+  saveData.cupResume=null;writeSave();
+  $('cupEndPanel').classList.remove('hidden');
+  if(cupKind==='grandmaster'&&place===1){
+    setTimeout(()=>showEnding(),450);
+  }
 }
 
 let input={x:0,y:0},keys={},heldAt=0;
@@ -1047,6 +1099,7 @@ function shoot(u,target,curve=false){if(u.moleActive)return false;
 }
 
 function reset(){
+  if(mode!=='boss')setBossStage(null);
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
   bullets=[];fx=[];mines=[];lobShots=[];windZones=[];miniFrogs=[];left=60;secAcc=0;over=false;running=true;
   player=new Unit(300,360,'blue',true);
@@ -1827,6 +1880,16 @@ function updateMines(dt){
 }
 
 function arenaTheme(){
+  if(mode==='boss'&&bossStageKind){
+    const bossThemes={
+      forest:{court:'#557b58',wall:'#6b543d',bg:'#213d2b'},
+      cave:{court:'#5a566d',wall:'#8d85a4',bg:'#252638'},
+      pond:{court:'#5d8f86',wall:'#6d8e73',bg:'#315c62'},
+      fairy:{court:'#7787a8',wall:'#d6c8f2',bg:'#3b4568'},
+      frogking:{court:'#64836a',wall:'#6a744d',bg:'#294c4c'}
+    };
+    return bossThemes[bossStageKind]||{court:'#8fb7bc',wall:'#e7fbf7',bg:'#405c67'};
+  }
   if(mode==='practice')return {court:'#b9d6f2',wall:'#e7edf5',bg:'#5f7c92'};
   if(cupKind==='beginner')return {court:'#9ad9b8',wall:'#f1e6cc',bg:'#5f7d8a'};
   if(cupKind==='rookie')return {court:'#b7a8e8',wall:'#eee7ff',bg:'#655f86'};
@@ -1837,14 +1900,72 @@ function arenaTheme(){
   return {court:'#9ad9b8',wall:'#f1e6cc',bg:'#5f7d8a'};
 }
 
+
+function drawBossObstacle(w,theme){
+  const k=w.kind||'wall';
+  g.save();
+
+  if(k==='tree'||k==='sacredtree'){
+    g.fillStyle=k==='sacredtree'?'#6d5a87':'#5d4632';
+    rr(w.x+w.w*.34,w.y+w.h*.35,w.w*.32,w.h*.65,8);
+    g.fillStyle=k==='sacredtree'?'#8fc7a0':'#3e7650';
+    g.beginPath();g.arc(w.x+w.w*.5,w.y+w.h*.26,w.w*.62,0,Math.PI*2);g.fill();
+    g.beginPath();g.arc(w.x+w.w*.25,w.y+w.h*.38,w.w*.42,0,Math.PI*2);g.fill();
+    g.beginPath();g.arc(w.x+w.w*.75,w.y+w.h*.38,w.w*.42,0,Math.PI*2);g.fill();
+    if(k==='sacredtree'){
+      g.strokeStyle='#e9d4ff';g.lineWidth=3;g.beginPath();g.arc(w.x+w.w*.5,w.y+w.h*.28,w.w*.25,0,Math.PI*2);g.stroke();
+    }
+  }else if(k==='boulder'||k==='mudrock'){
+    g.fillStyle=k==='mudrock'?'#5f6348':'#77737c';
+    g.beginPath();g.ellipse(w.x+w.w/2,w.y+w.h/2,w.w/2,w.h/2,0,0,Math.PI*2);g.fill();
+    g.strokeStyle='#ffffff22';g.lineWidth=3;g.beginPath();g.moveTo(w.x+w.w*.2,w.y+w.h*.4);g.lineTo(w.x+w.w*.6,w.y+w.h*.25);g.stroke();
+  }else if(k==='log'||k==='fallenlog'){
+    g.fillStyle='#72523a';rr(w.x,w.y,w.w,w.h,18);
+    g.strokeStyle='#a67b50';g.lineWidth=3;for(let x=w.x+18;x<w.x+w.w;x+=24){g.beginPath();g.moveTo(x,w.y+4);g.lineTo(x-8,w.y+w.h-4);g.stroke()}
+  }else if(k==='crystal'){
+    g.fillStyle='#9fe5ff';g.beginPath();
+    g.moveTo(w.x+w.w*.5,w.y);g.lineTo(w.x+w.w,w.y+w.h*.35);g.lineTo(w.x+w.w*.72,w.y+w.h);
+    g.lineTo(w.x+w.w*.28,w.y+w.h);g.lineTo(w.x,w.y+w.h*.35);g.closePath();g.fill();
+    g.strokeStyle='#eaffff';g.lineWidth=3;g.stroke();
+  }else if(k==='rockpillar'){
+    g.fillStyle='#686375';rr(w.x,w.y,w.w,w.h,10);
+    g.strokeStyle='#9b94ad';g.lineWidth=4;g.beginPath();g.moveTo(w.x+8,w.y+18);g.lineTo(w.x+w.w-8,w.y+35);g.moveTo(w.x+12,w.y+w.h*.65);g.lineTo(w.x+w.w-12,w.y+w.h*.55);g.stroke();
+  }else if(k==='lilypad'||k==='giantlily'){
+    g.fillStyle=k==='giantlily'?'#5d8f4b':'#6fa56c';
+    g.beginPath();g.ellipse(w.x+w.w/2,w.y+w.h/2,w.w/2,w.h/2,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#a8d889';g.beginPath();g.moveTo(w.x+w.w/2,w.y+w.h/2);g.lineTo(w.x+w.w,w.y+w.h*.35);g.lineTo(w.x+w.w,w.y+w.h*.65);g.closePath();g.fill();
+  }else if(k==='reedrock'){
+    g.fillStyle='#6c735e';g.beginPath();g.ellipse(w.x+w.w/2,w.y+w.h*.65,w.w*.48,w.h*.35,0,0,Math.PI*2);g.fill();
+    g.strokeStyle='#73975f';g.lineWidth=4;for(let i=0;i<4;i++){const x=w.x+12+i*16;g.beginPath();g.moveTo(x,w.y+w.h*.7);g.lineTo(x-5,w.y);g.stroke()}
+  }else if(k==='runestone'){
+    g.fillStyle='#7b7191';rr(w.x,w.y,w.w,w.h,10);
+    g.strokeStyle='#e8d8ff';g.lineWidth=3;g.beginPath();g.moveTo(w.x+w.w*.25,w.y+w.h*.25);g.lineTo(w.x+w.w*.72,w.y+w.h*.5);g.lineTo(w.x+w.w*.35,w.y+w.h*.75);g.stroke();
+  }else if(k==='lightpillar'){
+    const gr=g.createLinearGradient(w.x,0,w.x+w.w,0);
+    gr.addColorStop(0,'#ffffff22');gr.addColorStop(.5,'#fff7c9cc');gr.addColorStop(1,'#ffffff22');
+    g.fillStyle=gr;rr(w.x,w.y,w.w,w.h,18);
+    g.strokeStyle='#fff2b4';g.lineWidth=2;g.strokeRect(w.x+4,w.y+4,w.w-8,w.h-8);
+  }else{
+    g.fillStyle='#c7bda5';rr(w.x+5,w.y+6,w.w,w.h,8);g.fillStyle=theme.wall;rr(w.x,w.y,w.w,w.h,8);
+  }
+
+  g.restore();
+}
+
 function draw(){
   const theme=arenaTheme();g.fillStyle=theme.bg;g.fillRect(0,0,W,H);
   g.fillStyle=theme.court;g.fillRect(COURT.x,COURT.y,COURT.w,COURT.h);
   g.strokeStyle='#fff9d7';g.lineWidth=4;g.strokeRect(COURT.x,COURT.y,COURT.w,COURT.h);
   g.setLineDash([12,12]);g.beginPath();g.moveTo(W/2,COURT.y);g.lineTo(W/2,COURT.y+COURT.h);g.stroke();g.setLineDash([]);
   g.strokeStyle='#ffffff28';g.lineWidth=2;g.beginPath();g.arc(W/2,CY,74,0,Math.PI*2);g.stroke();
+  if(mode==='boss'&&bossStageKind){
+    const stageNames={forest:'月影の森',cave:'晶石洞窟',pond:'星雫の池',fairy:'妖精樹の聖域',frogking:'大湿原・王の沼'};
+    g.fillStyle='#ffffffbb';g.font='700 20px sans-serif';g.textAlign='center';
+    g.fillText(stageNames[bossStageKind]||'BOSS STAGE',W/2,42);
+    g.textAlign='left';
+  }
 
-  for(const w of walls){g.fillStyle='#c7bda5';rr(w.x+5,w.y+6,w.w,w.h,8);g.fillStyle=theme.wall;rr(w.x,w.y,w.w,w.h,8)}
+  for(const w of walls)drawBossObstacle(w,theme)
   drawFlag(flagBlue,'blue');drawFlag(flagRed,'red');
 
   for(const b of bullets){
@@ -2646,24 +2767,31 @@ function updateFieldQuestMarks(){
   for(const k of FIELD_QUEST_ORDER){
     const e=$('quest'+k[0].toUpperCase()+k.slice(1));
     if(e)e.classList.toggle('on',k===a);
+    const place=document.querySelector(`[data-place="${k}"]`);
+    if(place)place.classList.toggle('clearedBossRematch',!!saveData.gameCleared&&(saveData.fieldBossClears||[]).includes(k));
   }
   const fairyPlace=document.querySelector('[data-place="fairy"]');
   if(fairyPlace)fairyPlace.classList.toggle('rematchReady',(saveData.fieldBossClears||[]).includes('fairy'));
 }
 function openBossEvent(k){
   const b=FIELD_BOSSES[k];if(!b)return;
-  if(k==='fairy'&&(saveData.fieldBossClears||[]).includes('fairy')){
-    pendingBossKind='fairy';
+  const cleared=(saveData.fieldBossClears||[]).includes(k);
+  const postgame=!!saveData.gameCleared;
+
+  if((k==='fairy'&&cleared)||(postgame&&cleared)){
+    pendingBossKind=k;
     $('worldMap').classList.add('hidden');
-    $('bossTitle').textContent='妖精女王ティタニア・再戦';
-    $('bossDesc').textContent=`何度でも挑戦できる高難度戦。撃破回数 ${saveData.fairyBossWins||0}回。妖精化の力を試せます。`;
+    $('bossTitle').textContent=(k==='fairy'?'妖精女王ティタニア':b.name)+'・再戦';
+    $('bossDesc').textContent=`クリア後の再戦。${b.desc}`;
     $('bossPanel').classList.remove('hidden');
     return;
   }
+
   if(activeFieldQuest()!==k){
-    $('mapPrompt').textContent=(saveData.fieldBossClears||[]).includes(k)?'この異変は解決済みです':'今は特に異変はないようです';
+    $('mapPrompt').textContent=cleared?'この異変は解決済みです':'今は特に異変はないようです';
     return;
   }
+
   pendingBossKind=k;
   $('worldMap').classList.add('hidden');
   $('bossTitle').textContent=b.name;
@@ -2727,7 +2855,7 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
   const rematchBonus=(k==='fairy'&&saveData.fairyBossWins>0)?Math.min(15,(saveData.fairyBossWins||0)*3):0;
   const bossMaxHp=b.hp+rematchBonus;
   $('bossPanel').classList.add('hidden');
-  bossBattle={kind:k,hp:bossMaxHp,maxHp:bossMaxHp,revives:2,nextDamageAt:0,nextMiniFrogDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();if(enemies.length>1)enemies.splice(1);if(enemies[0]){
+  bossBattle={kind:k,hp:bossMaxHp,maxHp:bossMaxHp,revives:2,nextDamageAt:0,nextMiniFrogDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();setBossStage(k);if(enemies.length>1)enemies.splice(1);if(enemies[0]){
     enemies[0].r=k==='frogking'?68:(k==='fairy'?52:(k==='cave'?46:42));
     enemies[0].speed*=k==='frogking'?.62:(k==='fairy'?1.08:(k==='cave'?.90:.82));
     enemies[0].inv=.2;
@@ -2737,7 +2865,7 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
     if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}if(k==='frogking'){enemies[0].shotCd=.5;enemies[0].mana=100;}
   }left=k==='frogking'?180:(k==='fairy'?120:90);clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
 
-function showWetlands(){running=false;$('worldMap').classList.add('hidden');$('wetlandsMap').classList.remove('hidden')}
+function showWetlands(){setBossStage(null);running=false;$('worldMap').classList.add('hidden');$('wetlandsMap').classList.remove('hidden')}
 function leaveWetlands(){$('wetlandsMap').classList.add('hidden');showWorldMap();mapX=80;mapY=73;updateMapAvatar()}
 function inspectFrogKing(){
   pendingBossKind='frogking';$('wetlandsMap').classList.add('hidden');
@@ -2745,10 +2873,32 @@ function inspectFrogKing(){
   $('bossDesc').textContent=`HP80の超耐久ボス。攻撃は妖精女王ほど苛烈ではない。撃破回数 ${saveData.frogBossWins||0}回。`;
   $('bossPanel').classList.remove('hidden');
 }
+
+function showEnding(){
+  running=false;
+  for(const id of ['worldMap','menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){
+    const e=$(id);if(e)e.classList.add('hidden');
+  }
+  const p=$('endingPanel');if(p)p.classList.remove('hidden');
+}
+function continueAfterEnding(){
+  saveData.endingSeen=true;
+  writeSave();
+  const p=$('endingPanel');if(p)p.classList.add('hidden');
+  showWorldMap();
+  flash('クリア後モード：各地のボスと再戦できます',1400);
+}
+
 function showWorldMap(){
+  setBossStage(null);
+  if(saveData.gameCleared&&!saveData.endingSeen){
+    showEnding();
+    return;
+  }
   running=false;mode='menu';
   for(const id of ['menu','practicePanel','cupPanel','cupEndPanel','result','skillSetPanel','allySkillPanel','bossPanel']){const e=$(id);if(e)e.classList.add('hidden')}
   $('worldMap').classList.remove('hidden');
+  if(saveData.gameCleared)saveData.wetlandsUnlocked=true;
   const wg=document.querySelector('[data-place="wetlands"]');if(wg)wg.classList.toggle('hidden',!saveData.wetlandsUnlocked);
   updateFieldQuestMarks();updateMapSkillButtons();updateMapAvatar();
 }
@@ -2957,6 +3107,7 @@ window.addEventListener('keydown',e=>{
 function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEventListener('pointerup',e=>{e.preventDefault();fired=true;fn()},{passive:false});el.addEventListener('click',e=>{if(fired){fired=false;return}e.preventDefault();fn()})}
 
 bindTap('wetlandsReturn',()=>leaveWetlands());bindTap('frogKingPlace',()=>inspectFrogKing());
+bindTap('endingContinueBtn',()=>continueAfterEnding());
 bindTap('bossBackBtn',()=>{$('bossPanel').classList.add('hidden');if(pendingBossKind==='frogking')showWetlands();else showWorldMap()});bindTap('bossStartBtn',()=>{if(pendingBossKind)startFieldBoss(pendingBossKind)});
 bindTap('homeMapBtn',()=>{restoreAllCupButtons();showWorldMap()});
 bindTap('practiceMapBtn',()=>{showWorldMap()});
