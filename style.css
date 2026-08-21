@@ -857,3 +857,73 @@ body.screenGame #buttons{
     transform:scale(.84)!important;
   }
 }
+
+/* v2.96 — compact parallelogram action-button layout + MANA reposition */
+
+/*
+  Keep the button size from v2.95, but tighten the four-button cluster.
+  Left column (skill 1 / throw) shifts right and slightly upward,
+  producing a compact parallelogram instead of two widely separated columns.
+*/
+body.screenGame #buttons{
+  right:12px!important;
+  bottom:42px!important;
+  width:196px!important;
+  height:174px!important;
+  transform:scale(1.08)!important;
+  transform-origin:right bottom!important;
+}
+
+/* Existing button children are absolutely positioned by the base game CSS.
+   Pull the left column toward the right column. */
+body.screenGame #buttons > :nth-child(1){
+  transform:translate(30px,-12px)!important;
+}
+body.screenGame #buttons > :nth-child(3){
+  transform:translate(30px,-12px)!important;
+}
+
+/* Right column stays close, with a slight downward offset to form a parallelogram */
+body.screenGame #buttons > :nth-child(2){
+  transform:translate(0px,2px)!important;
+}
+body.screenGame #buttons > :nth-child(4){
+  transform:translate(0px,2px)!important;
+}
+
+/* MANA: a little farther right and higher */
+body.screenGame #manaHud{
+  left:30px!important;
+  top:92px!important;
+}
+
+/* Short Android landscape */
+@media (orientation:landscape) and (max-height:560px){
+  body.screenGame #buttons{
+    right:9px!important;
+    bottom:32px!important;
+    width:190px!important;
+    height:168px!important;
+    transform:scale(.94)!important;
+  }
+  body.screenGame #buttons > :nth-child(1),
+  body.screenGame #buttons > :nth-child(3){
+    transform:translate(28px,-10px)!important;
+  }
+  body.screenGame #manaHud{
+    left:22px!important;
+    top:66px!important;
+  }
+}
+
+@media (orientation:landscape) and (max-height:470px){
+  body.screenGame #buttons{
+    right:7px!important;
+    bottom:26px!important;
+    transform:scale(.84)!important;
+  }
+  body.screenGame #manaHud{
+    left:18px!important;
+    top:54px!important;
+  }
+}
