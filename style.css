@@ -425,3 +425,9 @@ body.isLandscape #gameWrap{display:block}
   padding:2px 7px;border-radius:8px;background:#17233ddd;color:#ffe8a3;font-size:10px;font-weight:900;
   border:1px solid #ffe6a755
 }
+
+:root{--magic-ball-css-build:"v2.87-1787278807";}
+#buildDiag::after{
+  content:"";
+  display:none;
+}

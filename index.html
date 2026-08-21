@@ -6,7 +6,7 @@
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
 <title>魔導球技 v2.84 <small style="opacity:.65">build 267059</small></title>
-<link href="style.css?v=286" rel="stylesheet"/>
+<link href="style.css?v=287_1787278807" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -15,8 +15,26 @@
 <meta content="no-cache" http-equiv="Pragma"/>
 <meta content="0" http-equiv="Expires"/>
 <meta content="v2.84-1787267059" name="app-build"/>
+
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="app-build" content="v2.87 <small style="opacity:.65">build 278807</small>-1787278807">
+<meta name="app-version" content="v2.87">
 </head>
 <body>
+<div id="buildDiag" style="
+position:fixed;right:8px;top:8px;z-index:99999;
+font:700 11px/1.35 monospace;color:#dcecff;
+background:#0d1730dd;border:1px solid #8fb3ff55;
+padding:6px 8px;border-radius:8px;pointer-events:none;
+box-shadow:0 2px 8px #0008">
+HTML: v2.87<br>
+JS: <span id="buildDiagJs">未確認</span><br>
+CSS: <span id="buildDiagCss">未確認</span><br>
+build: 278807
+</div>
+
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
 <div class="introVersion">v2.84</div>
 <div class="introCard">
@@ -241,7 +259,7 @@
 </div>
 </main>
 <div id="versionBadge">v2.84</div>
-<script src="game.js?v=286"></script>
+<script src="game.js?v=287_1787278807"></script>
 <div class="overlay hidden" id="endingPanel">
 <section class="panel endingCard">
 <div class="endingStars">✦ ✧ ✦</div>
@@ -261,5 +279,13 @@
     </div>
 <button id="endingContinueBtn" type="button">クリア後の世界へ</button>
 </section>
-</div></body>
+</div>
+<script>
+window.__HTML_BUILD__='v2.87-1787278807';
+setTimeout(function(){
+  var e=document.getElementById('buildDiagJs');
+  if(e && e.textContent==='未確認') e.textContent='読込失敗';
+},2000);
+</script>
+</body>
 </html>

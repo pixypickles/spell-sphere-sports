@@ -1,6 +1,24 @@
-window.MAGIC_BALL_BUILD='v2.84-1787267059';
-console.log('MAGIC BALL BUILD', window.MAGIC_BALL_BUILD);
-document.title='魔導球技 v2.84';
+window.MAGIC_BALL_HTML_EXPECTED='v2.87';
+window.MAGIC_BALL_BUILD='v2.87-1787278807';
+window.MAGIC_BALL_JS_BUILD='v2.87-1787278807';
+document.title='魔導球技 v2.87';
+console.log('MAGIC BALL HTML EXPECTED', window.MAGIC_BALL_HTML_EXPECTED);
+console.log('MAGIC BALL JS BUILD', window.MAGIC_BALL_JS_BUILD);
+
+function updateBuildDiagnostics(){
+  const j=document.getElementById('buildDiagJs');
+  const c=document.getElementById('buildDiagCss');
+  if(j)j.textContent='v2.87';
+  if(c){
+    try{
+      const v=getComputedStyle(document.documentElement).getPropertyValue('--magic-ball-css-build').trim();
+      c.textContent=v? 'v2.87' : '未確認';
+    }catch(e){c.textContent='ERR'}
+  }
+}
+window.addEventListener('DOMContentLoaded',updateBuildDiagnostics);
+setTimeout(updateBuildDiagnostics,50);
+
 (()=>{'use strict';
 
 function updateOrientation(){
