@@ -931,3 +931,41 @@ body.screenGame #manaHud{
 /* v2.97: the standalone pre-intro rotate notice is intentionally removed.
    Landscape guidance remains only on the competition explanation screen. */
 #rotateNotice{display:none!important}
+
+/* v3.00 — larger competition controls */
+body.screenGame #stickZone{
+  transform:scale(1.16)!important;
+  transform-origin:left bottom!important;
+  left:18px!important;
+  bottom:22px!important;
+}
+body.screenGame #buttons{
+  transform:scale(1.20)!important;
+  transform-origin:right bottom!important;
+  right:14px!important;
+  bottom:44px!important;
+}
+@media (orientation:landscape) and (max-height:560px){
+  body.screenGame #stickZone{
+    transform:scale(1.02)!important;
+    left:12px!important;
+    bottom:18px!important;
+  }
+  body.screenGame #buttons{
+    transform:scale(1.04)!important;
+    right:9px!important;
+    bottom:34px!important;
+  }
+}
+@media (orientation:landscape) and (max-height:470px){
+  body.screenGame #stickZone{
+    transform:scale(.91)!important;
+    left:8px!important;
+    bottom:14px!important;
+  }
+  body.screenGame #buttons{
+    transform:scale(.93)!important;
+    right:7px!important;
+    bottom:28px!important;
+  }
+}

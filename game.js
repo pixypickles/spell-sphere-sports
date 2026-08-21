@@ -22,7 +22,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v2.99';
+const APP_VERSION='v3.00';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -290,7 +290,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v2.99 old-save compatibility:
+    // v3.00 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1581,7 +1581,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.99: genuine frog mages never use human headwear/outfit head pieces.
+  // v3.00: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -1660,17 +1660,30 @@ function drawUnit(u){
     g.strokeStyle='#fff3a2';g.lineWidth=2;g.beginPath();g.arc(0,1,28+Math.sin(t)*2,0,Math.PI*2);g.stroke();
     g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     
-    // v2.99 fairy appearance (competition and field share drawUnit)
-    g.fillStyle='#d9c8ff';
-    g.beginPath();g.arc(0,-28,12,Math.PI,Math.PI*2);g.fill();
-    g.beginPath();g.moveTo(-12,-28);g.quadraticCurveTo(-14,-17,-8,-12);g.lineTo(8,-12);g.quadraticCurveTo(14,-17,12,-28);g.closePath();g.fill();
-    g.strokeStyle='#ffe58a';g.lineWidth=2;g.beginPath();g.arc(0,-27,10,Math.PI*1.08,Math.PI*1.92);g.stroke();
-    g.fillStyle='#fff2a8';g.beginPath();g.arc(0,-37,2.5,0,Math.PI*2);g.fill();
-    g.fillStyle='#20213a';g.beginPath();g.arc(-4,-24,1.8,0,Math.PI*2);g.arc(4,-24,1.8,0,Math.PI*2);g.fill();
 
-    // v2.99 fairy mouth: ▼
-    g.fillStyle='#34233f';
-    g.beginPath();g.moveTo(-3,-19);g.lineTo(3,-19);g.lineTo(0,-15);g.closePath();g.fill();
+    // v3.00 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
+    g.fillStyle='#f2cf72';
+    g.beginPath();g.ellipse(0,-16,11,13,0,0,Math.PI*2);g.fill();
+
+    // blue hair framing the face
+    g.fillStyle='#4aa9ef';
+    g.beginPath();g.arc(0,-23,12,Math.PI,Math.PI*2);g.fill();
+    g.beginPath();g.roundRect(-13,-24,5,19,3);g.roundRect(8,-24,5,19,3);g.fill();
+
+    // twin hair buns
+    g.beginPath();g.arc(-10,-31,5,0,Math.PI*2);g.arc(10,-31,5,0,Math.PI*2);g.fill();
+    g.fillStyle='#ef74d8';
+    g.beginPath();g.arc(-10,-31,2.5,0,Math.PI*2);g.arc(10,-31,2.5,0,Math.PI*2);g.fill();
+
+    // pointed ears
+    g.fillStyle='#f2cf72';
+    g.beginPath();g.moveTo(-10,-18);g.lineTo(-17,-15);g.lineTo(-10,-12);g.closePath();g.fill();
+    g.beginPath();g.moveTo(10,-18);g.lineTo(17,-15);g.lineTo(10,-12);g.closePath();g.fill();
+
+    // point eyes + ▼ mouth
+    g.fillStyle='#272534';
+    g.beginPath();g.arc(-4,-17,1.45,0,Math.PI*2);g.arc(4,-17,1.45,0,Math.PI*2);g.fill();
+    g.beginPath();g.moveTo(-3,-12);g.lineTo(3,-12);g.lineTo(0,-8);g.closePath();g.fill();
 g.restore();g.restore();return;
   }
 
