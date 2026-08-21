@@ -687,3 +687,96 @@ body.screenEnding #game{
   #worldMap #mapStickZone{transform:scale(.62)!important}
   #worldMap .mapButtons{transform:scale(.60)!important}
 }
+
+/* v2.94 — keep v2.93 court size; improve controls and vertical MANA */
+
+/* Right action buttons: larger and a little higher */
+body.screenGame #buttons{
+  right:14px!important;
+  bottom:26px!important;
+  width:208px!important;
+  height:178px!important;
+  transform:scale(.92)!important;
+  transform-origin:right bottom!important;
+}
+
+/* Vertical MANA meter on the far left so it doesn't cover the court */
+body.screenGame #manaHud{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  position:fixed!important;
+  left:18px!important;
+  top:112px!important;
+  bottom:auto!important;
+  width:54px!important;
+  height:250px!important;
+  z-index:70!important;
+  transform:none!important;
+  pointer-events:none!important;
+}
+
+body.screenGame #manaHud .manaLabel,
+body.screenGame #manaHud .label,
+body.screenGame #manaHud > span:first-child{
+  display:block!important;
+  width:auto!important;
+  height:auto!important;
+  margin:0 0 7px 0!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+
+/* Rotate the existing horizontal bar itself, preserving current fill logic */
+body.screenGame #manaHud .manaBar,
+body.screenGame #manaHud .bar,
+body.screenGame #manaHud > div:last-child{
+  width:220px!important;
+  height:18px!important;
+  margin-top:101px!important;
+  transform:rotate(-90deg)!important;
+  transform-origin:center center!important;
+}
+
+/* Chrome/Android with address bar visible */
+@media (orientation:landscape) and (max-height:560px){
+  body.screenGame #buttons{
+    right:10px!important;
+    bottom:18px!important;
+    transform:scale(.80)!important;
+  }
+  body.screenGame #manaHud{
+    left:10px!important;
+    top:78px!important;
+    width:48px!important;
+    height:205px!important;
+    transform:none!important;
+  }
+  body.screenGame #manaHud .manaBar,
+  body.screenGame #manaHud .bar,
+  body.screenGame #manaHud > div:last-child{
+    width:180px!important;
+    margin-top:82px!important;
+  }
+}
+
+/* Very short landscape: still larger/higher than v2.93 */
+@media (orientation:landscape) and (max-height:470px){
+  body.screenGame #buttons{
+    right:8px!important;
+    bottom:14px!important;
+    transform:scale(.72)!important;
+  }
+  body.screenGame #manaHud{
+    left:8px!important;
+    top:64px!important;
+    height:178px!important;
+  }
+  body.screenGame #manaHud .manaBar,
+  body.screenGame #manaHud .bar,
+  body.screenGame #manaHud > div:last-child{
+    width:154px!important;
+    margin-top:69px!important;
+  }
+}
