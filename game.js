@@ -1,3 +1,4 @@
+window.addEventListener('DOMContentLoaded',()=>setScreenMode('world'));
 
 function updateViewportFit(){
   const vv=window.visualViewport;
@@ -13,7 +14,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v2.90';
+const APP_VERSION='v2.91';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -281,7 +282,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v2.90 old-save compatibility:
+    // v2.91 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1130,6 +1131,7 @@ function shoot(u,target,curve=false){if(u.moleActive)return false;
 }
 
 function reset(){
+  if(mode!=='menu')setScreenMode('game');
   if(mode!=='boss')setBossStage(null);
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
   bullets=[];fx=[];mines=[];lobShots=[];windZones=[];miniFrogs=[];left=60;secAcc=0;over=false;running=true;
@@ -1571,7 +1573,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.90: genuine frog mages never use human headwear/outfit head pieces.
+  // v2.91: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -2886,6 +2888,7 @@ function bossTakeHit(source='bullet'){
   return true;
 }
 function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
+  setScreenMode('game');
   document.body.classList.add('bossMode');
   const rematchBonus=(k==='fairy'&&saveData.fairyBossWins>0)?Math.min(15,(saveData.fairyBossWins||0)*3):0;
   const bossMaxHp=b.hp+rematchBonus;
@@ -2901,6 +2904,7 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
   }left=k==='frogking'?180:(k==='fairy'?120:90);clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
 
 function showWetlands(){
+  setScreenMode('wetlands');
   document.body.classList.remove('bossMode');setBossStage(null);running=false;$('worldMap').classList.add('hidden');$('wetlandsMap').classList.remove('hidden')}
 function leaveWetlands(){$('wetlandsMap').classList.add('hidden');showWorldMap();mapX=80;mapY=73;updateMapAvatar()}
 function inspectFrogKing(){
@@ -2910,7 +2914,17 @@ function inspectFrogKing(){
   $('bossPanel').classList.remove('hidden');
 }
 
+
+function setScreenMode(kind){
+  document.body.classList.remove('screenGame','screenWorld','screenWetlands','screenEnding');
+  if(kind==='game')document.body.classList.add('screenGame');
+  else if(kind==='world')document.body.classList.add('screenWorld');
+  else if(kind==='wetlands')document.body.classList.add('screenWetlands');
+  else if(kind==='ending')document.body.classList.add('screenEnding');
+}
+
 function showEnding(){
+  setScreenMode('ending');
   document.body.classList.remove('bossMode');
   running=false;
   // 表示した時点で視聴済みにする。再戦後に何度も強制表示しない。
@@ -2933,6 +2947,7 @@ function continueAfterEnding(){
 }
 
 function showWorldMap(){
+  setScreenMode('world');
   document.body.classList.remove('bossMode');
   setBossStage(null);
 
@@ -3044,7 +3059,8 @@ function moveMap(dx,dy){
   updateMapAvatar();
 }
 
-function startFrogMageChallenge(){running=false;over=false;fieldFrogMatch=true;mode='practice';cupKind='beginner';currentOpponent='frogmages';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('worldMap').classList.add('hidden');reset();flash('池のカエル魔導師チームが勝負を挑んできた！',1000);}
+function startFrogMageChallenge(){
+  setScreenMode('game');running=false;over=false;fieldFrogMatch=true;mode='practice';cupKind='beginner';currentOpponent='frogmages';bScore=0;rScore=0;round=1;score.textContent='0 - 0';$('worldMap').classList.add('hidden');reset();flash('池のカエル魔導師チームが勝負を挑んできた！',1000);}
 function enterMapPlace(kind,force=false){
   const p=MAP_PLACES[kind];if(!p)return;
   if(!force&&Math.hypot(mapX-p.x,mapY-p.y)>=11){$('mapPrompt').textContent='もう少し近づいてください';return}

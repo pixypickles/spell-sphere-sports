@@ -635,3 +635,53 @@ body.bossMode #manaHud{
   opacity:1!important;
   top:46px!important;
 }
+
+/* v2.91: separate competition HUD from field-map UI */
+
+/* Default: competition HUD hidden outside actual matches */
+body:not(.screenGame) #hud,
+body:not(.screenGame) #manaHud{
+  display:none!important;
+}
+
+/* The game canvas should not sit over the field-map presentation */
+body.screenWorld #game,
+body.screenWetlands #game,
+body.screenEnding #game{
+  visibility:hidden!important;
+}
+
+/* World/wetlands overlays own the screen completely */
+body.screenWorld #worldMap{
+  display:block;
+}
+body.screenWetlands #wetlandsMap{
+  display:block;
+}
+
+/* Competition controls are hidden when using field-map overlays.
+   Field-map has its own visible map controls inside the overlay. */
+body.screenWorld > #gameWrap > #buttons,
+body.screenWorld > #gameWrap > #stickZone,
+body.screenWetlands > #gameWrap > #buttons,
+body.screenWetlands > #gameWrap > #stickZone,
+body.screenEnding > #gameWrap > #buttons,
+body.screenEnding > #gameWrap > #stickZone{
+  display:none!important;
+}
+
+/* If map controls reuse the same visual classes inside overlays, keep them visible. */
+#worldMap #buttons,
+#worldMap #stickZone,
+#wetlandsMap #buttons,
+#wetlandsMap #stickZone{
+  display:block!important;
+}
+
+/* In a real match, HUD and gameplay controls are visible. */
+body.screenGame #hud,
+body.screenGame #manaHud,
+body.screenGame > #gameWrap > #buttons,
+body.screenGame > #gameWrap > #stickZone{
+  display:block!important;
+}
