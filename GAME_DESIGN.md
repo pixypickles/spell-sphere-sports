@@ -418,3 +418,8 @@ Version: v2.8
 ## v2.91 UIモード分離
 - 競技HUDとフィールドHUDを画面モードで明確に分離。
 - viewport固定自体は維持し、表示対象だけをモードごとに切り替える。
+
+## v2.92 フィールド入力
+- フィールド移動は画面表示用スティック自身が入力を所有する。
+- Pointer Events + Touch Eventsの二重経路でAndroid/WebView差異に対応。
+- 移動更新はrequestAnimationFrameで行う。

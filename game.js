@@ -14,7 +14,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v2.91';
+const APP_VERSION='v2.92';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -282,7 +282,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v2.91 old-save compatibility:
+    // v2.92 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1573,7 +1573,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.91: genuine frog mages never use human headwear/outfit head pieces.
+  // v2.92: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -2948,6 +2948,7 @@ function continueAfterEnding(){
 
 function showWorldMap(){
   setScreenMode('world');
+  clearMapStick();
   document.body.classList.remove('bossMode');
   setBossStage(null);
 
@@ -3115,30 +3116,80 @@ function useFieldSlot(slot){
 
 // circular analogue joystick
 const mapStickZone=$('mapStickZone'),mapStickKnob=$('mapStickKnob');
-function setMapStickFromEvent(e){
+
+function setMapStickPoint(clientX,clientY){
   if(!mapStickZone||!mapStickKnob)return;
-  const r=mapStickZone.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
-  let dx=e.clientX-cx,dy=e.clientY-cy;
-  const max=39,len=Math.hypot(dx,dy);
+  const r=mapStickZone.getBoundingClientRect();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  let dx=clientX-cx,dy=clientY-cy;
+  const max=Math.max(30,Math.min(r.width,r.height)*.31);
+  const len=Math.hypot(dx,dy);
   if(len>max){dx=dx/len*max;dy=dy/len*max}
-  mapJoyX=dx/max;mapJoyY=dy/max;
+  mapJoyX=dx/max;
+  mapJoyY=dy/max;
   mapStickKnob.style.transform=`translate(${dx}px,${dy}px)`;
 }
-function clearMapStick(){
-  mapJoyPointer=null;mapJoyX=0;mapJoyY=0;
+
+function clearMapStick(e){
+  if(e&&mapJoyPointer!==null&&e.pointerId!==undefined&&e.pointerId!==mapJoyPointer)return;
+  mapJoyPointer=null;
+  mapJoyX=0;mapJoyY=0;
   if(mapStickKnob)mapStickKnob.style.transform='translate(0px,0px)';
 }
+
 if(mapStickZone){
-  mapStickZone.addEventListener('pointerdown',e=>{e.preventDefault();mapJoyPointer=e.pointerId;mapStickZone.setPointerCapture?.(e.pointerId);setMapStickFromEvent(e)});
-  mapStickZone.addEventListener('pointermove',e=>{if(e.pointerId===mapJoyPointer)setMapStickFromEvent(e)});
-  mapStickZone.addEventListener('pointerup',clearMapStick);
-  mapStickZone.addEventListener('pointercancel',clearMapStick);
+  // Pointer Events: Chrome/Android primary path.
+  mapStickZone.addEventListener('pointerdown',e=>{
+    e.preventDefault();e.stopPropagation();
+    mapJoyPointer=e.pointerId;
+    try{mapStickZone.setPointerCapture(e.pointerId)}catch(_){}
+    setMapStickPoint(e.clientX,e.clientY);
+  },{passive:false});
+
+  mapStickZone.addEventListener('pointermove',e=>{
+    if(mapJoyPointer===null||e.pointerId!==mapJoyPointer)return;
+    e.preventDefault();e.stopPropagation();
+    setMapStickPoint(e.clientX,e.clientY);
+  },{passive:false});
+
+  mapStickZone.addEventListener('pointerup',e=>{e.preventDefault();clearMapStick(e)},{passive:false});
+  mapStickZone.addEventListener('pointercancel',e=>{e.preventDefault();clearMapStick(e)},{passive:false});
+  mapStickZone.addEventListener('lostpointercapture',()=>clearMapStick());
+
+  // Touch fallback for browsers/webviews where pointer capture is unreliable.
+  mapStickZone.addEventListener('touchstart',e=>{
+    if(!e.touches.length)return;
+    e.preventDefault();e.stopPropagation();
+    const t=e.touches[0];
+    mapJoyPointer='touch';
+    setMapStickPoint(t.clientX,t.clientY);
+  },{passive:false});
+
+  mapStickZone.addEventListener('touchmove',e=>{
+    if(mapJoyPointer!=='touch'||!e.touches.length)return;
+    e.preventDefault();e.stopPropagation();
+    const t=e.touches[0];
+    setMapStickPoint(t.clientX,t.clientY);
+  },{passive:false});
+
+  mapStickZone.addEventListener('touchend',e=>{e.preventDefault();clearMapStick()},{passive:false});
+  mapStickZone.addEventListener('touchcancel',()=>clearMapStick(),{passive:false});
 }
-setInterval(()=>{
-  if($('worldMap')&&!$('worldMap').classList.contains('hidden')&&(Math.abs(mapJoyX)>.08||Math.abs(mapJoyY)>.08)){
-    moveMap(mapJoyX*.55,mapJoyY*.55);
+
+// Move from the actual joystick state every animation frame.
+// This avoids timer throttling and keeps movement working after screen-mode changes.
+let lastMapFrame=performance.now();
+function mapMovementFrame(now){
+  const dt=Math.min(.05,Math.max(0,(now-lastMapFrame)/1000));
+  lastMapFrame=now;
+  const wm=$('worldMap');
+  if(wm&&!wm.classList.contains('hidden')&&(Math.abs(mapJoyX)>.05||Math.abs(mapJoyY)>.05)){
+    // approximately the same speed as the old 32ms timer, now frame-rate independent
+    moveMap(mapJoyX*17.2*dt,mapJoyY*17.2*dt);
   }
-},32);
+  requestAnimationFrame(mapMovementFrame);
+}
+requestAnimationFrame(mapMovementFrame);
 
 bindTap('mapEnterBtn',()=>{if(mapNearPlace)enterMapPlace(mapNearPlace)});
 bindTap('mapSpecial1',()=>useFieldSlot(1));

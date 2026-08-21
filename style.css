@@ -685,3 +685,37 @@ body.screenGame > #gameWrap > #buttons,
 body.screenGame > #gameWrap > #stickZone{
   display:block!important;
 }
+
+/* v2.92 field joystick input reliability */
+#worldMap .mapControls{
+  z-index:80!important;
+  pointer-events:none!important;
+}
+#worldMap #mapStickZone{
+  z-index:90!important;
+  pointer-events:auto!important;
+  touch-action:none!important;
+  -webkit-user-select:none!important;
+  user-select:none!important;
+  overscroll-behavior:none!important;
+}
+#worldMap #mapStickBase,
+#worldMap #mapStickKnob{
+  pointer-events:none!important;
+}
+#worldMap .mapButtons{
+  z-index:90!important;
+  pointer-events:auto!important;
+}
+#worldMap .mapGameBtn{
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+}
+
+/* No transparent panel may sit over the joystick. */
+#worldMap .mapHint,
+#worldMap .mapPrompt,
+#worldMap .worldTitle,
+#worldMap .mapNearbyLabel{
+  pointer-events:none!important;
+}
