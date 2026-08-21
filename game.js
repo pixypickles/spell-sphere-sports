@@ -1,4 +1,19 @@
-const APP_VERSION='v2.89';
+
+function updateViewportFit(){
+  const vv=window.visualViewport;
+  const vw=vv?vv.width:window.innerWidth;
+  const vh=vv?vv.height:window.innerHeight;
+  document.documentElement.style.setProperty('--vwpx',`${vw}px`);
+  document.documentElement.style.setProperty('--vhpx',`${vh}px`);
+  document.body.classList.toggle('shortLandscape',vw>vh&&vh<620);
+}
+window.addEventListener('resize',updateViewportFit,{passive:true});
+window.addEventListener('orientationchange',()=>setTimeout(updateViewportFit,80),{passive:true});
+if(window.visualViewport)window.visualViewport.addEventListener('resize',updateViewportFit,{passive:true});
+window.addEventListener('DOMContentLoaded',updateViewportFit);
+setTimeout(updateViewportFit,30);
+
+const APP_VERSION='v2.90';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -266,7 +281,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v2.89 old-save compatibility:
+    // v2.90 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1556,7 +1571,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v2.89: genuine frog mages never use human headwear/outfit head pieces.
+  // v2.90: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -2908,9 +2923,11 @@ function showEnding(){
   const p=$('endingPanel');if(p)p.classList.remove('hidden');
 }
 function continueAfterEnding(){
+  const p=$('endingPanel');
+  if(p&&p.classList.contains('hidden'))return;
   saveData.endingSeen=true;
   writeSave();
-  const p=$('endingPanel');if(p)p.classList.add('hidden');
+  if(p)p.classList.add('hidden');
   showWorldMap();
   flash('各地のボスと何度でも再戦できます',1400);
 }
@@ -3365,3 +3382,15 @@ window.__gameDebug=()=>({mode,cupIndex,currentOpponent,enemies:enemies.length,al
 
 
 setTimeout(()=>{if($('worldMap'))updateMapAvatar()},80);
+
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const go=()=>continueAfterEnding();
+  for(const id of ['endingContinueBtn','endingCloseBtn']){
+    const el=$(id);
+    if(!el)continue;
+    el.addEventListener('click',go);
+    el.addEventListener('pointerup',e=>{e.preventDefault();go();});
+    el.addEventListener('touchend',e=>{e.preventDefault();go();},{passive:false});
+  }
+});
