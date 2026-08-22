@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v3.00 <small style="opacity:.65"></small></title>
-<link href="style.css?v=300_1787290817" rel="stylesheet"/>
+<title>魔導球技 v3.02 <small style="opacity:.65"></small></title>
+<link href="style.css?v=302_1787442896" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,17 +14,14 @@
 <meta content="no-store, no-cache, must-revalidate, max-age=0" http-equiv="Cache-Control"/>
 <meta content="no-cache" http-equiv="Pragma"/>
 <meta content="0" http-equiv="Expires"/>
-<meta content="v3.00-1787267059" name="app-build"/>
-
-<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0"></small>-1787278807">
+<meta content="v3.02-1787267059" name="app-build"/>
+<meta content="no-store, no-cache, must-revalidate, max-age=0" http-equiv="Cache-Control"/>
+<meta content="no-cache" http-equiv="Pragma"/>
+<meta content="0" http-equiv="Expires"/>-1787278807"&gt;
 </head>
 <body>
-
-
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion id="versionBadge">>v3.00</div>
+<div class="introVersion id=" versionbadge"="">&gt;v3.02</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -55,7 +52,6 @@
 <div class="introLandscape">↔ スマホを横持ちしてください ↔</div>
 </div>
 </div>
-
 <main id="gameWrap">
 <canvas height="720" id="game" width="1280"></canvas>
 <div id="hud">
@@ -130,7 +126,11 @@
 <label>味方A<select id="roleA"><option value="support">サポート</option><option value="attacker">旗取り</option><option value="guard">守備</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
 <label>味方B<select id="roleB"><option value="guard">守備</option><option value="attacker">旗取り</option><option value="support">サポート</option><option value="shooter">射撃</option><option value="balance">バランス</option></select></label>
 <div class="menuActions">
-<button class="menuBtn" id="cupStartBtn" type="button">ビギナーカップ開始</button><button class="rookieBtn hidden" id="rookieBtn" type="button">ルーキーカップへ</button><button class="rookieBtn hidden" id="advancedBtn" type="button">アドバンスカップへ</button><button class="rookieBtn hidden" id="expertBtn" type="button">エキスパートカップへ</button><button class="rookieBtn hidden" id="masterBtn" type="button">マスターカップへ</button><button class="rookieBtn hidden" id="grandmasterBtn" type="button">グランドマスターカップへ</button><button class="resumeBtn hidden" id="cupContinueBtn" type="button">大会の続きから</button>
+<div class="noSkillCupCard">
+<div class="noSkillCupTitle">⚔ 特殊スキル無し大会</div>
+<div class="noSkillCupDesc">特殊技なし。通常弾・回避・クリスタル奪取だけで勝負。</div>
+<button id="noSkillCupBtn" type="button">特殊スキル無し大会へ</button>
+</div><button class="menuBtn" id="cupStartBtn" type="button">ビギナーカップ開始</button><button class="rookieBtn hidden" id="rookieBtn" type="button">ルーキーカップへ</button><button class="rookieBtn hidden" id="advancedBtn" type="button">アドバンスカップへ</button><button class="rookieBtn hidden" id="expertBtn" type="button">エキスパートカップへ</button><button class="rookieBtn hidden" id="masterBtn" type="button">マスターカップへ</button><button class="rookieBtn hidden" id="grandmasterBtn" type="button">グランドマスターカップへ</button><button class="resumeBtn hidden" id="cupContinueBtn" type="button">大会の続きから</button>
 <button class="subBtn" id="practiceBtn" type="button">練習試合</button>
 </div>
 <p class="note">敵クリスタルに触れるか敵3人を全員アウトで1本。2本先取。</p>
@@ -246,11 +246,11 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v3.00</div>
-<script src="game.js?v=300_1787290817"></script>
+<div id="versionBadge">v3.02</div>
+<script src="game.js?v=302_1787442896"></script>
 <div class="overlay hidden" id="endingPanel">
 <section class="panel endingCard">
-    <button id="endingCloseBtn" class="endingCloseBtn" type="button" aria-label="クリア後の世界へ">×</button>
+<button aria-label="クリア後の世界へ" class="endingCloseBtn" id="endingCloseBtn" type="button">×</button>
 <div class="endingStars">✦ ✧ ✦</div>
 <div class="kicker">GRANDMASTER CHAMPION</div>
 <h1>魔導球技・制覇</h1>
@@ -269,6 +269,5 @@
 <button id="endingContinueBtn" type="button">クリア後の世界へ戻る</button>
 </section>
 </div>
-
 </body>
 </html>
