@@ -969,3 +969,20 @@ body.screenGame #buttons{
     bottom:28px!important;
   }
 }
+
+/* v3.01 no-skill cup */
+.noSkillCupCard{
+  margin:12px 0 14px;padding:12px 14px;border-radius:14px;
+  background:#1a2946ee;border:2px solid #ffe08a88;box-shadow:0 4px 14px #0006;
+}
+.noSkillCupTitle{font-size:20px;font-weight:1000;color:#ffe28f;margin-bottom:4px}
+.noSkillCupDesc{font-size:13px;color:#e8f1ff;margin-bottom:9px;line-height:1.45}
+#noSkillCupBtn{
+  width:100%;min-height:52px;border-radius:12px;font-size:18px;font-weight:1000;
+  background:#6f5a2c;color:#fff4bf;border:1px solid #ffe79d88;
+}
+#noSkillCupBtn:active{transform:translateY(1px)}
+body.noSkillCupMode #special1,
+body.noSkillCupMode #special2{
+  opacity:.48!important;filter:grayscale(.4)!important;
+}

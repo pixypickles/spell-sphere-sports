@@ -22,7 +22,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v3.00';
+const APP_VERSION='v3.01';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -252,6 +252,7 @@ let mines=[],lobShots=[];
 let windZones=[],miniFrogs=[];
 let selectedTeam='rush',running=false,over=false,last=0,left=60,secAcc=0,bScore=0,rScore=0,round=1,msgUntil=0,pendingLearnMessage='';
 let mode='menu',cupKind='beginner',cupIndex=0,cupTable=null,currentOpponent='rush',fieldFrogMatch=false;
+let noSkillCup=false;
 const CUP_ORDER=['rush','guard','shoot'];
 const ROOKIE_ORDER=['shield','rush','mix','triple'];
 const ADVANCED_ORDER=['phase','bounce','hybrid','blast'];
@@ -290,7 +291,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v3.00 old-save compatibility:
+    // v3.01 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -471,6 +472,12 @@ function specialName(kind){
   return 'なし（✌）';
 }
 function updateSpecialButtons(){
+  if(noSkillCup&&mode==='cup'){
+    const a=$('special1'),b=$('special2');
+    if(a)a.innerHTML='×<small>使用不可</small>';
+    if(b)b.innerHTML='×<small>使用不可</small>';
+    return;
+  }
   const slots=[saveData.specialSlot1||'none',saveData.specialSlot2||'none'];
   ['special1','special2'].forEach((id,i)=>{
     const el=$(id);
@@ -1138,7 +1145,27 @@ function shoot(u,target,curve=false){if(u.moleActive)return false;
   bullets.push(new Bullet(u.x+dx*23,u.y+dy*23,dx,dy,u.team,curve,target));
 }
 
+
+function startNoSkillCup(){
+  noSkillCup=true;
+  document.body.classList.add('noSkillCupMode');
+  mode='cup';
+  cupKind='noskill';
+  cupIndex=0;
+  cupTable=null;
+  currentOpponent='rush';
+  bScore=0;rScore=0;round=1;
+  $('menu')?.classList.add('hidden');
+  $('cupPanel')?.classList.add('hidden');
+  reset();
+  flash('特殊スキル無し大会！　通常弾と回避だけで勝負',1000);
+}
+
 function reset(){
+  if(noSkillCup&&mode==='cup'){
+    const ns=['rush','shield','shoot'];
+    currentOpponent=ns[cupIndex%ns.length];
+  }
   if(mode!=='menu')setScreenMode('game');
   if(mode!=='boss')setBossStage(null);
   if(mode==='cup'&&currentOpponent)markEncountered(cupKind,currentOpponent);
@@ -1581,7 +1608,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v3.00: genuine frog mages never use human headwear/outfit head pieces.
+  // v3.01: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -1661,7 +1688,7 @@ function drawUnit(u){
     g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     
 
-    // v3.00 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
+    // v3.01 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
     g.fillStyle='#f2cf72';
     g.beginPath();g.ellipse(0,-16,11,13,0,0,Math.PI*2);g.fill();
 
@@ -2693,6 +2720,7 @@ function toggleMole(u){
   if(!u.fairyActive)u.mana-=22;u.lastMole=now;u.moleActive=true;u.moleT=3.2;return true;
 }
 function usePlayerSpecial(kind){
+  if(noSkillCup&&mode==='cup'){flash('この大会では特殊スキル使用禁止',300);return;}
   if(player&&player.frogMage){
     if(kind==='frog'){flash('本物のカエルなので元には戻れない！',380);return;}
   }
@@ -2979,6 +3007,7 @@ function continueAfterEnding(){
 }
 
 function showWorldMap(){
+  if(mode!=='cup'){noSkillCup=false;document.body.classList.remove('noSkillCupMode');}
   setScreenMode('world');
   clearMapStick();
   document.body.classList.remove('bossMode');
@@ -3223,6 +3252,7 @@ function mapMovementFrame(now){
 }
 requestAnimationFrame(mapMovementFrame);
 
+bindTap('noSkillCupBtn',()=>startNoSkillCup());
 bindTap('mapEnterBtn',()=>{if(mapNearPlace)enterMapPlace(mapNearPlace)});
 bindTap('mapSpecial1',()=>useFieldSlot(1));
 bindTap('mapSpecial2',()=>useFieldSlot(2));
@@ -3414,6 +3444,15 @@ bindTap('nextBtn',()=>{
     }
 
     cupIndex++;
+    if(noSkillCup&&cupIndex>=3){
+      noSkillCup=false;
+      document.body.classList.remove('noSkillCupMode');
+      mode='menu';
+      $('result')?.classList.add('hidden');
+      showWorldMap();
+      flash('特殊スキル無し大会 終了！',900);
+      return;
+    }
     if(cupIndex>=currentCupOrder().length){
       finishCup();
       if(pendingLearnMessage){
