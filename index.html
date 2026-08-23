@@ -5,8 +5,8 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
 <meta content="#17233a" name="theme-color"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/>
-<title>魔導球技 v3.03 <small style="opacity:.65"></small></title>
-<link href="style.css?v=303_1787443178" rel="stylesheet"/>
+<title>魔導球技 v3.05 <small style="opacity:.65"></small></title>
+<link href="style.css?v=305_1787444293" rel="stylesheet"/>
 <style id="bootFallback">
 .hidden{display:none!important}
 #rotateNotice{display:none}
@@ -14,14 +14,14 @@
 <meta content="no-store, no-cache, must-revalidate, max-age=0" http-equiv="Cache-Control"/>
 <meta content="no-cache" http-equiv="Pragma"/>
 <meta content="0" http-equiv="Expires"/>
-<meta content="v3.03-1787267059" name="app-build"/>
+<meta content="v3.05-1787267059" name="app-build"/>
 <meta content="no-store, no-cache, must-revalidate, max-age=0" http-equiv="Cache-Control"/>
 <meta content="no-cache" http-equiv="Pragma"/>
 <meta content="0" http-equiv="Expires"/>-1787278807"&gt;
 </head>
 <body>
 <div class="introScreen" id="introScreen" onclick="this.style.display='none';" onpointerdown="this.style.display='none';" ontouchstart="this.style.display='none';">
-<div class="introVersion id=" versionbadge"="">&gt;v3.03</div>
+<div class="introVersion id=" versionbadge"="">&gt;v3.05</div>
 <div class="introCard">
 <div class="introKicker">MAGIC SPORT</div>
 <h1>魔導球技</h1>
@@ -100,7 +100,11 @@
 <button class="mapGameBtn mapEnter" id="mapEnterBtn">入<small>入る</small></button>
 </div>
 </div><div class="mapHint">左スティックで移動　・　近づくと施設名表示　・　右の「入る」で決定</div>
-</section></div><section class="screen hidden" id="wetlandsMap"><div class="wetlandsScene"><div class="wetlandsWater"></div><div class="wetlandsIsland islandA"></div><div class="wetlandsIsland islandB"></div><div class="wetlandsIsland islandC"></div><div class="wetlandsMoon">✦</div><button class="wetlandsPlace frogKingPlace" id="frogKingPlace"><span class="frogSilhouette"><i></i><i></i><i></i></span><b>巨大な影</b><small>湿原の奥</small></button><button class="wetlandsPlace returnBoat" id="wetlandsReturn"><b>⛵ 星雫の池へ戻る</b></button><div class="wetlandsTitle">大湿原</div><div class="wetlandsHelp">妖精女王の魔力で霧が晴れた。<br/>湿原の奥に、とてつもなく大きな何かがいる……。</div></div></section><div class="hidden overlay" id="bossPanel"><section class="panel bossPanelCard"><div class="kicker">FIELD EVENT</div><h1 id="bossTitle">中ボス戦</h1><p class="lead" id="bossDesc"></p><div class="bossRuleCard">敵は1体・HP制 / こちらは一撃OUT<br/>復活クリスタルからチーム合計2回まで復活<br/>自陣クリスタル付近ではMPも回復</div><button id="bossStartBtn">戦闘開始</button><button id="bossBackBtn">フィールドへ戻る</button></section></div><div class="hidden overlay" id="menu">
+</section></div><section class="screen hidden" id="wetlandsMap"><div class="wetlandsScene"><div class="wetlandsWater"></div><div class="wetlandsIsland islandA"></div><div class="wetlandsIsland islandB"></div><div class="wetlandsIsland islandC"></div><div class="wetlandsMoon">✦</div><button class="wetlandsPlace frogKingPlace" id="frogKingPlace"><span class="frogSilhouette"><i></i><i></i><i></i></span><b>巨大な影</b><small>湿原の奥</small></button><button class="wetlandsPlace returnBoat" id="wetlandsReturn"><b>⛵ 星雫の池へ戻る</b></button><div class="wetlandsTitle">大湿原</div><div class="wetlandsHelp">妖精女王の魔力で霧が晴れた。<br/>湿原の奥に、とてつもなく大きな何かがいる……。</div></div></section><div class="hidden overlay" id="bossPanel"><section class="panel bossPanelCard"><div class="kicker">FIELD EVENT</div><h1 id="bossTitle">中ボス戦</h1><p class="lead" id="bossDesc"></p><div class="bossRuleCard">敵は1体・HP制 / こちらは一撃OUT<br/>復活クリスタルからチーム合計2回まで復活<br/>自陣クリスタル付近ではMPも回復</div><button id="bossStartBtn">戦闘開始</button>
+<button id="silverWolfStartBtn" class="hidden silverWolfStartBtn">銀影の迅狼に挑む</button>
+<button id="manaGolemStartBtn" class="hidden postBossStartBtn">蒼晶の魔導巨像に挑む</button>
+<button id="manaDeerStartBtn" class="hidden postBossStartBtn">泉脈の白鹿に挑む</button>
+<button id="bossBackBtn">フィールドへ戻る</button></section></div><div class="hidden overlay" id="menu">
 <section class="panel">
 <div class="kicker">TOURNAMENT MENU</div>
 <h1>魔導球技</h1>
@@ -246,8 +250,8 @@
 </section>
 </div>
 </main>
-<div id="versionBadge">v3.03</div>
-<script src="game.js?v=303_1787443178"></script>
+<div id="versionBadge">v3.05</div>
+<script src="game.js?v=305_1787444293"></script>
 <div class="overlay hidden" id="endingPanel">
 <section class="panel endingCard">
 <button aria-label="クリア後の世界へ" class="endingCloseBtn" id="endingCloseBtn" type="button">×</button>

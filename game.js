@@ -22,7 +22,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v3.03';
+const APP_VERSION='v3.05';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -79,6 +79,17 @@ function setBossStage(kind){
       {x:470,y:430,w:78,h:54,kind:'boulder'},
       {x:670,y:195,w:48,h:190,kind:'tree'},
       {x:810,y:455,w:95,h:44,kind:'log'}
+    ],
+    silverwolf:[],
+    managolem:[
+      {x:430,y:170,w:48,h:160,kind:'crystal'},
+      {x:640,y:400,w:62,h:115,kind:'rockpillar'},
+      {x:845,y:170,w:48,h:160,kind:'crystal'}
+    ],
+    manadeer:[
+      {x:430,y:190,w:88,h:54,kind:'lilypad'},
+      {x:650,y:430,w:82,h:54,kind:'reedrock'},
+      {x:845,y:190,w:88,h:54,kind:'lilypad'}
     ],
     cave:[
       {x:365,y:145,w:54,h:180,kind:'crystal'},
@@ -271,7 +282,9 @@ function defaultSave(){
     rookieUnlocked:false,cupResume:null,
     shieldProgress:0,shieldUnlocked:false,shieldEquipped:false,
     specialSlot1:'double',specialSlot2:'rabbit',allyRole1:'support',allyRole2:'guard',
-    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogTeamUnlocked:false,playerTeamStyle:'human',gameCleared:false,endingSeen:false,frogBossWins:0,fieldBossClears:[],fieldQuestStage:0
+    encounteredTeams:[],tripleProgress:0,tripleUnlocked:false,advancedUnlocked:false,phaseProgress:0,phaseUnlocked:false,bounceProgress:0,bounceUnlocked:false,expertUnlocked:false,blastProgress:0,blastUnlocked:false,beastProgress:0,beastUnlocked:false,masterUnlocked:false,playerSkills:['none','none','none'],allySkillA:'none',allySkillB:'none',ally1SkillA:'none',ally1SkillB:'none',ally2SkillA:'none',ally2SkillB:'none',invisProgress:0,invisUnlocked:false,spreadProgress:0,spreadUnlocked:false,rightAngleProgress:0,rightAngleUnlocked:false,lobProgress:0,lobUnlocked:false,mineProgress:0,mineUnlocked:false,jumpProgress:0,jumpUnlocked:false,grandmasterUnlocked:false,cloneProgress:0,cloneUnlocked:false,reflectBladeProgress:0,reflectBladeUnlocked:false,windProgress:0,windUnlocked:false,moleProgress:0,moleUnlocked:false,bladeProgress:0,bladeUnlocked:false,fairyUnlocked:false,fairyBossWins:0,wetlandsUnlocked:false,frogUnlocked:false,frogTeamUnlocked:false,playerTeamStyle:'human',gameCleared:false,endingSeen:false,frogBossWins:0,fieldBossClears:[],fieldQuestStage:0,speedBootsUnlocked:false,silverWolfWins:0,
+    maxManaRelicUnlocked:false,manaRegenRelicUnlocked:false,
+    manaGolemWins:0,manaDeerWins:0
   };
 }
 function loadSave(){
@@ -291,7 +304,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v3.03 old-save compatibility:
+    // v3.05 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -900,13 +913,13 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 class Unit{
   constructor(x,y,team,controlled=false,role='balance'){
-    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,lastFrogJump:-99,lastFrogTongue:-99,lastFrogBubble:-99,frogTongueT:0,frogMage:false,lastMiniFrog:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
+    Object.assign(this,{x,y,team,controlled,role,r:17,alive:true,mana:100,maxMana:100,manaRegen:8,lastShot:-9,shotCd:.85,lastDodge:-9,dodgeT:0,inv:0,dodgeRecover:0,dx:0,dy:0,emote:0,think:0,target:null,charging:false,chargeT:0,curveSide:1,rollAngle:0,strafeDir:(Math.random()<.5?-1:1),strafeTimer:0,shield:0,lastShield:-99,specialKind:null,specialA:'none',specialB:'none',shieldReact:-1,lastDouble:-99,lastBlade:-99,bladeT:0,bladeAngle:0,tripleReady:-1,lastTriple:-99,lastPhase:-99,lastBounce:-99,lastBlast:-99,lastBeast:-99,beastT:0,beastActive:false,rabbitActive:false,lastRabbit:-99,rabbitT:0,lastInvis:-99,invisT:0,lastSpread:-99,lastRightAngle:-99,lastLob:-99,lastMine:-99,lastJump:-99,jumpT:0,lastClone:-99,cloneT:0,cloneBody:null,lastReflectBlade:-99,reflectBladeT:0,lastWind:-99,lastMole:-99,moleActive:false,moleT:0,fairyActive:false,lastFairy:-99,frogActive:false,lastFrog:-99,lastFrogJump:-99,lastFrogTongue:-99,lastFrogBubble:-99,frogTongueT:0,frogMage:false,lastMiniFrog:-99,outfitKey:null,runPhase:Math.random()*6.28,isMoving:false});
     this.speed=controlled?190:158;
   }
   update(dt){
     const _oldX=this.x,_oldY=this.y;
     if(!this.alive)return;
-    this.mana=Math.min(100,this.mana+8*dt);
+    this.mana=Math.min(this.maxMana,this.mana+this.manaRegen*dt);
     const wasDodging=this.dodgeT>0;
     this.dodgeT=Math.max(0,this.dodgeT-dt);
     this.inv=Math.max(0,this.inv-dt);
@@ -977,12 +990,12 @@ function explodeAt(x,y,team,radius=58){
 class Bullet{
   constructor(x,y,dx,dy,team,curve,target,kind='normal'){
     Object.assign(this,{
-      x,y,dx,dy,team,curve,target,kind,r:kind==='bubble'?13:7,life:kind==='bubble'?2.8:3.6,
+      x,y,dx,dy,team,curve,target,kind,r:kind==='bubble'?13:(kind==='claw'?12:(kind==='crystal'?9:(kind==='spirit'?10:7))),life:kind==='bubble'?2.8:(kind==='claw'?1.45:3.6),
       bouncesLeft:kind==='bounce'?4:0,
       blastRadius:kind==='blast'?58:0,
       spreadLife:kind==='spread'?.46:0,
       originX:x,originY:y,phase2:0,
-      speed:kind==='bubble'?245:(kind==='rightangle'?325:(kind==='spread'?360:(curve?315:355))),age:0,
+      speed:kind==='bubble'?245:(kind==='claw'?470:(kind==='crystal'?330:(kind==='spirit'?300:(kind==='rightangle'?325:(kind==='spread'?360:(curve?315:355)))))),age:0,
       curveTime:curve?1.20:0,
       maxCurveRate:curve?2.35:0
     });
@@ -1161,6 +1174,19 @@ function startNoSkillCup(){
   flash('特殊スキル無し大会！　通常弾と回避だけで勝負',1000);
 }
 
+
+function applyPermanentTeamItems(){
+  const units=[player,...allies].filter(Boolean);
+  for(const u of units){
+    // Absolute base-derived values: re-entering a match can never stack these bonuses.
+    const controlledBase=u.controlled?190:158;
+    u.speed=controlledBase*(saveData.speedBootsUnlocked?1.12:1);
+    u.maxMana=saveData.maxManaRelicUnlocked?125:100;
+    u.manaRegen=saveData.manaRegenRelicUnlocked?10:8;
+    u.mana=Math.min(u.maxMana,Math.max(u.mana,u.maxMana));
+  }
+}
+
 function reset(){
   if(noSkillCup&&mode==='cup'){
     const ns=['rush','guard','shoot'];
@@ -1192,6 +1218,7 @@ function reset(){
     allies[1].specialA=saveData.ally2SkillA||'none';
     allies[1].specialB=saveData.ally2SkillB||'none';
   }
+  applyPermanentTeamItems();
   const od=opponentData(currentOpponent),roles=od.roles;
   enemies=[
     new Unit(995,220,'red',false,roles[0]),
@@ -1332,6 +1359,43 @@ function allyUseSpecial(u,kind){
 
 function ai(u,dt,isEnemy){
   if(!u.alive)return;
+  if(u.bossKind==='manadeer'){
+    const targets=[player,...allies].filter(v=>v&&v.alive);
+    if(!targets.length)return;
+    const t=nearest(u,targets),to=norm(t.x-u.x,t.y-u.y);
+    const side=u.strafeDir||1;
+    const desired=dist(u,t)<250
+      ?norm(-to.x+(-to.y)*side*.7,-to.y+(to.x)*side*.7)
+      :norm(to.x*.25+(-to.y)*side,to.y*.25+(to.x)*side);
+    move(u,desired.x,desired.y,dt);
+    if(Math.random()<.012)u.strafeDir*=-1;
+    return;
+  }
+  if(u.bossKind==='silverwolf'){
+    const targets=[player,...allies].filter(v=>v&&v.alive);
+    if(!targets.length)return;
+    const t=nearest(u,targets);
+    const now=performance.now()/1000;
+
+    // Save a short trail every ~0.055s to make the speed readable as afterimages.
+    if(now-(u.lastAfterimageAt||0)>.055){
+      u.lastAfterimageAt=now;
+      u.afterimages=u.afterimages||[];
+      u.afterimages.unshift({x:u.x,y:u.y,a:.38});
+      if(u.afterimages.length>6)u.afterimages.length=6;
+    }
+    for(const q of (u.afterimages||[]))q.a=Math.max(0,q.a-dt*.8);
+
+    // Orbit and slash past the nearest target rather than running straight into the crystal.
+    const to=norm(t.x-u.x,t.y-u.y);
+    const side=u.strafeDir||1;
+    let nx=to.x*.52+(-to.y)*side*.92;
+    let ny=to.y*.52+( to.x)*side*.92;
+    const n=norm(nx,ny);
+    move(u,n.x,n.y,dt);
+    if(Math.random()<.018)u.strafeDir*=-1;
+    return;
+  }
   u.think-=dt;
   if(u.think<=0){u.think=.16+Math.random()*.18;u.target=nearest(u,isEnemy?[player,...allies]:enemies)}
   const t=u.target,enemyFlag=isEnemy?flagBlue:flagRed,ownFlag=isEnemy?flagRed:flagBlue;
@@ -1512,7 +1576,7 @@ function checkFlags(){
   if(mode==='boss')return;
   for(const u of [player,...allies])if(u&&u.alive&&!u.beastActive&&u.jumpT<=0&&dist(u,flagRed)<u.r+22)return finish('blue','敵クリスタルを取りました！');
   for(const u of enemies)if(u.alive&&!u.beastActive&&u.jumpT<=0&&dist(u,flagBlue)<u.r+22)return finish('red','敵にクリスタルを取られました');
-  if(player&&player.alive&&dist(player,flagBlue)<45)player.mana=Math.min(100,player.mana+36/60);
+  if(player&&player.alive&&dist(player,flagBlue)<45)player.mana=Math.min(player.maxMana,player.mana+36/60);
 }
 
 function transferControl(){
@@ -1527,7 +1591,10 @@ function transferControl(){
   allies.push(oldPlayer);
 
   next.controlled=true;
-  next.speed=190;
+  next.speed=190*(saveData.speedBootsUnlocked?1.12:1);
+  next.maxMana=saveData.maxManaRelicUnlocked?125:100;
+  next.manaRegen=saveData.manaRegenRelicUnlocked?10:8;
+  next.mana=Math.min(next.maxMana,next.mana);
   player=next;
 
   // avoid inheriting an AI dodge/shoot decision at the exact moment of takeover
@@ -1607,7 +1674,7 @@ function update(dt){
   for(const p of fx){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt}
   fx=fx.filter(p=>p.t>0);
   checkFlags();
-  manaFill.style.width=player.mana+'%';
+  manaFill.style.width=(player.mana/player.maxMana*100)+'%';
   if(msgUntil&&performance.now()>msgUntil){message.textContent='';msgUntil=0}
 }
 
@@ -1615,7 +1682,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v3.03: genuine frog mages never use human headwear/outfit head pieces.
+  // v3.05: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -1644,6 +1711,41 @@ function drawUnit(u){
       g.fillStyle='#172416';g.beginPath();g.arc(-20,-16,3,0,Math.PI*2);g.arc(20,-16,3,0,Math.PI*2);g.fill();
       g.fillStyle='#d4b957';g.beginPath();g.moveTo(-27,-29);g.lineTo(-14,-48);g.lineTo(0,-31);g.lineTo(15,-49);g.lineTo(28,-29);g.closePath();g.fill();
       g.strokeStyle='#355c2c';g.lineWidth=10;g.beginPath();g.moveTo(-28,20);g.lineTo(-49,38);g.moveTo(28,20);g.lineTo(49,38);g.stroke();g.restore();
+    }else if(k==='silverwolf'){
+      // afterimages are drawn relative to the current wolf position
+      if(u.afterimages){
+        for(let i=u.afterimages.length-1;i>=0;i--){
+          const q=u.afterimages[i];if(q.a<=0)continue;
+          g.save();g.translate(q.x-u.x,q.y-u.y);g.globalAlpha=q.a*(1-i/u.afterimages.length*.45);
+          g.fillStyle='#9fd7e8';g.beginPath();g.ellipse(0,3,30,16,0,0,Math.PI*2);g.fill();
+          g.beginPath();g.moveTo(15,-7);g.lineTo(23,-28);g.lineTo(29,-8);g.closePath();g.fill();
+          g.beginPath();g.moveTo(-8,-8);g.lineTo(-18,-28);g.lineTo(1,-12);g.closePath();g.fill();
+          g.restore();
+        }
+      }
+      const grad=g.createLinearGradient(-30,-20,30,20);
+      grad.addColorStop(0,'#84d8ef');grad.addColorStop(.55,'#c9e8ef');grad.addColorStop(1,'#8fa8b7');
+      g.fillStyle=grad;g.beginPath();g.ellipse(0,3,31,17,0,0,Math.PI*2);g.fill();
+      g.beginPath();g.moveTo(15,-7);g.lineTo(23,-29);g.lineTo(30,-8);g.closePath();g.fill();
+      g.beginPath();g.moveTo(-8,-8);g.lineTo(-19,-29);g.lineTo(1,-12);g.closePath();g.fill();
+      g.fillStyle='#eafcff';g.beginPath();g.arc(18,-7,3,0,Math.PI*2);g.fill();
+      g.strokeStyle='#b9e9f4';g.lineWidth=4;for(let i=-1;i<=1;i++){g.beginPath();g.moveTo(-18+i*8,13);g.lineTo(-25+i*8+Math.sin(t+i)*6,27);g.stroke()}
+    }else if(k==='managolem'){
+      g.fillStyle='#536d88';g.beginPath();g.roundRect(-34,-26,68,58,10);g.fill();
+      g.fillStyle='#7395ad';g.fillRect(-48,-12,14,38);g.fillRect(34,-12,14,38);
+      g.fillStyle='#a9edff';g.beginPath();g.moveTo(-16,-25);g.lineTo(-5,-51);g.lineTo(2,-23);g.closePath();g.fill();
+      g.beginPath();g.moveTo(8,-24);g.lineTo(20,-46);g.lineTo(27,-21);g.closePath();g.fill();
+      g.fillStyle='#e4fbff';g.beginPath();g.arc(0,1,10+Math.sin(t)*2,0,Math.PI*2);g.fill();
+      g.strokeStyle='#8bcce7';g.lineWidth=4;g.strokeRect(-26,-19,52,43);
+    }else if(k==='manadeer'){
+      g.fillStyle='#eef7ed';g.beginPath();g.ellipse(0,4,28,15,0,0,Math.PI*2);g.fill();
+      g.beginPath();g.ellipse(20,-9,14,11,-.2,0,Math.PI*2);g.fill();
+      g.strokeStyle='#d7efe2';g.lineWidth=5;g.beginPath();
+      g.moveTo(-16,14);g.lineTo(-18,30);g.moveTo(2,15);g.lineTo(1,31);g.moveTo(15,10);g.lineTo(18,27);g.stroke();
+      g.strokeStyle='#9ee8c5';g.lineWidth=3;g.beginPath();
+      g.moveTo(24,-18);g.lineTo(30,-34);g.lineTo(35,-28);g.moveTo(19,-18);g.lineTo(15,-34);g.lineTo(10,-27);g.stroke();
+      g.fillStyle='#58a58a';g.beginPath();g.arc(24,-10,2.5,0,Math.PI*2);g.fill();
+      g.strokeStyle='#b8ffe1';g.lineWidth=2;g.beginPath();g.arc(0,2,39+Math.sin(t)*2,0,Math.PI*2);g.stroke();
     }else if(k==='forest'){
       g.fillStyle='#294f3c';g.beginPath();g.ellipse(0,3,30,17,0,0,Math.PI*2);g.fill();
       g.beginPath();g.moveTo(15,-7);g.lineTo(23,-28);g.lineTo(29,-8);g.closePath();g.fill();
@@ -1695,7 +1797,7 @@ function drawUnit(u){
     g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     
 
-    // v3.03 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
+    // v3.05 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
     g.fillStyle='#f2cf72';
     g.beginPath();g.ellipse(0,-16,11,13,0,0,Math.PI*2);g.fill();
 
@@ -1982,6 +2084,9 @@ function arenaTheme(){
   if(mode==='boss'&&bossStageKind){
     const bossThemes={
       forest:{court:'#557b58',wall:'#6b543d',bg:'#213d2b'},
+      silverwolf:{court:'#668b87',wall:'#a9c5c8',bg:'#203b42'},
+      managolem:{court:'#586d83',wall:'#a7dbf2',bg:'#202b3d'},
+      manadeer:{court:'#69958a',wall:'#c6e7d4',bg:'#294f52'},
       cave:{court:'#5a566d',wall:'#8d85a4',bg:'#252638'},
       pond:{court:'#5d8f86',wall:'#6d8e73',bg:'#315c62'},
       fairy:{court:'#7787a8',wall:'#d6c8f2',bg:'#3b4568'},
@@ -2058,7 +2163,7 @@ function draw(){
   g.setLineDash([12,12]);g.beginPath();g.moveTo(W/2,COURT.y);g.lineTo(W/2,COURT.y+COURT.h);g.stroke();g.setLineDash([]);
   g.strokeStyle='#ffffff28';g.lineWidth=2;g.beginPath();g.arc(W/2,CY,74,0,Math.PI*2);g.stroke();
   if(mode==='boss'&&bossStageKind){
-    const stageNames={forest:'月影の森',cave:'晶石洞窟',pond:'星雫の池',fairy:'妖精樹の聖域',frogking:'大湿原・王の沼'};
+    const stageNames={forest:'月影の森',silverwolf:'月影の森・銀風原',managolem:'晶石洞窟・蒼晶深部',manadeer:'星雫の池・精霊泉',cave:'晶石洞窟',pond:'星雫の池',fairy:'妖精樹の聖域',frogking:'大湿原・王の沼'};
     g.fillStyle='#ffffffbb';g.font='700 20px sans-serif';g.textAlign='center';
     g.fillText(stageNames[bossStageKind]||'BOSS STAGE',W/2,42);
     g.textAlign='left';
@@ -2070,7 +2175,27 @@ function draw(){
   for(const b of bullets){
     g.save();g.shadowBlur=13;g.shadowColor=b.team==='blue'?'#8fc6ff':'#ff9daa';g.fillStyle=b.team==='blue'?'#d9ecff':'#ffe1e4';
     g.beginPath();g.arc(b.x,b.y,b.r,0,Math.PI*2);g.fill();
-    if(b.kind==='bubble'){g.globalAlpha=.55;g.fillStyle=b.team==='blue'?'#b9efff':'#ffd3e7';g.beginPath();g.arc(b.x,b.y,b.r+2,0,Math.PI*2);g.fill();g.globalAlpha=1;g.strokeStyle='#ffffffcc';g.lineWidth=2;g.beginPath();g.arc(b.x-3,b.y-4,b.r-4,.2,2.0);g.stroke();}
+    if(b.kind==='crystal'){
+      g.fillStyle='#b9efff';g.beginPath();
+      g.moveTo(b.x,b.y-11);g.lineTo(b.x+8,b.y);g.lineTo(b.x,b.y+11);g.lineTo(b.x-8,b.y);g.closePath();g.fill();
+      g.strokeStyle='#efffff';g.lineWidth=2;g.stroke();
+    }else if(b.kind==='spirit'){
+      g.strokeStyle='#bfffdc';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
+      g.beginPath();g.arc(b.x,b.y,b.r+10,.4,4.8);g.stroke();
+    }else if(b.kind==='claw'){
+      g.shadowBlur=8;g.shadowColor='#d8fbff';
+      g.strokeStyle='#d9fbff';g.lineWidth=5;g.lineCap='round';
+      const a=Math.atan2(b.dy,b.dx);
+      const nx=-Math.sin(a),ny=Math.cos(a);
+      g.beginPath();
+      g.moveTo(b.x-b.dx*18+nx*7,b.y-b.dy*18+ny*7);
+      g.lineTo(b.x+b.dx*18-nx*7,b.y+b.dy*18-ny*7);
+      g.stroke();
+      g.beginPath();
+      g.moveTo(b.x-b.dx*14-nx*7,b.y-b.dy*14-ny*7);
+      g.lineTo(b.x+b.dx*14+nx*7,b.y+b.dy*14+ny*7);
+      g.stroke();
+    }else if(b.kind==='bubble'){g.globalAlpha=.55;g.fillStyle=b.team==='blue'?'#b9efff':'#ffd3e7';g.beginPath();g.arc(b.x,b.y,b.r+2,0,Math.PI*2);g.fill();g.globalAlpha=1;g.strokeStyle='#ffffffcc';g.lineWidth=2;g.beginPath();g.arc(b.x-3,b.y-4,b.r-4,.2,2.0);g.stroke();}
     else if(b.kind==='phase'){
       g.strokeStyle='#8fffe1';g.lineWidth=3;g.beginPath();g.arc(b.x,b.y,b.r+5,0,Math.PI*2);g.stroke();
     }else if(b.kind==='spread'){g.strokeStyle='#ffb0f1';g.lineWidth=2;g.beginPath();g.arc(b.x,b.y,b.r+3,0,Math.PI*2);g.stroke();
@@ -2152,16 +2277,55 @@ function updateBossCrystalMana(dt){
     if(!u||!u.alive)continue;
     const d=Math.hypot(u.x-flagBlue.x,u.y-flagBlue.y);
     if(d<92){
-      u.mana=Math.min(100,u.mana+24*dt);
+      u.mana=Math.min(u.maxMana,u.mana+24*dt);
       if(u.controlled&&Math.random()<.015)flash('復活クリスタル：MP回復',260);
     }
   }
+}
+
+
+function fireSilverClaw(u,target){
+  if(!u||!u.alive||!target||!target.alive)return;
+  const d=norm(target.x-u.x,target.y-u.y);
+  bullets.push(new Bullet(u.x+d.x*30,u.y+d.y*30,d.x,d.y,u.team,false,target,'claw'));
 }
 
 function updateFieldBossAI(){
   if(mode!=='boss'||!bossBattle||bossBattle.defeated||!enemies[0]||!enemies[0].alive)return;
   const b=enemies[0],now=performance.now()/1000;
   const ts=[player,...allies].filter(x=>x&&x.alive);if(!ts.length)return;
+  if(b.bossKind==='silverwolf'){
+    if(now>=(b.bossShotAt||0)){
+      const t=ts[Math.floor(Math.random()*ts.length)];
+      fireSilverClaw(b,t);
+      b.bossShotAt=now+3.4+Math.random()*2.0;
+      flash('銀狼の爪撃！',260);
+    }
+    return;
+  }
+  if(b.bossKind==='managolem'){
+    if(now>=(b.bossShotAt||0)){
+      const t=ts[Math.floor(Math.random()*ts.length)];
+      const d=norm(t.x-b.x,t.y-b.y),base=Math.atan2(d.y,d.x);
+      for(const off of [-.28,0,.28]){
+        const a=base+off;
+        bullets.push(new Bullet(b.x+Math.cos(a)*35,b.y+Math.sin(a)*35,Math.cos(a),Math.sin(a),b.team,false,t,'crystal'));
+      }
+      b.bossShotAt=now+2.25;
+      flash('蒼晶散弾！',240);
+    }
+    return;
+  }
+  if(b.bossKind==='manadeer'){
+    if(now>=(b.bossShotAt||0)){
+      const t=ts[Math.floor(Math.random()*ts.length)];
+      const d=norm(t.x-b.x,t.y-b.y);
+      bullets.push(new Bullet(b.x+d.x*28,b.y+d.y*28,d.x,d.y,b.team,true,t,'spirit'));
+      b.bossShotAt=now+2.0+Math.random()*.8;
+      flash('精霊の波紋！',240);
+    }
+    return;
+  }
 
   if(b.bossKind==='cave'){
     if(!b.moleActive&&now>(b.bossBurrowAt||0)){
@@ -2854,7 +3018,8 @@ function returnToMainMenu(){
 // world map v2.61
 let mapX=20,mapY=27,mapMoveTimer=null;
 const MAP_PLACES={home:{x:18,y:20},practice:{x:18,y:72},low:{x:52,y:70},mid:{x:78,y:48},high:{x:56,y:18},forest:{x:34,y:43},cave:{x:87,y:24},pond:{x:73,y:78},fairy:{x:58,y:21},wetlands:{x:79,y:61}};
-const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'},frogking:{name:'湿原王ガマグラン',desc:'大湿原の主。攻撃は単純だが、とにかく巨大でしぶとい。妖精化の火力を思い切り試せる。',hp:80,reward:'カエル化'}};
+const FIELD_BOSSES={forest:{name:'森番の巨狼',desc:'月影の森を荒らす巨大な魔獣。木立と岩を盾にして戦う。',hp:8,reward:'森駆けの加護'},silverwolf:{name:'銀影の迅狼',desc:'クリア後の月影の森に現れる超高速の銀狼。残像を残して駆け回り、時折爪の斬撃を飛ばす。',hp:22,reward:'風走りのブーツ'},managolem:{name:'蒼晶の魔導巨像',desc:'クリア後の晶石洞窟で目覚める巨大な魔導像。遅いが高耐久で、結晶弾を扇状に放つ。',hp:28,reward:'星脈の器'},
+manadeer:{name:'泉脈の白鹿',desc:'クリア後の星雫の池に現れる精霊獣。素早く距離を取り、魔力の波紋を放つ。',hp:24,reward:'精霊の雫'},cave:{name:'地潜り晶獣モルグ',desc:'晶石洞窟に棲む地中魔獣。モグラ化で地面へ潜り、壁を無視して接近してくる。',hp:12,reward:'モグラ化'},pond:{name:'星沼の水竜',desc:'星雫の池に棲む水竜。',hp:14,reward:'水鏡の加護'},fairy:{name:'妖精女王ティタニア',desc:'三つの異変を越えた者だけが挑める強敵。高速の回転弾と連続魔法を操る。',hp:30,reward:'妖精化'},frogking:{name:'湿原王ガマグラン',desc:'大湿原の主。攻撃は単純だが、とにかく巨大でしぶとい。妖精化の火力を思い切り試せる。',hp:80,reward:'カエル化'}};
 const FIELD_QUEST_ORDER=['forest','cave','pond','fairy'];let pendingBossKind=null,bossBattle=null;
 function isPostGame(){
   return !!(saveData.gameCleared||saveData.grandmasterChampion);
@@ -2876,6 +3041,16 @@ function updateFieldQuestMarks(){
   const fairyPlace=document.querySelector('[data-place="fairy"]');
   if(fairyPlace)fairyPlace.classList.toggle('rematchReady',(saveData.fieldBossClears||[]).includes('fairy'));
 }
+
+function updatePostgameBossChoices(kind,postgame){
+  const silver=$('silverWolfStartBtn'),golem=$('manaGolemStartBtn'),deer=$('manaDeerStartBtn');
+  if(silver)silver.classList.toggle('hidden',!(postgame&&kind==='forest'));
+  if(golem)golem.classList.toggle('hidden',!(postgame&&kind==='cave'));
+  if(deer)deer.classList.toggle('hidden',!(postgame&&kind==='pond'));
+  const start=$('bossStartBtn');
+  if(start)start.textContent=(postgame&&['forest','cave','pond'].includes(kind))?'通常ボスと再戦':'戦闘開始';
+}
+
 function openBossEvent(k){
   const b=FIELD_BOSSES[k];if(!b)return;
   const cleared=(saveData.fieldBossClears||[]).includes(k);
@@ -2884,8 +3059,18 @@ function openBossEvent(k){
   if((k==='fairy'&&cleared)||(postgame&&cleared)){
     pendingBossKind=k;
     $('worldMap').classList.add('hidden');
-    $('bossTitle').textContent=(k==='fairy'?'妖精女王ティタニア':b.name)+'・再戦';
-    $('bossDesc').textContent=`クリア後の再戦。${b.desc}`;
+    const bonusChoice=(postgame&&['forest','cave','pond'].includes(k));
+    updatePostgameBossChoices(k,postgame);
+    $('bossTitle').textContent=bonusChoice
+      ?(k==='forest'?'月影の森・クリア後':(k==='cave'?'晶石洞窟・クリア後':'星雫の池・クリア後'))
+      :((k==='fairy'?'妖精女王ティタニア':b.name)+'・再戦');
+    $('bossDesc').textContent=bonusChoice
+      ?(k==='forest'
+        ?'通常ボス再戦か、超高速の「銀影の迅狼」を選べます。'
+        :(k==='cave'
+          ?'通常ボス再戦か、最大MPを高める宝を守る「蒼晶の魔導巨像」を選べます。'
+          :'通常ボス再戦か、魔力回復の宝を守る「泉脈の白鹿」を選べます。'))
+      :`クリア後の再戦。${b.desc}`;
     $('bossPanel').classList.remove('hidden');
     return;
   }
@@ -2896,6 +3081,7 @@ function openBossEvent(k){
   }
 
   pendingBossKind=k;
+  updatePostgameBossChoices(k,false);
   $('worldMap').classList.add('hidden');
   $('bossTitle').textContent=b.name;
   $('bossDesc').textContent=b.desc;
@@ -2936,6 +3122,33 @@ function bossTakeHit(source='bullet'){
         learned=`　妖精女王撃破 ${saveData.fairyBossWins}回目！`;
       }
     }
+    if(k==='silverwolf'){
+      saveData.silverWolfWins=(saveData.silverWolfWins||0)+1;
+      if(!saveData.speedBootsUnlocked){
+        saveData.speedBootsUnlocked=true;
+        learned='　「風走りのブーツ」を獲得！　通常移動速度がアップした。';
+      }else{
+        learned=`　銀影の迅狼 撃破 ${saveData.silverWolfWins}回目！`;
+      }
+    }
+    if(k==='managolem'){
+      saveData.manaGolemWins=(saveData.manaGolemWins||0)+1;
+      if(!saveData.maxManaRelicUnlocked){
+        saveData.maxManaRelicUnlocked=true;
+        learned='　「星脈の器」を獲得！　最大MPが100 → 125になった。';
+      }else{
+        learned=`　蒼晶の魔導巨像 撃破 ${saveData.manaGolemWins}回目！`;
+      }
+    }
+    if(k==='manadeer'){
+      saveData.manaDeerWins=(saveData.manaDeerWins||0)+1;
+      if(!saveData.manaRegenRelicUnlocked){
+        saveData.manaRegenRelicUnlocked=true;
+        learned='　「精霊の雫」を獲得！　MP自然回復速度がアップした。';
+      }else{
+        learned=`　泉脈の白鹿 撃破 ${saveData.manaDeerWins}回目！`;
+      }
+    }
 
     writeSave();
     running=false;over=true;
@@ -2961,14 +3174,22 @@ function startFieldBoss(k){const b=FIELD_BOSSES[k];if(!b)return;
   const bossMaxHp=b.hp+rematchBonus;
   $('bossPanel').classList.add('hidden');
   bossBattle={kind:k,hp:bossMaxHp,maxHp:bossMaxHp,revives:2,nextDamageAt:0,nextMiniFrogDamageAt:0,defeated:false};mode='boss';cupKind='beginner';currentOpponent='rush';bScore=0;rScore=0;round=1;reset();setBossStage(k);if(enemies.length>1)enemies.splice(1);if(enemies[0]){
-    enemies[0].r=k==='frogking'?68:(k==='fairy'?52:(k==='cave'?46:42));
-    enemies[0].speed*=k==='frogking'?.62:(k==='fairy'?1.08:(k==='cave'?.90:.82));
+    enemies[0].r=k==='frogking'?68:(k==='fairy'?52:(k==='cave'?46:(k==='silverwolf'?44:(k==='managolem'?58:(k==='manadeer'?43:42)))));
+    enemies[0].speed*=k==='frogking'?.62:(k==='fairy'?1.08:(k==='cave'?.90:(k==='silverwolf'?2.45:(k==='managolem'?.58:(k==='manadeer'?1.35:.82)))));
     enemies[0].inv=.2;
     enemies[0].bossKind=k;
     enemies[0].bossShotAt=performance.now()/1000+1.2;
     enemies[0].bossBurrowAt=performance.now()/1000+2.4;
+    if(k==='silverwolf'){
+      enemies[0].bossShotAt=performance.now()/1000+3.2;
+      enemies[0].afterimages=[];
+      enemies[0].lastAfterimageAt=0;
+      enemies[0].role='balance';
+    }
+    if(k==='managolem'){enemies[0].bossShotAt=performance.now()/1000+1.8;enemies[0].shotCd=.25;enemies[0].mana=100;}
+    if(k==='manadeer'){enemies[0].bossShotAt=performance.now()/1000+1.9;enemies[0].shotCd=.35;enemies[0].mana=100;}
     if(k==='fairy'){enemies[0].shotCd=.10;enemies[0].mana=100;}if(k==='frogking'){enemies[0].shotCd=.5;enemies[0].mana=100;}
-  }left=k==='frogking'?180:(k==='fairy'?120:90);clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
+  }left=k==='frogking'?180:(k==='fairy'?120:((k==='silverwolf'||k==='managolem'||k==='manadeer')?120:90));clock.textContent='BOSS';flash(`${b.name}　HP ${bossMaxHp} / 復活 2`,1000)}
 
 function showWetlands(){
   setScreenMode('wetlands');
@@ -3286,6 +3507,12 @@ function bindTap(id,fn){const el=$(id);if(!el)return;let fired=false;el.addEvent
 bindTap('wetlandsReturn',()=>leaveWetlands());bindTap('frogKingPlace',()=>inspectFrogKing());
 bindTap('endingContinueBtn',()=>continueAfterEnding());
 bindTap('endingCloseBtn',()=>continueAfterEnding());
+bindTap('silverWolfStartBtn',()=>{
+  pendingBossKind='silverwolf';
+  startFieldBoss('silverwolf');
+});
+bindTap('manaGolemStartBtn',()=>{pendingBossKind='managolem';startFieldBoss('managolem');});
+bindTap('manaDeerStartBtn',()=>{pendingBossKind='manadeer';startFieldBoss('manadeer');});
 bindTap('bossBackBtn',()=>{$('bossPanel').classList.add('hidden');if(pendingBossKind==='frogking')showWetlands();else showWorldMap()});bindTap('bossStartBtn',()=>{if(pendingBossKind)startFieldBoss(pendingBossKind)});
 bindTap('homeMapBtn',()=>{restoreAllCupButtons();showWorldMap()});
 bindTap('practiceMapBtn',()=>{showWorldMap()});
@@ -3420,7 +3647,7 @@ bindTap('nextBtn',()=>{
   const ended=bScore>=2||rScore>=2;
   if(!ended){round++;reset();return}
   if(mode==='cup'){
-    // v3.03: 特殊スキル無し大会は通常大会表を使わない。
+    // v3.05: 特殊スキル無し大会は通常大会表を使わない。
     // v3.01では cupTable=null のまま recordMatch() に入り、1試合終了後に例外停止していた。
     if(noSkillCup){
       if(bScore>rScore)saveData.totalWins++;

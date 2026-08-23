@@ -986,3 +986,17 @@ body.noSkillCupMode #special1,
 body.noSkillCupMode #special2{
   opacity:.48!important;filter:grayscale(.4)!important;
 }
+
+/* v3.04 postgame silver wolf */
+.silverWolfStartBtn{
+  background:#587d96!important;
+  color:#eefaff!important;
+  border:1px solid #bfefff88!important;
+  font-weight:1000!important;
+}
+
+.postBossStartBtn{
+  background:#526e8c!important;color:#effaff!important;
+  border:1px solid #b9e6ff88!important;font-weight:1000!important;
+}
+#manaDeerStartBtn{background:#567d70!important;border-color:#c8ffdf88!important}
