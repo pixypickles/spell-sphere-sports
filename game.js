@@ -22,7 +22,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v3.02';
+const APP_VERSION='v3.03';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -291,7 +291,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v3.02 old-save compatibility:
+    // v3.03 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1163,7 +1163,7 @@ function startNoSkillCup(){
 
 function reset(){
   if(noSkillCup&&mode==='cup'){
-    const ns=['rush','shield','shoot'];
+    const ns=['rush','guard','shoot'];
     currentOpponent=ns[cupIndex%ns.length];
   }
   if(mode!=='menu')setScreenMode('game');
@@ -1199,6 +1199,13 @@ function reset(){
     new Unit(995,500,'red',false,roles[2])
   ];
   for(const e of enemies)e.outfitKey=`${cupKind}:${currentOpponent}`;
+  if(noSkillCup&&mode==='cup'){
+    for(const e of enemies){
+      e.specialKind=null;
+      e.rabbitActive=false;e.beastActive=false;e.moleActive=false;e.fairyActive=false;e.frogActive=false;
+      e.frogMage=false;
+    }
+  }
   if(od.frogMageUsers)for(const i of od.frogMageUsers)if(enemies[i]){enemies[i].frogMage=true;enemies[i].frogActive=true;enemies[i].specialKind='frogmage';enemies[i].shotCd=.55;enemies[i].mana=100;}
   if(cupKind==='rookie'&&od.shieldUsers)for(const i of od.shieldUsers)if(enemies[i])enemies[i].specialKind='shield';
   if(cupKind==='rookie'&&od.tripleUsers)for(const i of od.tripleUsers)if(enemies[i])enemies[i].specialKind='triple';
@@ -1546,7 +1553,7 @@ function finish(team,text){
     const match=bScore>=2||rScore>=2;
     $('resultTitle').textContent=match?(bScore>rScore?'MATCH WIN!':'MATCH LOSE'):(team==='blue'?'ROUND WIN!':'ROUND LOSE');
     $('resultText').textContent=text;
-    $('nextBtn').textContent=match?(mode==='cup'?'大会表へ':'メニューへ戻る'):'次のラウンド';
+    $('nextBtn').textContent=match?(mode==='cup'?(noSkillCup?'次の試合へ':'大会表へ'):'メニューへ戻る'):'次のラウンド';
     $('result').classList.remove('hidden');
   },300);
 }
@@ -1608,7 +1615,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v3.02: genuine frog mages never use human headwear/outfit head pieces.
+  // v3.03: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -1688,7 +1695,7 @@ function drawUnit(u){
     g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     
 
-    // v3.02 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
+    // v3.03 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
     g.fillStyle='#f2cf72';
     g.beginPath();g.ellipse(0,-16,11,13,0,0,Math.PI*2);g.fill();
 
@@ -3413,6 +3420,37 @@ bindTap('nextBtn',()=>{
   const ended=bScore>=2||rScore>=2;
   if(!ended){round++;reset();return}
   if(mode==='cup'){
+    // v3.03: 特殊スキル無し大会は通常大会表を使わない。
+    // v3.01では cupTable=null のまま recordMatch() に入り、1試合終了後に例外停止していた。
+    if(noSkillCup){
+      if(bScore>rScore)saveData.totalWins++;
+      else saveData.totalLosses++;
+      writeSave();
+
+      cupIndex++;
+      if(cupIndex>=3){
+        noSkillCup=false;
+        document.body.classList.remove('noSkillCupMode');
+        bScore=0;rScore=0;round=1;
+        score.textContent='0 - 0';
+        roundLabel.textContent='ROUND 1';
+        clock.textContent='1:00';
+        showWorldMap();
+        flash('特殊スキル無し大会 終了！',1000);
+        return;
+      }
+
+      // 次のチームへ直接進む。通常大会の standings / cupTable / cupResume は使用しない。
+      bScore=0;rScore=0;round=1;
+      score.textContent='0 - 0';
+      roundLabel.textContent='ROUND 1';
+      clock.textContent='1:00';
+      reset();
+      const names=['ラッシュ・ランナーズ','ガード・ライン','スターショッツ'];
+      flash(`特殊スキル無し大会　第${cupIndex+1}試合：${names[cupIndex]}`,900);
+      return;
+    }
+
     recordMatch('player',currentCupOrder()[cupIndex],bScore,rScore);
 
     pendingLearnMessage='';
@@ -3444,15 +3482,6 @@ bindTap('nextBtn',()=>{
     }
 
     cupIndex++;
-    if(noSkillCup&&cupIndex>=3){
-      noSkillCup=false;
-      document.body.classList.remove('noSkillCupMode');
-      mode='menu';
-      $('result')?.classList.add('hidden');
-      showWorldMap();
-      flash('特殊スキル無し大会 終了！',900);
-      return;
-    }
     if(cupIndex>=currentCupOrder().length){
       finishCup();
       if(pendingLearnMessage){
