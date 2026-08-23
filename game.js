@@ -22,7 +22,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v3.05';
+const APP_VERSION='v3.06';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -304,7 +304,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v3.05 old-save compatibility:
+    // v3.06 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1175,6 +1175,13 @@ function startNoSkillCup(){
 }
 
 
+function renderItemInventory(){
+ const p=$('itemInventoryPanel');if(!p)return;const items=[];
+ if(saveData.speedBootsUnlocked)items.push('👢 風走りのブーツ　移動速度 +12%');
+ if(saveData.maxManaRelicUnlocked)items.push('💎 星脈の器　最大MP 125');
+ if(saveData.manaRegenRelicUnlocked)items.push('💧 精霊の雫　MP回復速度 +25%');
+ p.innerHTML=items.length?'<div class="owned">現在所持しているアイテム</div>'+items.map(x=>`<div>${x}</div>`).join(''):'<div class="empty">まだ恒久アイテムを持っていません。</div>';
+}
 function applyPermanentTeamItems(){
   const units=[player,...allies].filter(Boolean);
   for(const u of units){
@@ -1372,29 +1379,15 @@ function ai(u,dt,isEnemy){
     return;
   }
   if(u.bossKind==='silverwolf'){
-    const targets=[player,...allies].filter(v=>v&&v.alive);
-    if(!targets.length)return;
-    const t=nearest(u,targets);
-    const now=performance.now()/1000;
-
-    // Save a short trail every ~0.055s to make the speed readable as afterimages.
-    if(now-(u.lastAfterimageAt||0)>.055){
-      u.lastAfterimageAt=now;
-      u.afterimages=u.afterimages||[];
-      u.afterimages.unshift({x:u.x,y:u.y,a:.38});
-      if(u.afterimages.length>6)u.afterimages.length=6;
-    }
+    const targets=[player,...allies].filter(v=>v&&v.alive);if(!targets.length)return;
+    const t=nearest(u,targets),now=performance.now()/1000,d0=dist(u,t);
+    if(now-(u.lastAfterimageAt||0)>.055){u.lastAfterimageAt=now;u.afterimages=u.afterimages||[];u.afterimages.unshift({x:u.x,y:u.y,a:.38});if(u.afterimages.length>6)u.afterimages.length=6}
     for(const q of (u.afterimages||[]))q.a=Math.max(0,q.a-dt*.8);
-
-    // Orbit and slash past the nearest target rather than running straight into the crystal.
-    const to=norm(t.x-u.x,t.y-u.y);
-    const side=u.strafeDir||1;
-    let nx=to.x*.52+(-to.y)*side*.92;
-    let ny=to.y*.52+( to.x)*side*.92;
-    const n=norm(nx,ny);
-    move(u,n.x,n.y,dt);
-    if(Math.random()<.018)u.strafeDir*=-1;
-    return;
+    const to=norm(t.x-u.x,t.y-u.y),side=u.strafeDir||1;let nx,ny;
+    if(d0<185){nx=-to.x+(-to.y)*side*.32;ny=-to.y+(to.x)*side*.32}
+    else if(d0>300){nx=to.x*.72+(-to.y)*side*.55;ny=to.y*.72+(to.x)*side*.55}
+    else{nx=(-to.y)*side+to.x*.05;ny=(to.x)*side+to.y*.05}
+    const n=norm(nx,ny);move(u,n.x,n.y,dt);if(Math.random()<.009)u.strafeDir*=-1;return;
   }
   u.think-=dt;
   if(u.think<=0){u.think=.16+Math.random()*.18;u.target=nearest(u,isEnemy?[player,...allies]:enemies)}
@@ -1682,7 +1675,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v3.05: genuine frog mages never use human headwear/outfit head pieces.
+  // v3.06: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -1797,7 +1790,7 @@ function drawUnit(u){
     g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     
 
-    // v3.05 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
+    // v3.06 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
     g.fillStyle='#f2cf72';
     g.beginPath();g.ellipse(0,-16,11,13,0,0,Math.PI*2);g.fill();
 
@@ -3126,7 +3119,7 @@ function bossTakeHit(source='bullet'){
       saveData.silverWolfWins=(saveData.silverWolfWins||0)+1;
       if(!saveData.speedBootsUnlocked){
         saveData.speedBootsUnlocked=true;
-        learned='　「風走りのブーツ」を獲得！　通常移動速度がアップした。';
+        learned='　【初回クリア報酬】風走りのブーツ獲得！　移動速度 +12%';
       }else{
         learned=`　銀影の迅狼 撃破 ${saveData.silverWolfWins}回目！`;
       }
@@ -3135,7 +3128,7 @@ function bossTakeHit(source='bullet'){
       saveData.manaGolemWins=(saveData.manaGolemWins||0)+1;
       if(!saveData.maxManaRelicUnlocked){
         saveData.maxManaRelicUnlocked=true;
-        learned='　「星脈の器」を獲得！　最大MPが100 → 125になった。';
+        learned='　【初回クリア報酬】星脈の器獲得！　最大MP 100 → 125';
       }else{
         learned=`　蒼晶の魔導巨像 撃破 ${saveData.manaGolemWins}回目！`;
       }
@@ -3144,7 +3137,7 @@ function bossTakeHit(source='bullet'){
       saveData.manaDeerWins=(saveData.manaDeerWins||0)+1;
       if(!saveData.manaRegenRelicUnlocked){
         saveData.manaRegenRelicUnlocked=true;
-        learned='　「精霊の雫」を獲得！　MP自然回復速度がアップした。';
+        learned='　【初回クリア報酬】精霊の雫獲得！　MP自然回復速度 +25%';
       }else{
         learned=`　泉脈の白鹿 撃破 ${saveData.manaDeerWins}回目！`;
       }
@@ -3480,6 +3473,7 @@ function mapMovementFrame(now){
 }
 requestAnimationFrame(mapMovementFrame);
 
+bindTap('itemInventoryBtn',()=>{renderItemInventory();$('itemInventoryPanel')?.classList.toggle('hidden');});
 bindTap('noSkillCupBtn',()=>startNoSkillCup());
 bindTap('mapEnterBtn',()=>{if(mapNearPlace)enterMapPlace(mapNearPlace)});
 bindTap('mapSpecial1',()=>useFieldSlot(1));
@@ -3647,7 +3641,7 @@ bindTap('nextBtn',()=>{
   const ended=bScore>=2||rScore>=2;
   if(!ended){round++;reset();return}
   if(mode==='cup'){
-    // v3.05: 特殊スキル無し大会は通常大会表を使わない。
+    // v3.06: 特殊スキル無し大会は通常大会表を使わない。
     // v3.01では cupTable=null のまま recordMatch() に入り、1試合終了後に例外停止していた。
     if(noSkillCup){
       if(bScore>rScore)saveData.totalWins++;

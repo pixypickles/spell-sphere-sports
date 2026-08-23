@@ -1000,3 +1000,4 @@ body.noSkillCupMode #special2{
   border:1px solid #b9e6ff88!important;font-weight:1000!important;
 }
 #manaDeerStartBtn{background:#567d70!important;border-color:#c8ffdf88!important}
+.itemInventoryCard{margin:8px 0 12px}#itemInventoryBtn{min-height:44px;width:100%;font-weight:1000;border-radius:11px}.itemInventoryPanel{margin-top:7px;padding:10px 12px;border-radius:11px;background:#13243de8;border:1px solid #cce8ff55;color:#eef7ff;line-height:1.55}.itemInventoryPanel .owned{font-weight:900;margin-bottom:3px}.itemInventoryPanel .empty{opacity:.7}
