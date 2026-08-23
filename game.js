@@ -1218,12 +1218,12 @@ function reset(){
     }
   }
   if(allies[0]){
-    allies[0].specialA=saveData.ally1SkillA||'none';
-    allies[0].specialB=saveData.ally1SkillB||'none';
+    allies[0].specialA=(noSkillCup&&mode==='cup')?'none':(saveData.ally1SkillA||'none');
+    allies[0].specialB=(noSkillCup&&mode==='cup')?'none':(saveData.ally1SkillB||'none');
   }
   if(allies[1]){
-    allies[1].specialA=saveData.ally2SkillA||'none';
-    allies[1].specialB=saveData.ally2SkillB||'none';
+    allies[1].specialA=(noSkillCup&&mode==='cup')?'none':(saveData.ally2SkillA||'none');
+    allies[1].specialB=(noSkillCup&&mode==='cup')?'none':(saveData.ally2SkillB||'none');
   }
   applyPermanentTeamItems();
   const od=opponentData(currentOpponent),roles=od.roles;
@@ -1341,6 +1341,7 @@ function allySpecialReady(u,kind){
   return false;
 }
 function allyUseSpecial(u,kind){
+  if(noSkillCup&&mode==='cup')return false;
   if(!allySpecialReady(u,kind))return false;
   if(kind==='double')return useDoubleShot(u);
   if(kind==='rabbit')return toggleRabbit(u);
@@ -1478,7 +1479,7 @@ function ai(u,dt,isEnemy){
   if(u.specialKind==='mole'&&!u.moleActive&&nowSpecial-u.lastMole>5.5&&u.mana>=45&&Math.random()<.0045){toggleMole(u);}
 
 
-  if(!isEnemy){
+  if(!isEnemy&&!(noSkillCup&&mode==='cup')){
     const allyChoices=[u.specialA,u.specialB].filter(k=>k&&k!=='none');
     if(allyChoices.length&&Math.random()<.006){
       const first=allyChoices[Math.floor(Math.random()*allyChoices.length)];
