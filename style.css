@@ -1103,3 +1103,63 @@ body.forcePortraitPlay #game{width:100%!important;height:100%!important}
 @media (orientation:landscape){
   #rotateNotice{display:none!important}
 }
+
+/* v3.10 portrait field-map fix */
+@media (orientation:portrait){
+  body.forcePortraitPlay #gameWrap:has(#worldMap:not(.hidden)){
+    top:0!important;
+    left:0!important;
+    width:100vw!important;
+    height:100dvh!important;
+    transform:none!important;
+    overflow:hidden!important;
+    background:#101d35!important;
+  }
+  body.forcePortraitPlay #worldMap:not(.hidden){
+    display:block!important;
+    position:fixed!important;
+    inset:0!important;
+    width:100vw!important;
+    height:100dvh!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    transform:none!important;
+  }
+  /* Keep the actual map visible instead of letting its lower half get clipped. */
+  body.forcePortraitPlay #worldMap:not(.hidden) .mapStage{
+    position:absolute!important;
+    left:0!important;
+    top:50%!important;
+    width:100vw!important;
+    height:56.25vw!important;
+    min-height:0!important;
+    transform:translateY(-50%)!important;
+    transform-origin:center center!important;
+  }
+  /* Controls must sit on the phone viewport, not below the 16:9 map strip. */
+  body.forcePortraitPlay #worldMap:not(.hidden) #mapStickZone{
+    position:fixed!important;
+    left:10px!important;
+    bottom:max(18px,env(safe-area-inset-bottom))!important;
+    transform:scale(.72)!important;
+    transform-origin:left bottom!important;
+    z-index:32000!important;
+    display:block!important;
+  }
+  body.forcePortraitPlay #worldMap:not(.hidden) .mapButtons{
+    position:fixed!important;
+    right:10px!important;
+    bottom:max(18px,env(safe-area-inset-bottom))!important;
+    transform:scale(.72)!important;
+    transform-origin:right bottom!important;
+    z-index:32000!important;
+    display:flex!important;
+  }
+}
+
+@media (orientation:portrait){
+  body.forcePortraitPlay.portraitWorldMap #gameWrap{
+    top:0!important;left:0!important;width:100vw!important;height:100dvh!important;
+    transform:none!important;overflow:hidden!important;background:#101d35!important;
+  }
+}
