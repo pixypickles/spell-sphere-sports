@@ -1253,3 +1253,112 @@ body.forcePortraitPlay #game{width:100%!important;height:100%!important}
     }
   }
 }
+
+/* v3.12 — portrait controls outside the court */
+@media (orientation:portrait){
+
+  body.forcePortraitPlay.screenGame #gameWrap{
+    position:fixed!important;
+    inset:0!important;
+    width:100vw!important;
+    height:100dvh!important;
+    min-height:0!important;
+    max-height:none!important;
+    transform:none!important;
+    overflow:hidden!important;
+    background:#101d35!important;
+  }
+
+  /* Court/play canvas: correct 16:9-like proportion, moved upward.
+     The blank lower area is intentionally reserved for controls. */
+  body.forcePortraitPlay.screenGame #game{
+    position:absolute!important;
+    left:0!important;
+    top:20dvh!important;
+    width:100vw!important;
+    height:56.25vw!important;
+    max-width:none!important;
+    max-height:none!important;
+    transform:none!important;
+    display:block!important;
+  }
+
+  /* HUD rides above the court. */
+  body.forcePortraitPlay.screenGame #hud{
+    position:absolute!important;
+    top:calc(20dvh + 4px)!important;
+    left:50%!important;
+    transform:translateX(-50%) scale(.82)!important;
+    transform-origin:center top!important;
+    z-index:130!important;
+  }
+
+  /* MANA stays to the far-left edge, close to but not over the central play area. */
+  body.forcePortraitPlay.screenGame #manaHud{
+    position:absolute!important;
+    left:4px!important;
+    top:calc(20dvh + 52px)!important;
+    transform:scale(.76)!important;
+    transform-origin:left top!important;
+    z-index:130!important;
+  }
+
+  /* Joystick: move completely below the court, hard to the left edge. */
+  body.forcePortraitPlay.screenGame #stickZone{
+    display:block!important;
+    position:fixed!important;
+    left:2px!important;
+    bottom:max(10px,env(safe-area-inset-bottom))!important;
+    top:auto!important;
+    transform:scale(1.02)!important;
+    transform-origin:left bottom!important;
+    z-index:32000!important;
+  }
+
+  /* Four action buttons: below the court, hard to the right edge. */
+  body.forcePortraitPlay.screenGame #buttons{
+    display:block!important;
+    position:fixed!important;
+    right:2px!important;
+    bottom:max(10px,env(safe-area-inset-bottom))!important;
+    top:auto!important;
+    width:196px!important;
+    height:174px!important;
+    transform:scale(1.04)!important;
+    transform-origin:right bottom!important;
+    z-index:32000!important;
+  }
+
+  /* Preserve the compact parallelogram relationship. */
+  body.forcePortraitPlay.screenGame #buttons > :nth-child(1),
+  body.forcePortraitPlay.screenGame #buttons > :nth-child(3){
+    transform:translate(30px,-12px)!important;
+  }
+  body.forcePortraitPlay.screenGame #buttons > :nth-child(2),
+  body.forcePortraitPlay.screenGame #buttons > :nth-child(4){
+    transform:translate(0px,2px)!important;
+  }
+
+  /* Narrow phones: keep controls large, only reduce slightly if absolutely necessary. */
+  @media (max-width:430px){
+    body.forcePortraitPlay.screenGame #game{
+      top:18dvh!important;
+    }
+    body.forcePortraitPlay.screenGame #hud{
+      top:calc(18dvh + 2px)!important;
+    }
+    body.forcePortraitPlay.screenGame #manaHud{
+      top:calc(18dvh + 48px)!important;
+    }
+    body.forcePortraitPlay.screenGame #stickZone{
+      transform:scale(.94)!important;
+      left:1px!important;
+      bottom:max(6px,env(safe-area-inset-bottom))!important;
+    }
+    body.forcePortraitPlay.screenGame #buttons{
+      transform:scale(.96)!important;
+      right:1px!important;
+      bottom:max(6px,env(safe-area-inset-bottom))!important;
+    }
+  }
+}
