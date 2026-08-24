@@ -1001,3 +1001,19 @@ body.noSkillCupMode #special2{
 }
 #manaDeerStartBtn{background:#567d70!important;border-color:#c8ffdf88!important}
 .itemInventoryCard{margin:8px 0 12px}#itemInventoryBtn{min-height:44px;width:100%;font-weight:1000;border-radius:11px}.itemInventoryPanel{margin-top:7px;padding:10px 12px;border-radius:11px;background:#13243de8;border:1px solid #cce8ff55;color:#eef7ff;line-height:1.55}.itemInventoryPanel .owned{font-weight:900;margin-bottom:3px}.itemInventoryPanel .empty{opacity:.7}
+/* v3.08 orientation fallback */
+#rotateNotice{flex-direction:column}
+.rotateNoticeCard{width:min(88vw,520px);padding:22px 18px;border-radius:18px;background:#1b2941;border:1px solid #9bdfff66;text-align:center;font-size:clamp(20px,6vw,34px)}
+.rotateNoticeCard small{display:block;margin:12px auto 16px;font-size:13px;line-height:1.5;opacity:.8;font-weight:600}
+.rotatePhone{font-size:48px;margin-bottom:8px}
+#portraitContinueBtn{display:block;width:100%;min-height:50px;border-radius:13px;border:1px solid #aee7ff88;background:#315b7d;color:#fff;font-size:16px;font-weight:1000;touch-action:manipulation}
+body.forcePortraitPlay #rotateNotice{display:none!important}
+body.forcePortraitPlay #gameWrap{display:block!important}
+/* Fit the whole 16:9 play surface inside a portrait viewport. Controls become smaller, but remain usable. */
+body.forcePortraitPlay #gameWrap{
+  width:100vw!important;height:56.25vw!important;
+  position:fixed!important;left:0!important;top:50%!important;
+  transform:translateY(-50%)!important;
+  overflow:hidden!important;
+}
+body.forcePortraitPlay #game{width:100%!important;height:100%!important}
