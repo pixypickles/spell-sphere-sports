@@ -22,7 +22,7 @@ if(window.visualViewport)window.visualViewport.addEventListener('resize',updateV
 window.addEventListener('DOMContentLoaded',updateViewportFit);
 setTimeout(updateViewportFit,30);
 
-const APP_VERSION='v3.12';
+const APP_VERSION='v3.13';
 window.APP_VERSION=APP_VERSION;
 document.title=`魔導球技 ${APP_VERSION}`;
 window.addEventListener('DOMContentLoaded',()=>{
@@ -326,7 +326,7 @@ function loadSave(){
     if(typeof data.endingSeen!=='boolean')data.endingSeen=false;
     if(typeof data.frogTeamUnlocked!=='boolean')data.frogTeamUnlocked=false;
     if(!data.playerTeamStyle)data.playerTeamStyle='human';
-    // v3.12 old-save compatibility:
+    // v3.13 old-save compatibility:
     // If the save had already reached/cleared the highest tier in an older build,
     // preserve postgame access instead of requiring the ending again.
     if(data.grandmasterChampion)data.gameCleared=true;
@@ -1698,7 +1698,7 @@ function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.lin
 function drawFlag(f,team){g.save();g.translate(f.x,f.y);const col=team==='blue'?'#86c7ff':'#ff9aa8',glow=team==='blue'?'#cfeaff':'#ffd6dc',t=performance.now()/1000;g.save();g.rotate(t*.35*(team==='blue'?1:-1));g.strokeStyle=col;g.lineWidth=2;g.globalAlpha=.55;g.beginPath();g.arc(0,10,27,0,Math.PI*2);g.stroke();g.beginPath();g.arc(0,10,18,0,Math.PI*2);g.stroke();g.restore();const bob=Math.sin(t*3+f.x*.01)*3;g.translate(0,-8+bob);g.shadowBlur=18;g.shadowColor=col;g.fillStyle=glow;g.beginPath();g.moveTo(0,-25);g.lineTo(13,-4);g.lineTo(0,22);g.lineTo(-13,-4);g.closePath();g.fill();g.strokeStyle=col;g.lineWidth=3;g.stroke();g.restore();}
 
 function drawUnit(u){
-  // v3.12: genuine frog mages never use human headwear/outfit head pieces.
+  // v3.13: genuine frog mages never use human headwear/outfit head pieces.
   if(u&&u.frogMage)u.outfitKey=null;
   // v2.63: null/alive check MUST happen before any transformation state access.
   // player is null on the title/map screen, so the old order killed requestAnimationFrame.
@@ -1813,7 +1813,7 @@ function drawUnit(u){
     g.fillStyle='#fff7b5';for(let i=0;i<4;i++){const a=t+i*Math.PI/2;g.beginPath();g.arc(Math.cos(a)*32,Math.sin(a)*22,2.5,0,Math.PI*2);g.fill()}
     
 
-    // v3.12 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
+    // v3.13 fairy appearance: human/fairy face, blue hair, twin buns, point eyes, ▼ mouth
     g.fillStyle='#f2cf72';
     g.beginPath();g.ellipse(0,-16,11,13,0,0,Math.PI*2);g.fill();
 
@@ -3665,7 +3665,7 @@ bindTap('nextBtn',()=>{
   const ended=bScore>=2||rScore>=2;
   if(!ended){round++;reset();return}
   if(mode==='cup'){
-    // v3.12: 特殊スキル無し大会は通常大会表を使わない。
+    // v3.13: 特殊スキル無し大会は通常大会表を使わない。
     // v3.01では cupTable=null のまま recordMatch() に入り、1試合終了後に例外停止していた。
     if(noSkillCup){
       if(bScore>rScore)saveData.totalWins++;
@@ -3806,3 +3806,20 @@ window.addEventListener('DOMContentLoaded',()=>{
     el.addEventListener('touchend',e=>{e.preventDefault();go();},{passive:false});
   }
 });
+
+(()=>{
+ const choice=document.getElementById('portraitStartChoice'), pb=document.getElementById('startPortraitBtn'), lb=document.getElementById('waitLandscapeBtn');
+ if(!choice||!pb||!lb)return;
+ let approved=false, waiting=false;
+ const portrait=()=>matchMedia('(orientation:portrait)').matches;
+ const visible=e=>{if(!e)return false;const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&+s.opacity!==0&&r.width>2&&r.height>2};
+ const intro=()=>[...document.querySelectorAll('body *')].some(e=>{if(!visible(e))return false;const t=(e.textContent||'').trim();return t.length<1500&&(/PUSH\s*ANY\s*BUTTON/i.test(t)||/スマホを横持ちしてください/.test(t)||/競技説明/.test(t))});
+ function sync(){const need=portrait()&&!approved&&intro();choice.classList.toggle('hidden',!need);document.body.classList.toggle('portraitStartGate',need);
+   if(!portrait()&&waiting){waiting=false;choice.classList.add('hidden');document.body.classList.remove('portraitStartGate');setTimeout(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',bubbles:true})),180)}}
+ const block=e=>{if(document.body.classList.contains('portraitStartGate')&&!e.target.closest('#portraitStartChoice')){e.preventDefault();e.stopImmediatePropagation()}};
+ ['pointerdown','touchstart','mousedown','click','keydown'].forEach(t=>window.addEventListener(t,block,true));
+ lb.onclick=e=>{e.preventDefault();e.stopPropagation();waiting=true;lb.textContent='横画面にしてください…'};
+ pb.onclick=e=>{e.preventDefault();e.stopPropagation();approved=true;choice.classList.add('hidden');document.body.classList.remove('portraitStartGate');setTimeout(()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',bubbles:true})),60)};
+ addEventListener('resize',()=>setTimeout(sync,80),{passive:true});addEventListener('orientationchange',()=>setTimeout(sync,180),{passive:true});
+ setInterval(sync,300);setTimeout(sync,100);
+})();
